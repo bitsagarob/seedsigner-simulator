@@ -4,7 +4,7 @@
 # The most interesting claim this repository makes is that a wallet zip is the
 # pinned upstream SeedSigner tree plus its pinned dependencies and nothing else,
 # and that anyone can rebuild it and get the same bytes. UPSTREAM publishes both
-# hashes, for both firmwares, for exactly that comparison. Until now nothing
+# hashes, for every firmware, for exactly that comparison. Until now nothing
 # enforced them: they were checked when somebody remembered, and they had
 # already drifted once before anybody noticed. A published hash nobody
 # re-derives is a claim, not a check.
@@ -42,7 +42,7 @@ jobs:
     timeout-minutes: 20
 
     # A matrix rather than two jobs or a loop inside one. The steps are
-    # identical for both firmwares down to the last character, with the name
+    # identical for every firmware down to the last character, with the name
     # substituted in three places, so the alternative is copying forty lines and
     # maintaining them in parallel forever. It also buys the thing a loop would
     # not: two independently named results, so a red mark says which firmware
@@ -52,7 +52,7 @@ jobs:
       # the diagnosis, and fail-fast would throw that away.
       fail-fast: false
       matrix:
-        firmware: [smartcard, stock]
+        firmware: [smartcard, stock, doomsigner]
 
     steps:
       - uses: actions/checkout@v4
@@ -88,7 +88,7 @@ jobs:
           # look, one place to change, and a copy in a workflow would be one more
           # number able to drift. Same section-aware awk idiom the build script
           # reads the pin with, and section-aware for the same reason: UPSTREAM
-          # describes two firmwares, and a parser that ignored the headers would
+          # describes several firmwares, and a parser that ignored the headers would
           # cheerfully compare this build against the other one's hash.
           field() {
             awk -F= -v want="[${FIRMWARE}]" -v key="$1" '
@@ -151,7 +151,7 @@ jobs:
       # this workflow, at this commit, and records it against the repository;
       # `gh attestation verify wallet-smartcard.zip --repo bitsagarob/seedsigner-simulator`
       # checks it against a file you downloaded, with nothing from us involved.
-      # Both firmwares are attested, each by its own matrix leg, because both are
+      # Every firmware is attested, each by its own matrix leg, because all are
       # served and either one is a file somebody may want to check.
       #
       # Push only. A pull request from a fork runs without the write permissions

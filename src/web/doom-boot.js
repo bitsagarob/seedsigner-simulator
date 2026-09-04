@@ -26,9 +26,11 @@
 (function (scope) {
   "use strict";
 
-  // The three side buttons, left to right, exactly as bootgame/unlock.py has
-  // them. None of them steer, so the sequence cannot be spelled by ordinary
-  // play, and it reads clearly on camera.
+  // Default: the three side buttons, top to bottom, exactly as bootgame/unlock.py
+  // has them. Doomsigner replaces this with five taps on the top one (key 1),
+  // which is also how you come back from the wallet. Up steers, so it cannot
+  // be the unlock. None of the default three steer, so that sequence cannot be
+  // spelled by ordinary play.
   var SEQUENCE = ["key1", "key2", "key3"];
 
   // The channels the page and the device shell speak, named. The same list as
@@ -40,7 +42,7 @@
   // thing that decides what is served from where. Freedoom, so the licensing
   // stays clean; about 10MB gzipped, which is why it is fetched here and not in
   // the offline shell.
-  var WAD_URL = "freedoom1.wad";
+  var WAD_URL = "freedoom1-3097f296.wad";
 
   // What DOOM draws, and how. RGB565 big endian is what the ST7789 panel takes
   // over SPI on the real device, so the wrapper hands over the same bytes the
@@ -183,6 +185,11 @@
      */
     boot: function (opts) {
       options = opts;
+      SEQUENCE = (opts.sequence && opts.sequence.length)
+        ? opts.sequence.slice()
+        : ["key1", "key2", "key3"];
+      progress = 0;
+      held = {};
       panelW = opts.width;
       panelH = opts.height;
       panel = new Uint8Array(panelW * panelH * 3);

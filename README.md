@@ -13,10 +13,15 @@ Real [SeedSigner](https://seedsigner.com) device firmware, the actual Python off
 the device, running in a browser tab. Its screen is a canvas, its buttons are
 your keyboard, and its camera is your webcam.
 
-Two firmwares are built, and the page says which one it is running and switches
-between them: **stock SeedSigner**, which is what a plain SeedSigner runs, and
-the **3rdIteration smartcard fork**, a third party fork that adds SeedKeeper and
-Satochip support and is what this page runs by default.
+Three firmwares are built, and the page says which one it is running and switches
+between them: **stock SeedSigner**, which is what a plain SeedSigner runs; the
+**3rdIteration smartcard fork**, a third party fork that adds SeedKeeper and
+Satochip support and is what this page runs by default; and **DoomSigner**, our
+own fork of that fork, which adds BIP-352 silent payments and boots into DOOM.
+
+The third one is ours, so its published hashes are what our CI produces rather
+than what an upstream project publishes. That difference is the point rather than
+something to hide: rebuilding it checks that we built what we said we did.
 
 > **This is a simulator, not a wallet.**
 > Everything it does happens in a browser tab, on a general-purpose computer, with
@@ -126,7 +131,7 @@ the worked example and what the resulting hashes mean.
   seen this repository and shares no cache with anything, and GitHub signs the
   result:
   `gh attestation verify wallet-smartcard.zip --repo bitsagarob/seedsigner-simulator`.
-- **Upstream's own tests run against our pinned versions**, both firmwares, each
+- **Upstream's own tests run against our pinned versions**, every firmware, each
   against its own pin ([`upstream-tests.yml`](.github/workflows/upstream-tests.yml)):
   949 tests from the fork's 22,000-line suite, and the whole of stock's smaller
   one. Nothing is vendored and none of it goes near a wallet zip. One file of the

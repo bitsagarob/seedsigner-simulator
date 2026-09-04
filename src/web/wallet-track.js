@@ -134,6 +134,10 @@
 
   push(["setTrackerUrl", TRACKER_URL]);
   push(["setSiteId", SITE_ID]);
+  // Cookieless, same as the marketing pages: nothing is stored on the device,
+  // so no page of bitsaga.be needs a consent banner. Costs returning-visitor
+  // recognition; the milestones above are sessionStorage and are unaffected.
+  push(["disableCookies"]);
   push(["enableLinkTracking"]);
   // A visit that loads the page and never gets the wallet up sends exactly one
   // request, and Matomo can only date a visit from the requests it receives, so

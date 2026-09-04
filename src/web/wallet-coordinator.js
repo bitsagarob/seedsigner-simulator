@@ -26,6 +26,16 @@
 
   var C = scope.SignetCoordinator;
 
+  // Bringing your own coordinator is offered on the demo flow and nowhere else.
+  // The page at rest is a SeedSigner with a wallet beside it, which is the thing
+  // worth handing to a stranger; pairing the device with Sparrow on the other
+  // half of the screen is a demonstration of one particular way of working, so
+  // it sits behind the same ?tutorial the other demonstration does. Present at
+  // all is enough: ?tutorial=offer shows the choice without starting anything,
+  // which is also how the test reaches it.
+  var BYO_OFFERED = typeof location !== "undefined"
+    && new URLSearchParams(location.search).get("tutorial") !== null;
+
   // What this panel needs from the coordinator beyond what the multisig
   // tutorial already uses. Checked by name rather than assumed, because the
   // single sig half is newer than this file and a missing function should read
@@ -55,14 +65,18 @@
 
   // How long a code stays up before the next one. Same as the tutorial, which
   // is what the device's decoder was watched reading.
-  var FRAME_MS = 550;
+  var E2E = typeof location !== "undefined"
+    && new URLSearchParams(location.search).has("e2e");
+  var FRAME_MS = E2E ? 120 : 550;
 
   var NOT_REAL = "These are not real bitcoin. They exist only on that test "
                + "network, cannot be sold or sent to anyone, and are worth nothing.";
 
   // The one sentence that has to be true whatever else the panel is showing.
-  var NOT_A_WALLET = "Not a real wallet. Bitsaga Signet test coins only, no "
-                   + "keys, and it forgets everything when you close the tab.";
+  // Six words where there were twenty. Everything the long version said is
+  // still true and still on the page, in the panel behind the i; what this
+  // line has to do is stop somebody thinking these coins are theirs.
+  var NOT_A_WALLET = "Signet test coins. Nothing real, nothing kept.";
 
   // The device path to the account key, spelled out because the whole point of
   // the landing state is that nobody has to guess it. It ends where the device's
@@ -71,10 +85,26 @@
   // steers a visitor away from what the device wanted to do. Static is still
   // read, it just no longer has to be named.
   var SEED_PATH = "Tools → New seed";
-  var EXPORT_PATH = "Seeds → your seed → Export Xpub → Single sig "
-                  + "→ Native Segwit";
+  var EXPORT_PATH = "Seeds → Export Xpub → Single sig → Native Segwit";
 
   var WAITING = "Waiting for Bitsaga Signet to put it in a block, about thirty seconds.";
+
+  // The receive overlay. Spend of a received silent-payment coin does not
+  // need the BIP84 account export: the seed is already loaded, the output
+  // and tweak are published, and the device signs from m/352h/1h/0h/0h/0.
+  // Doomsigner is where the overlay lives. Old ?firmware=spreceive links
+  // still carry that name in the URL even though the page remaps them.
+  var fw = typeof location !== "undefined"
+    && new URLSearchParams(location.search).get("firmware");
+  var SPRECEIVE = fw === "doomsigner" || fw === "spreceive";
+  var SP_SEED_URL = "sp-overlay/test-seed.json";
+  var SP_SCAN_PATH = "Home → Scan, or Seeds → 24c323b5 → Scan transaction";
+  var SP_SEND_SCAN_PATH = "Home → Scan (seed 73c5da0a if asked)";
+  var SP_SEND_AMOUNT = 40000;
+  // Sparrow's SeedSigner import wraps the scanned string as sp(<text>). Export
+  // only the inner key expression from the device, never sp() or a checksum.
+  var SP_CONNECT_LINE =
+    /^\[([0-9a-f]{8})\/352h\/([01])h\/0h\]((tspscan|spscan)1[a-z0-9]+)$/i;
 
   // What the one control says, in both of its states. It is a disclosure
   // button, so the label is the action and aria-expanded carries the state.
@@ -106,6 +136,11 @@
     // does not read as the way into the only thing here that can hold a
     // balance. Orange, because it is the one action on this page worth taking;
     // the firmware row under it is grey, and is a preference rather than an act.
+    // Filled orange rather than outlined, because outlined was what the
+    // walkthrough button and this one both were, and two identical boxes an inch
+    // apart make the visitor read instead of look. There is one filled thing on
+    // the page and this is it: the act, the alternative route to it, and a
+    // preference, told apart by weight before a word of either is read.
     // The control, and beside it what the wallet is doing. They were one
     // object, which made the button's own name change under a screen reader
     // every time the balance moved, and read as a status chip somebody had put
@@ -113,9 +148,14 @@
     ".wal-openrow{display:flex;flex-wrap:wrap;align-items:center;",
     "justify-content:center;gap:.4rem .7rem}",
     ".wal-open{display:inline-flex;align-items:center;gap:.5rem;font:inherit;",
-    "font-size:.9rem;color:#f7931a;background:#16181c;border:1px solid #f7931a;",
+    "font-size:.9rem;color:#12151a;background:#f7931a;border:1px solid #f7931a;",
     "border-radius:8px;padding:.55rem 1.1rem;cursor:pointer}",
-    ".wal-open:hover{background:#1c2026}",
+    ".wal-open:hover{background:#ffa32e;border-color:#ffa32e}",
+    // Open, and the fill goes with the act: the same control now says Close
+    // wallet, and a filled orange box shouting that beside the panel it belongs
+    // to is the loudest thing on a page whose point has moved into the panel.
+    ".wal-open[aria-expanded=true]{color:#f7931a;background:#16181c}",
+    ".wal-open[aria-expanded=true]:hover{background:#1c2026}",
     ".wal-open:focus-visible{outline:2px solid #f7931a;outline-offset:2px}",
     ".wal-open b{font-weight:600}",
     // The page's own icon idiom, taken from the fullscreen control: strokes
@@ -124,8 +164,14 @@
     ".wal-open svg{width:1.1em;height:1.1em;flex:none;fill:none;",
     "stroke:currentColor;stroke-width:1.6;stroke-linecap:round;",
     "stroke-linejoin:round}",
+    // A lamp, not a sentence. What it says never changes while it is off, which
+    // is most of the time, and "Not connected" beside a grey dot is the dot
+    // again in words. The words stay in the accessibility tree, where a status
+    // that changes is worth announcing and a colour is worth nothing.
     ".wal-status{margin:0;display:flex;align-items:center;gap:.4rem;",
     "color:#7c848f;font-size:.85rem}",
+    ".wal-status .wal-state{position:absolute;width:1px;height:1px;padding:0;",
+    "margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}",
     ".wal-status .wal-dot{width:.45rem;height:.45rem;",
     "flex:none;border-radius:50%;background:#3a4048}",
     ".wal-status[data-on=yes] .wal-dot{background:#f7931a}",
@@ -255,6 +301,48 @@
     ".wal{padding:.9rem .85rem 1.1rem}",
     ".wal-balance{font-size:1.7rem}",
     "}",
+
+    // A phone held upright gives this panel half a screen, with the device it
+    // talks to on the other half. So the words shrink and the controls do not:
+    // the standing explanation of what this panel is gets read once and then
+    // never again, while every button on it has to stay a thumb target. The
+    // numbers, the address and the line saying what is happening keep their
+    // size, because those are what somebody is actually here to read.
+    "@media (max-width:61.99rem) and (orientation:portrait){",
+    ".wal{padding:.75rem .8rem .85rem}",
+    ".wal-note{margin:.25rem 0 0;font-size:.76rem}",
+    ".wal-howto{margin:.6rem 0 0}",
+    ".wal-howto li{margin:0 0 .55rem}",
+    ".wal-path{margin:.25rem 0 0;padding:.4rem .6rem}",
+    ".wal-actions{margin:.8rem 0 0}",
+    ".wal-actions button{min-height:2.75rem;padding-inline:1rem}",
+    "}",
+
+    // The two modes, as one segmented control rather than two buttons. They are
+    // the same choice seen from either side, and a pair of separate buttons
+    // reads as two unrelated actions.
+    ".wal-modes{display:flex;gap:0;margin:0 0 1rem}",
+    ".wal-modes button{flex:1;border-radius:0;padding:.4rem .6rem}",
+    ".wal-modes button:first-child{border-radius:5px 0 0 5px}",
+    ".wal-modes button:last-child{border-radius:0 5px 5px 0;margin-left:-1px}",
+    ".wal-modes button[aria-pressed=true]{color:#f7931a;border-color:#f7931a;",
+    "background:#16181c;position:relative;z-index:1}",
+
+    // Bring your own wallet: one box per direction, because two directions is
+    // all an airgap is. Monospace and selectable, since every value here exists
+    // to be carried somewhere else by hand.
+    ".wal-hand{margin:1.2rem 0 0;padding-top:1.1rem;border-top:1px solid #22262c}",
+    ".wal-hand:first-of-type{margin-top:0;padding-top:0;border-top:none}",
+    ".wal-hand h3{margin:0;font-size:.92rem;font-weight:600;color:#d7dbe0}",
+    ".wal-hand>p{margin:.3rem 0 0;font-size:.82rem;color:#7c848f;line-height:1.5}",
+    ".wal-hand textarea{width:100%;box-sizing:border-box;margin:.65rem 0 0;",
+    "min-height:5rem;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,",
+    "monospace;font-size:.76rem;line-height:1.55;color:#d7dbe0;background:#0d1014;",
+    "border:1px solid #2a2f36;border-radius:6px;padding:.5rem .6rem}",
+    ".wal-hand textarea:focus-visible{outline:2px solid #f7931a;outline-offset:1px}",
+    ".wal-hand textarea[readonly]{color:#b6bec8;background:#101317}",
+    ".wal-kind{margin:.55rem 0 0;font-size:.82rem;color:#f7931a}",
+    ".wal-kind:empty{display:none}",
   ].join("");
 
   // ------------------------------------------------------------ an address in
@@ -380,6 +468,10 @@
 
   function Wallet(options) {
     this.screen = options.screen;
+    this.sendKey = options.sendKey;
+    this.keymap = options.keymap || {
+      ArrowUp: 1, ArrowDown: 2, ArrowLeft: 3, ArrowRight: 4, Enter: 5,
+    };
     this.lines = [];              // the device's own narration, for the send flow
     this.open = false;
     this.stage = "idle";          // idle | connecting | ready
@@ -393,6 +485,16 @@
     this.sent = [];               // spends this tab made, so the list can name them
     this.presenting = null;       // the frames the device's camera is being shown
     this.reader = 0;              // bumped to call off whatever is being read
+    // demo | byo. The demo half is this panel being a wallet; the byo half is
+    // this panel being nothing but the two ends of an airgap, so that the
+    // wallet can be Sparrow, or Nunchuk on a phone, or anything that speaks
+    // PSBT. Both halves drive the same device through the same camera and the
+    // same screen: nothing in byo mode reaches past the QR.
+    this.mode = "demo";
+    this.carry = "";              // what byo mode is about to show the device
+    this.showing = null;          // what it is holding up, said in words
+    this.reading = false;         // a read of the device's screen is in hand
+    this.readout = null;          // { kind, text } of the last thing read off it
     this.build(options.container);
   }
 
@@ -424,6 +526,8 @@
     this.openerStatus.dataset.on = "no";
     this.openerStatus.appendChild(element("span", "wal-dot"));
     this.openerState = element("span", "wal-state", "Not connected");
+    // Same words on hover from the first paint, not only once the state moves.
+    this.openerStatus.title = "Not connected";
     this.openerStatus.appendChild(this.openerState);
 
     var row = element("div", "wal-openrow");
@@ -506,7 +610,11 @@
       };
       if (still) hide(); else setTimeout(hide, 220);
       this.stopReading();
-      this.stopPresenting();
+      this.stopShowing();
+      // Byo mode says what it is doing, so it has to stop saying it when it
+      // stops doing it. Reopening onto "3 codes are cycling" with an empty
+      // canvas behind it would be a lie the panel told about itself.
+      this.reading = false;
       // A send is a conversation with the device, and shutting the drawer ends
       // it: the code is no longer being held up and nothing is watching the
       // screen for an answer. Said, rather than left as a step that has quietly
@@ -525,7 +633,12 @@
   Wallet.prototype.began = function () {
     var self = this;
     this.render();
-    if (this.stage === "idle") this.watchForAccount();
+    // Only the demo half is waiting for an export. In byo mode the device's
+    // screen is read when somebody asks for it and not before.
+    if (this.mode !== "byo" && this.stage === "idle") {
+      if (SPRECEIVE) this.watchForSpConnect();
+      else this.watchForAccount();
+    }
     if (this.stage === "ready") this.refreshSoon();
     // The first question this page ever asks Bitsaga Signet, and it is not
     // asked until a visitor has opened the wallet: a page that reached out to
@@ -577,7 +690,7 @@
     var deadline = Date.now() + timeout;
     return new Promise(function (resolve, reject) {
       (function tick() {
-        if (mine !== self.reader) return;
+        if (mine !== self.reader) return reject(new Error("Stopped waiting for " + what));
         var value;
         try {
           value = test();
@@ -734,8 +847,11 @@
 
   /** The stream the page hands the device when the wallet is holding a code up. */
   Wallet.prototype.stream = function () {
-    if (!this.presenting || !this.canvas.captureStream) return null;
-    return this.canvas.captureStream(25);
+    // The canvas itself. It used to be handed over as a captureStream, which
+    // Safari has no such method for, so on an iPhone this returned null and the
+    // device was given a webcam it was never meant to look at.
+    if (!this.presenting) return null;
+    return this.canvas;
   };
 
   // ------------------------------------------------------- the device's own log
@@ -754,6 +870,226 @@
       if (found) return found[1];
     }
     return null;
+  };
+
+  Wallet.prototype.sleep = function (ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  };
+
+  /**
+   * The screen that has been up for two looks in a row. A key sent during a
+   * transition is taken by whatever arrives next, so the review walk waits
+   * until the name has stopped changing.
+   */
+  Wallet.prototype.settledScreen = function () {
+    var self = this;
+    var deadline = Date.now() + 30000;
+    return new Promise(function (resolve, reject) {
+      var previous = null;
+      var looks = 0;
+      (function look() {
+        if (Date.now() > deadline) {
+          return reject(new Error("The device screen did not settle (last: "
+                                  + self.currentScreen() + ")."));
+        }
+        var screen = self.currentScreen();
+        if (screen && screen === previous) {
+          looks += 1;
+          if (looks >= 2) return resolve(screen);
+        } else {
+          looks = 0;
+          previous = screen;
+        }
+        setTimeout(look, 280);
+      })();
+    });
+  };
+
+  Wallet.prototype.tapEnter = function () {
+    var channel = this.keymap.Enter;
+    if (!this.sendKey || channel === undefined) {
+      return Promise.reject(new Error("This panel cannot press the device buttons."));
+    }
+    this.sendKey(channel);
+    return this.sleep(450).then(this.settledScreen.bind(this));
+  };
+
+  /**
+   * Open Scan, then walk Continue / review / Approve until the signed QR.
+   * That is the click-through the companion used to wait for a person to do.
+   */
+  /**
+   * Back out of QR and menu screens until Home or Scan is reachable.
+   * Connect to Sparrow leaves the device on QRDisplayScreen; spending needs Scan.
+   */
+  Wallet.prototype.backToMainMenu = function () {
+    var self = this;
+    var deadline = Date.now() + 90000;
+    return Promise.resolve().then(function step() {
+      if (Date.now() > deadline) {
+        throw new Error("Could not reach the home menu from the Connect QR.");
+      }
+      var screen = self.currentScreen();
+      if (screen === "MainMenuScreen" || screen === "ScanScreen") return;
+      if (self.sendKey && self.keymap.ArrowLeft !== undefined) {
+        self.sendKey(self.keymap.ArrowLeft);
+        return self.sleep(450).then(function () {
+          return self.settledScreen();
+        }).then(function (screen) {
+          if (screen === "MainMenuScreen" || screen === "ScanScreen") return;
+          self.sendKey(self.keymap.Enter);
+          return self.sleep(450).then(self.settledScreen.bind(self));
+        }).then(step);
+      }
+      self.say("Leave the Connect QR (Back on the device) so Scan can open.");
+      return self.sleep(500).then(step);
+    });
+  };
+
+  Wallet.prototype.openScan = function () {
+    var self = this;
+    if (!this.sendKey) {
+      this.say("On the device, open Scan.");
+      return this.watch(function () {
+        return self.currentScreen() === "ScanScreen";
+      }, 300000, "the device to open Scan");
+    }
+    this.say("Opening Scan on the device.");
+    return this.backToMainMenu().then(function () {
+      if (self.currentScreen() === "ScanScreen") return;
+      return self.watch(function () {
+        var screen = self.currentScreen();
+        return screen === "MainMenuScreen" || screen === "SeedOptionsScreen";
+      }, 60000, "the home menu");
+    }).then(function () {
+      if (self.currentScreen() === "ScanScreen") return;
+      return self.tapEnter();
+    }).then(function () {
+      return self.watch(function () {
+        var screen = self.currentScreen();
+        if (screen === "ScanScreen") return true;
+        // A PSBT can leave Scan in one frame; treat seed selection as success.
+        if (screen === "ButtonListScreen") return true;
+        return false;
+      }, 30000, "Scan");
+    });
+  };
+
+  Wallet.prototype.clickThroughSpend = function (kind) {
+    var self = this;
+    var send = kind === "send";
+    if (!this.sendKey) {
+      this.say("Work through the review on the device and Approve.");
+      return this.watch(function () {
+        return self.currentScreen() === "QRDisplayScreen";
+      }, 600000, "the signed QR");
+    }
+    this.say("Walking the device's review.");
+    var taps = 0;
+    function step(screen) {
+      if (screen === "ErrorScreen") {
+        throw new Error(send
+          ? "The device refused the silent-payment send."
+          : "The device refused the silent-payment spend.");
+      }
+      if (screen === "QRDisplayScreen") return screen;
+      if (taps++ > 20) {
+        throw new Error("The device did not reach the signed QR after the review (last screen: "
+                        + screen + ").");
+      }
+      self.sendKey(self.keymap.Enter);
+      var from = screen;
+      var movedAt = Date.now();
+      function waitMoved() {
+        if (Date.now() - movedAt > 20000) {
+          throw new Error("The device stayed on " + from + " after Approve/Continue.");
+        }
+        var now = self.currentScreen();
+        if (now && now !== from) return self.settledScreen();
+        return self.sleep(250).then(waitMoved);
+      }
+      return self.sleep(350).then(waitMoved).then(step);
+    }
+    return this.settledScreen().then(step);
+  };
+
+  Wallet.prototype.waitForE2eInject = function (timeout) {
+    var self = this;
+    publishE2e(self);
+    return new Promise(function (resolve, reject) {
+      var deadline = Date.now() + timeout;
+      (function tick() {
+        var e2e = scope.__bitsagaE2e;
+        if (e2e && e2e.injected) return resolve();
+        if (Date.now() > deadline) {
+          return reject(new Error("The E2E driver never scanned the PSBT into the device."));
+        }
+        setTimeout(tick, 150);
+      })();
+    });
+  };
+
+  Wallet.prototype.waitForE2eSigned = function (timeout) {
+    var self = this;
+    publishE2e(self);
+    return new Promise(function (resolve, reject) {
+      var deadline = Date.now() + timeout;
+      (function tick() {
+        var e2e = scope.__bitsagaE2e;
+        if (e2e && e2e.signedPsbt) return resolve(e2e.signedPsbt);
+        if (Date.now() > deadline) {
+          return reject(new Error("The E2E driver never read the signed PSBT QR."));
+        }
+        setTimeout(tick, 150);
+      })();
+    });
+  };
+
+  /**
+   * Show a PSBT to the device: canvas loop in normal mode, injected scan in e2e.
+   */
+  Wallet.prototype.offerPsbtToDevice = function (trackEvent) {
+    var self = this;
+    var psbt = self.sending.psbt;
+    self.at("show");
+    track(trackEvent, "psbt-shown");
+    publishE2e(self);
+    if (E2E) {
+      self.say("Waiting for the test driver to scan the PSBT.");
+      return self.waitForE2eInject(600000);
+    }
+    var frames = scope.WalletTutorial && scope.WalletTutorial.specterFrames;
+    if (!frames) {
+      throw new Error("wallet-tutorial.js is not on this page, so there "
+                      + "is nothing here to split the transaction into codes.");
+    }
+    self.sending.frames = frames(psbt, 280);
+    self.present(self.sending.frames);
+    return self.openScan().then(function () {
+      if (self.currentScreen() === "ScanScreen") {
+        return self.watch(function () {
+          return self.currentScreen() !== "ScanScreen";
+        }, 300000, "the device to take the transaction");
+      }
+    });
+  };
+
+  Wallet.prototype.reviewSignedPsbt = function (kind) {
+    var self = this;
+    self.stopPresenting();
+    self.canvas.hidden = true;
+    self.at("review");
+    if (E2E) {
+      self.say("Walking review on the device; the test driver reads the signed PSBT QR.");
+      return self.clickThroughSpend(kind).then(function () {
+        return self.waitForE2eSigned(600000);
+      }).then(function (signedB64) {
+        return { psbt: function () { return C.fromBase64(signedB64); } };
+      });
+    }
+    return self.clickThroughSpend(kind).then(function () {
+      return self.readPsbt(600000);
+    });
   };
 
   // ------------------------------------------------------------- connecting
@@ -802,6 +1138,64 @@
       .catch(function () { /* the drawer was shut, or the day ran out */ });
   };
 
+  /**
+   * When the device shows Connect to Sparrow, read the QR and stand in for
+   * Sparrow: fingerprint, derivation m/352'/coin'/0', and the tsp1 receive
+   * address must match the published test seed. Then run the spend demo.
+   */
+  Wallet.prototype.watchForSpConnect = function () {
+    var self = this;
+    this.error = "";
+    this.watch(function () {
+      if (self.spImported || self.step) return false;
+      var text = self.readDevice();
+      if (!text) return false;
+      var trimmed = text.trim();
+      if (!SP_CONNECT_LINE.test(trimmed)) return false;
+      return trimmed;
+    }, 86400000, "the Connect to Sparrow QR on the device's screen")
+      .then(function (exported) { return self.importSpConnect(exported); })
+      .catch(function () { /* drawer shut or superseded */ });
+  };
+
+  Wallet.prototype.importSpConnect = function (exported) {
+    var self = this;
+    if (this.spImported || this.step) return Promise.resolve();
+    this.stage = "connecting";
+    this.error = "";
+    this.say("Acting as Sparrow: reading the Connect QR off the device.");
+    track("sparrow", "import-started");
+    return this.loadSpSeed().then(function (seed) {
+      self.spSeed = seed;
+      if (exported.trim() !== seed.connect_descriptor) {
+        throw new Error("Connect QR does not match the published test seed.");
+      }
+      self.spImported = true;
+      self.stage = "sp-ready";
+      track("sparrow", "imported");
+      self.say("Sparrow would show Receive as " + seed.sp_address.slice(0, 20) + "…");
+      self.render();
+      return self.sleep(E2E ? 100 : 1200);
+    }).then(function () {
+      if (self.step) return;
+      self.view = "spspend";
+      self.step = null;
+      self.sending = null;
+      self.render();
+      // Connect leaves the device on the watch-key QR. Scan needs Home → Scan.
+      return self.backToMainMenu();
+    }).then(function () {
+      if (self.step) return;
+      return self.spendSilent();
+    }).catch(function (error) {
+      self.stage = "idle";
+      self.error = error.message;
+      self.say("");
+      self.render();
+      if (self.open && self.mode !== "byo" && !self.spImported) self.watchForSpConnect();
+    });
+  };
+
   /** Connect to whatever the export turned out to be: the line, or the CBOR. */
   Wallet.prototype.connect = function (exported) {
     var self = this;
@@ -847,7 +1241,9 @@
         self.error = error.message + " Nothing about the simulator itself has changed.";
         self.say("");
         self.render();
-        self.watchForAccount();
+        // Unless the other half has taken over in the meantime, in which case
+        // it owns the device's screen and this must not start reading it again.
+        if (self.mode !== "byo") self.watchForAccount();
       });
   };
 
@@ -1144,6 +1540,291 @@
     });
   };
 
+  Wallet.prototype.loadSpSeed = function () {
+    if (this.spSeed) return Promise.resolve(this.spSeed);
+    return fetch(SP_SEED_URL, { cache: "no-store" }).then(function (response) {
+      if (!response.ok) throw new Error("Could not load the published silent-payment test seed.");
+      return response.json();
+    }).then(function (seed) {
+      return seed;
+    });
+  };
+
+  /**
+   * Fund the published BIP-352 output, hand a PSBT to the device, read the
+   * signed QR back, finish the taproot witness, broadcast.
+   *
+   * The output key is the one from the first signet send. Paying that taproot
+   * (faucet or otherwise) pays the same script a silent payment created, so
+   * the same tweak spends it. A fresh BIP-352 send is what device_spend.py
+   * does; this path is the device's own screens.
+   */
+  Wallet.prototype.spendSilent = function () {
+    var self = this;
+    if (this._spSpendRunning) return Promise.resolve();
+    this._spSpendRunning = true;
+    this.stopReading();
+    this.error = "";
+    this.sending = { silent: true };
+    track("spspend", "start");
+
+    this.at("build");
+    return this.loadSpSeed().then(function (seed) {
+      self.spSeed = seed;
+      var taproot = seed.example_output.taproot;
+      self.sending.taproot = taproot;
+      self.sending.dest = seed.example_output.dest;
+      self.say("Looking for a silent-payment coin at the published output.");
+      return scanChain([taproot]).then(function (held) {
+        var row = held[taproot] || { utxos: [] };
+        if (row.utxos && row.utxos.length) return row;
+        self.say("No coin there yet. Asking the faucet to pay that taproot.");
+        return C.network.claim(taproot).then(function (paid) {
+          self.sending.faucet = paid.txid;
+          return self.waitForSpCoin(taproot);
+        });
+      });
+    }).then(function (row) {
+      var utxo = row.utxos.slice().sort(function (a, b) { return b.value - a.value; })[0];
+      if (!utxo) throw new Error("The silent-payment output still has no coin.");
+      var fee = 200;
+      if (utxo.value < fee + 546) {
+        throw new Error("That coin is too small to spend after a fee.");
+      }
+      var seed = self.spSeed;
+      var destValue = utxo.value - fee;
+      var script = concatBytes([new Uint8Array([0x51, 0x20]),
+                                C.unhex(seed.example_output.xonly)]);
+      self.sending.inputs = [{ txid: utxo.txid, vout: utxo.vout, value: utxo.value }];
+      self.sending.amount = destValue;
+      if (!C.buildSpSpendPsbt || !C.finaliseTaproot) {
+        throw new Error("signet-coordinator.js cannot build a silent-payment spend yet.");
+      }
+      return C.buildSpSpendPsbt({
+        txid: utxo.txid,
+        vout: utxo.vout,
+        value: utxo.value,
+        scriptPubkey: script,
+        tweak: C.unhex(seed.example_output.tweak),
+        // The 33-byte compressed key, not the x-only one: BIP-376 keys
+        // PSBT_IN_SP_SPEND_BIP32_DERIVATION by the full spend pubkey, and a
+        // 32-byte key there is a malformed field rather than a shorter one.
+        spendPubkey: C.unhex(seed.spend_pubkey_hex),
+        fingerprint: seed.fingerprint,
+        path: seed.spend_path,
+        destScript: addressScript(seed.example_output.dest),
+        destValue: destValue,
+      });
+    }).then(function (psbt) {
+      self.sending.psbt = psbt;
+      return self.offerPsbtToDevice("spspend");
+    }).then(function () {
+      return self.reviewSignedPsbt();
+    }).then(function (collector) {
+      self.at("finish");
+      track("spspend", "signature");
+      var signed = C.toBase64(collector.psbt());
+      self.sending.signed = signed;
+      return C.finaliseTaproot(signed);
+    }).then(function (raw) {
+      return C.network.broadcast(raw);
+    }).then(function (sent) {
+      track("spspend", "broadcast");
+      self.sending.txid = sent.txid;
+      self.at("confirm");
+      self.say(WAITING);
+      return self.waitForBlock(sent.txid);
+    }).then(function () {
+      track("spspend", "confirmed");
+      self.at("done");
+      self.say("");
+      self.render();
+    }).catch(function (error) {
+      self.stopPresenting();
+      if (self.canvas) self.canvas.hidden = true;
+      self.error = error.message;
+      self.say("");
+      self.render();
+    }).finally(function () {
+      self._spSpendRunning = false;
+    });
+  };
+
+  /**
+   * Fund the published sender address, build a PSBTv2 send, sign on the device
+   * with the abandon test seed, finalise the BIP-375 hand-off, broadcast.
+   */
+  Wallet.prototype.sendToSilentPayment = function () {
+    var self = this;
+    if (this._spSendRunning) return Promise.resolve();
+    this._spSendRunning = true;
+    this.stopReading();
+    this.error = "";
+    this.sending = { silent: true, send: true };
+    track("spsend", "start");
+
+    this.at("build");
+    return this.loadSpSeed().then(function (seed) {
+      self.spSeed = seed;
+      var sender = seed.sender_address;
+      var changeAddr = seed.sender_change_address || sender;
+      self.sending.sender = sender;
+      self.sending.dest = seed.sp_address;
+      self.say("Looking for coins at the published sender address.");
+      return scanChain([sender, changeAddr]).then(function (held) {
+        var fee = 200;
+        var minInput = SP_SEND_AMOUNT + fee + 546;
+        var rows = [held[sender] || { utxos: [] }, held[changeAddr] || { utxos: [] }];
+        var best = null;
+        var fromAddr = sender;
+        rows.forEach(function (row, index) {
+          var addr = index ? changeAddr : sender;
+          (row.utxos || []).forEach(function (utxo) {
+            if (!best || utxo.value > best.value) {
+              best = utxo;
+              fromAddr = addr;
+            }
+          });
+        });
+        if (best && best.value >= minInput) {
+          self.sending.spendFrom = fromAddr;
+          return { utxos: [best] };
+        }
+        self.say("No coin there yet. Asking the faucet to pay the sender.");
+        return C.network.claim(sender).then(function (paid) {
+          self.sending.faucet = paid.txid;
+          return self.waitForSpCoin(sender);
+        });
+      }).then(function (row) {
+        var fee = 200;
+        var minInput = SP_SEND_AMOUNT + fee + 546;
+        var utxo = row.utxos.slice().sort(function (a, b) { return b.value - a.value; })[0];
+        if (!utxo || utxo.value < minInput) {
+          self.say("Asking the faucet for a larger coin at the sender.");
+          return C.network.claim(sender).then(function () {
+            return self.waitForSpCoin(sender);
+          }).then(function (funded) {
+            utxo = funded.utxos.slice().sort(function (a, b) { return b.value - a.value; })[0];
+            if (!utxo || utxo.value < minInput) {
+              throw new Error("The sender address still has no coin large enough to send.");
+            }
+            self.sending.spendFrom = sender;
+            return utxo;
+          });
+        }
+        return utxo;
+      });
+    }).then(function (utxo) {
+      var fee = 200;
+      var change = utxo.value - SP_SEND_AMOUNT - fee;
+      if (change < 546) {
+        throw new Error("That coin is too small to send that much after fee and change.");
+      }
+      var seed = self.spSeed;
+      var fromChange = self.sending.spendFrom === seed.sender_change_address;
+      self.sending.inputs = [{ txid: utxo.txid, vout: utxo.vout, value: utxo.value }];
+      self.sending.amount = SP_SEND_AMOUNT;
+      self.sending.change = change;
+      self.sending.source = fromChange ? {
+        pubkey: seed.sender_change_pubkey_hex,
+        fingerprint: seed.sender_fingerprint,
+        path: seed.sender_change_path,
+        scriptPubkey: seed.sender_change_script_pubkey_hex,
+      } : {
+        pubkey: seed.sender_pubkey_hex,
+        fingerprint: seed.sender_fingerprint,
+        path: seed.sender_path,
+        scriptPubkey: seed.sender_script_pubkey_hex,
+      };
+      if (!C.buildSpSendPsbt || !C.finaliseSpSend) {
+        throw new Error("signet-coordinator.js cannot build a silent-payment send yet.");
+      }
+      var src = self.sending.source;
+      return C.buildSpSendPsbt({
+        input: { txid: utxo.txid, vout: utxo.vout, value: utxo.value },
+        source: {
+          pubkey: C.unhex(src.pubkey),
+          fingerprint: src.fingerprint,
+          path: src.path,
+          scriptPubkey: C.unhex(src.scriptPubkey),
+        },
+        scanPubkey: C.unhex(seed.scan_pubkey_hex),
+        spendPubkey: C.unhex(seed.spend_pubkey_hex),
+        spAmount: SP_SEND_AMOUNT,
+        change: {
+          value: change,
+          scriptPubkey: C.unhex(seed.sender_change_script_pubkey_hex),
+          pubkey: C.unhex(seed.sender_change_pubkey_hex),
+          fingerprint: seed.sender_fingerprint,
+          path: seed.sender_change_path,
+        },
+      });
+    }).then(function (psbt) {
+      self.sending.psbt = psbt;
+      return self.offerPsbtToDevice("spsend");
+    }).then(function () {
+      return self.reviewSignedPsbt("send");
+    }).then(function (collector) {
+      self.at("finish");
+      track("spsend", "signature");
+      var signed = C.toBase64(collector.psbt());
+      self.sending.signed = signed;
+      var src = self.sending.source;
+      return C.finaliseSpSend(signed, {
+        pubkey: C.unhex(src.pubkey),
+        fingerprint: src.fingerprint,
+        path: src.path,
+      });
+    }).then(function (raw) {
+      return C.network.broadcast(raw);
+    }).then(function (sent) {
+      track("spsend", "broadcast");
+      self.sending.txid = sent.txid;
+      self.at("confirm");
+      self.say(WAITING);
+      return self.waitForBlock(sent.txid);
+    }).then(function () {
+      track("spsend", "confirmed");
+      self.at("done");
+      self.say("");
+      self.render();
+    }).catch(function (error) {
+      self.stopPresenting();
+      if (self.canvas) self.canvas.hidden = true;
+      self.error = error.message;
+      self.say("");
+      self.render();
+    }).finally(function () {
+      self._spSendRunning = false;
+    });
+  };
+
+  Wallet.prototype.waitForSpCoin = function (address) {
+    var self = this;
+    var deadline = Date.now() + 180000;
+    return new Promise(function (resolve, reject) {
+      (function tick() {
+        if (Date.now() > deadline) {
+          return reject(new Error("The faucet payment did not land at the silent-payment output."));
+        }
+        scanChain([address]).then(function (held) {
+          var row = held[address] || { utxos: [] };
+          if (row.utxos && row.utxos.length) return resolve(row);
+          self.say("Waiting for the faucet payment to appear.");
+          setTimeout(tick, 8000);
+        }, reject);
+      })();
+    });
+  };
+
+  function concatBytes(parts) {
+    var length = parts.reduce(function (n, p) { return n + p.length; }, 0);
+    var out = new Uint8Array(length);
+    var at = 0;
+    parts.forEach(function (part) { out.set(part, at); at += part.length; });
+    return out;
+  }
+
   // ------------------------------------------------------------- the rendering
 
   // The steps of a send, which are what a visitor is meant to come away with,
@@ -1160,6 +1841,7 @@
   Wallet.prototype.at = function (step) {
     this.step = step;
     this.render();
+    publishE2e(this);
   };
 
   /** A line about what is happening now, which is never a guess. */
@@ -1167,6 +1849,9 @@
     this.progress = text;
     if (this.sayText) this.sayText.textContent = text;
     this.openerState.textContent = this.openerLine();
+    // The same words on hover, since the lamp is all there is to look at.
+    this.openerStatus.title = this.openerLine();
+    publishE2e(this);
   };
 
   Wallet.prototype.openerLine = function () {
@@ -1182,8 +1867,16 @@
     this.body.textContent = "";
     this.openerStatus.dataset.on = this.stage === "ready" ? "yes" : "no";
     this.openerState.textContent = this.openerLine();
+    // The same words on hover, since the lamp is all there is to look at.
+    this.openerStatus.title = this.openerLine();
 
-    if (this.stage === "idle") this.renderIdle();
+    if (BYO_OFFERED) this.body.appendChild(this.modes());
+
+    if (this.mode === "byo") this.renderByo();
+    else if (this.view === "spspend") this.renderSpSpend();
+    else if (this.view === "spsend") this.renderSpSend();
+    else if (this.stage === "sp-ready") this.renderSpReady();
+    else if (this.stage === "idle") this.renderIdle();
     else if (this.stage === "connecting") this.renderConnecting();
     else if (this.view === "receive") this.renderReceive();
     else if (this.view === "send") this.renderSend();
@@ -1200,15 +1893,20 @@
       retry.addEventListener("click", function () {
         self.error = "";
         self.render();
-        if (self.stage === "idle") self.watchForAccount();
+        // Only the demo half has something to go back to waiting for. In byo
+        // mode there is no connection to make, so retry is the two buttons
+        // already on screen.
+        if (self.mode !== "byo" && self.stage === "idle") {
+          if (SPRECEIVE) self.watchForSpConnect();
+          else self.watchForAccount();
+        }
       });
       var row = element("div", "wal-actions");
       row.appendChild(retry);
       this.body.appendChild(row);
     }
+    publishE2e(this);
   };
-
-  // The one line that changes without the panel being rebuilt around it, so it
   // is the one line that has to announce itself.
   Wallet.prototype.sayInto = function (parent) {
     this.sayText = element("p", "wal-say", this.progress);
@@ -1228,12 +1926,54 @@
   // its own -- "leave the QR up, this panel reads it" reads as a riddle with
   // nothing before it, and as an instruction once it is step three of three.
   Wallet.prototype.renderIdle = function () {
+    var self = this;
+    if (SPRECEIVE) {
+      var steps = element("ol", "wal-howto");
+      steps.appendChild(step("On the device: Silent payments → Connect to Sparrow → Scan in Sparrow", null));
+      steps.appendChild(step("Leave the Connect QR up. This panel reads it as Sparrow would.", null));
+      steps.appendChild(step("Faucet, PSBT, sign on the device, broadcast — the rest runs here.", null));
+      this.body.appendChild(steps);
+      this.body.appendChild(element("p", "wal-say",
+        "With the simulator wallet open, show the Connect QR and wait a moment. "
+        + "Or run the spend path directly:"));
+      var row = element("div", "wal-actions");
+      row.appendChild(this.button("Spend a silent payment", true, function () {
+        self.view = "spspend";
+        self.step = null;
+        self.sending = null;
+        self.error = "";
+        self.render();
+        self.spendSilent();
+      }));
+      row.appendChild(this.button("Send to silent payment", false, function () {
+        self.view = "spsend";
+        self.step = null;
+        self.sending = null;
+        self.error = "";
+        self.render();
+        self.sendToSilentPayment();
+      }));
+      this.body.appendChild(row);
+      this.sayInto(this.body);
+      return;
+    }
     var steps = element("ol", "wal-howto");
-    steps.appendChild(step("Make a seed on the device.", SEED_PATH));
-    steps.appendChild(step("Export its public key.", EXPORT_PATH));
-    steps.appendChild(step("Leave that QR on the device's screen. This panel "
-                           + "reads it off the screen by itself.", null));
+    steps.appendChild(step("Make a seed", SEED_PATH));
+    steps.appendChild(step("Export its key", EXPORT_PATH));
+    steps.appendChild(step("Leave the QR up. This reads it.", null));
     this.body.appendChild(steps);
+    this.sayInto(this.body);
+  };
+
+  Wallet.prototype.renderSpReady = function () {
+    var seed = this.spSeed;
+    this.body.appendChild(element("p", "wal-say",
+      "Imported like Sparrow. Receive matches the published test seed."));
+    if (seed && seed.sp_address) {
+      this.body.appendChild(element("p", "wal-mono", seed.sp_address));
+    }
+    this.body.appendChild(element("p", "wal-say",
+      "Asking the faucet and building the spend…"));
     this.sayInto(this.body);
   };
 
@@ -1254,6 +1994,265 @@
     button.type = "button";
     button.addEventListener("click", handler);
     return button;
+  };
+
+  // --------------------------------------------------- bring your own wallet
+  //
+  // The demo half of this panel is a wallet. This half is not: it is the two
+  // ends of an airgap and nothing else, so that the wallet can be Sparrow on
+  // the other half of the screen, or Nunchuk on a phone, or anything at all
+  // that speaks PSBT. Nothing here reaches past the QR. What is pasted in goes
+  // up as a code in front of the device's camera and the device's own scanner
+  // reads it; what comes back is read off the device's screen with the same
+  // jsQR the demo half uses. The device cannot tell the difference, which is
+  // the only reason any of this is worth showing anyone.
+
+  /**
+   * The choice between the two halves.
+   *
+   * A segmented control rather than two buttons, because it is one choice seen
+   * from either side. It sits above everything else in the panel because it
+   * decides what everything else in the panel is.
+   */
+  Wallet.prototype.modes = function () {
+    var self = this;
+    var row = element("div", "wal-modes");
+    row.setAttribute("role", "group");
+    row.setAttribute("aria-label", "Which wallet is doing the coordinating");
+    [["demo", "Bitsaga demo wallet"], ["byo", "Bring your own wallet"]].forEach(function (pair) {
+      var button = element("button", null, pair[1]);
+      button.type = "button";
+      button.setAttribute("aria-pressed", self.mode === pair[0] ? "true" : "false");
+      button.addEventListener("click", function () { self.setMode(pair[0]); });
+      row.appendChild(button);
+    });
+    return row;
+  };
+
+  Wallet.prototype.setMode = function (mode) {
+    if (mode === this.mode) return;
+    // Whatever the half being left was doing to the device stops before the
+    // other one starts. There is one camera and one reader and both are
+    // claimed rather than shared, so a watcher left running would have the two
+    // halves fighting over the same screen with nothing on it saying so.
+    this.stopReading();
+    this.stopShowing();
+    this.reading = false;
+    this.error = "";
+    this.mode = mode;
+    this.say("");
+    this.render();
+    track("mode", mode);
+    // The demo half waits for an export to appear; the byo half waits for
+    // nobody, because there is nothing for it to connect to.
+    if (mode === "demo" && this.stage === "idle") {
+      if (SPRECEIVE) this.watchForSpConnect();
+      else this.watchForAccount();
+    }
+  };
+
+  Wallet.prototype.renderByo = function () {
+    var self = this;
+
+    var out = element("section", "wal-hand");
+    out.appendChild(element("h3", null, "To the device"));
+    out.appendChild(element("p", null,
+      "Paste what your own wallet gives you: an unsigned transaction, a wallet "
+      + "descriptor, a key. It is held up as a QR in front of the device's "
+      + "camera, so the device scans it exactly as it would scan your screen."));
+    var box = element("textarea");
+    box.spellcheck = false;
+    box.setAttribute("aria-label", "What to show the device");
+    box.value = this.carry;
+    box.addEventListener("input", function () { self.carry = box.value; });
+    out.appendChild(box);
+
+    var showRow = element("div", "wal-actions");
+    showRow.appendChild(this.button(this.showing ? "Show this instead" : "Show it to the device",
+                                    true, function () { self.showToDevice(box.value); }));
+    if (this.showing) {
+      showRow.appendChild(this.button("Stop showing", false, function () {
+        self.stopShowing();
+        self.render();
+      }));
+    }
+    out.appendChild(showRow);
+    if (this.showing) {
+      out.appendChild(element("p", "wal-kind", this.showing));
+      // render() emptied the body, and the canvas lives in it while it is being
+      // held up. Its bitmap survives being moved, so what was painted stays.
+      out.appendChild(this.canvas);
+    }
+    this.body.appendChild(out);
+
+    var back = element("section", "wal-hand");
+    back.appendChild(element("h3", null, "From the device"));
+    back.appendChild(element("p", null,
+      "Leave whatever the device is showing on its screen and press this. "
+      + "Animated codes are read frame by frame and counted off as they land, "
+      + "the same way a webcam pointed at a real device would read them."));
+    var readRow = element("div", "wal-actions");
+    var read = this.button(this.reading ? "Reading the screen" : "Read the device's screen",
+                           true, function () { self.readFromDevice(); });
+    read.disabled = this.reading;
+    readRow.appendChild(read);
+    if (this.reading) {
+      readRow.appendChild(this.button("Stop", false, function () {
+        self.stopReading();
+        self.reading = false;
+        self.say("");
+        self.render();
+      }));
+    }
+    back.appendChild(readRow);
+
+    if (this.readout) {
+      back.appendChild(element("p", "wal-kind", this.readout.kind));
+      var shown = element("textarea");
+      shown.readOnly = true;
+      shown.spellcheck = false;
+      shown.setAttribute("aria-label", "What the device is showing");
+      shown.value = this.readout.text;
+      back.appendChild(shown);
+      var copyRow = element("div", "wal-actions");
+      copyRow.appendChild(this.button("Copy", false, function () {
+        shown.focus();
+        shown.select();
+        // execCommand first: it is the one that works without a permission
+        // prompt and without a secure context, which is what a page opened
+        // over plain http while testing still has.
+        var copied = false;
+        try { copied = document.execCommand("copy"); } catch (error) { copied = false; }
+        if (!copied && scope.navigator && scope.navigator.clipboard) {
+          scope.navigator.clipboard.writeText(shown.value);
+        }
+        self.say("Copied. Paste it into your wallet.");
+      }));
+      back.appendChild(copyRow);
+    }
+    this.body.appendChild(back);
+    this.sayInto(this.body);
+  };
+
+  /**
+   * Hold pasted text up to the device's camera, in as many codes as it takes.
+   *
+   * One code when the whole thing fits in one, and the frames a SeedSigner
+   * reassembles by plain concatenation when it does not: a 2 of 3 PSBT runs to
+   * several kilobytes and no single code this encoder can draw will hold it.
+   * The split is the tutorial's own, so what this half shows the device is the
+   * same thing the demo half shows it.
+   */
+  Wallet.prototype.showToDevice = function (text) {
+    var payload = (text || "").trim();
+    this.error = "";
+    if (!payload) {
+      this.error = "There is nothing in the box to show the device.";
+      this.render();
+      return;
+    }
+    var frames;
+    try {
+      // Ask the encoder whether it fits before splitting it. A static code is
+      // one glance, and a transfer of one part is not a transfer.
+      scope.QREncode.matrix(payload);
+      frames = [payload];
+    } catch (tooLong) {
+      var split = scope.WalletTutorial && scope.WalletTutorial.specterFrames;
+      if (!split) {
+        this.error = "That is too long for one code, and wallet-tutorial.js is not on "
+                   + "this page, so there is nothing here to split it into several.";
+        this.render();
+        return;
+      }
+      frames = split(payload, 280);
+    }
+    this.carry = payload;
+    this.present(frames);
+    this.showing = frames.length === 1
+      ? "One code is up. Open Scan on the device."
+      : frames.length + " codes are cycling. Open Scan on the device.";
+    track("byo", frames.length === 1 ? "shown-static" : "shown-animated");
+    this.render();
+  };
+
+  Wallet.prototype.stopShowing = function () {
+    this.stopPresenting();
+    if (this.canvas) this.canvas.hidden = true;
+    this.showing = null;
+  };
+
+  // What a static code turned out to be, said plainly. The device writes an
+  // account key as a line with its origin in brackets, and a PSBT as base64
+  // beginning with the magic bytes; anything else is left unnamed rather than
+  // guessed at.
+  function describe(text) {
+    if (ACCOUNT_LINE.test(text)) return "An account key, with the seed it came from.";
+    if (/^cHNidP8/.test(text)) return "A transaction, as a base64 PSBT.";
+    return "What the device had on its screen.";
+  }
+
+  /**
+   * Read whatever is on the device's screen, static or animated, and say what.
+   *
+   * A PSBT comes back as base64 because that is the form every coordinator
+   * takes, and an account key as the bracketed line, because that is the form
+   * every coordinator takes. Everything else is handed back as the reassembled
+   * UR text, unread: this half does not interpret, it carries.
+   */
+  Wallet.prototype.readFromDevice = function () {
+    var self = this;
+    if (this.reading) return;
+    this.reading = true;
+    this.readout = null;
+    this.error = "";
+    this.say("Looking at the device's screen.");
+    this.render();
+
+    var collector = null;
+    var kind = null;
+    this.watch(function () {
+      var text = self.readDevice();
+      if (!text) return false;
+      var head = /^ur:([a-z0-9-]+)\//i.exec(text);
+      if (!head) return { text: text.trim() };
+      kind = head[1].toLowerCase();
+      collector = collector || scope.URDecode.collector();
+      if (!feed(collector, text)) return false;
+      if (collector.parts()) {
+        self.say("Code " + collector.have() + " of " + collector.parts() + ".");
+      }
+      if (!collector.done()) return false;
+      return { ur: kind, collector: collector };
+    }, 600000, "a code on the device's screen").then(function (found) {
+      if (found.text !== undefined) {
+        return { kind: describe(found.text), text: found.text };
+      }
+      if (found.ur === "crypto-psbt") {
+        return { kind: "A signed transaction, as a base64 PSBT.",
+                 text: C.toBase64(found.collector.psbt()) };
+      }
+      if (found.ur === "crypto-account" || found.ur === "crypto-hdkey") {
+        return Promise.resolve(C.parseAccount(found.collector.payload()))
+          .then(function (account) {
+            return { kind: "An account key, from a ur:" + found.ur + ".",
+                     text: "[" + account.fingerprint + account.path + "]" + account.tpub };
+          });
+      }
+      return { kind: "A ur:" + found.ur + ", put back together but not read.",
+               text: C.hex(found.collector.payload()) };
+    }).then(function (readout) {
+      self.reading = false;
+      self.readout = readout;
+      self.say("");
+      track("byo", "read");
+      self.render();
+    }).catch(function (error) {
+      self.reading = false;
+      self.error = error && error.message ? error.message : String(error);
+      self.say("");
+      self.render();
+    });
   };
 
   Wallet.prototype.renderBalance = function () {
@@ -1342,6 +2341,24 @@
       self.render();
     }));
     row.appendChild(this.button("Get test bitcoin", false, function () { self.claim(); }));
+    if (SPRECEIVE) {
+      row.appendChild(this.button("Spend a silent payment", false, function () {
+        self.view = "spspend";
+        self.step = null;
+        self.sending = null;
+        self.error = "";
+        self.render();
+        self.spendSilent();
+      }));
+      row.appendChild(this.button("Send to silent payment", false, function () {
+        self.view = "spsend";
+        self.step = null;
+        self.sending = null;
+        self.error = "";
+        self.render();
+        self.sendToSilentPayment();
+      }));
+    }
     this.body.appendChild(row);
   };
 
@@ -1472,6 +2489,50 @@
     return this.fresh(0).address;
   };
 
+  Wallet.prototype.renderSpSpend = function () {
+    var self = this;
+    if (this.step) return this.renderSending();
+    this.body.appendChild(element("p", "wal-say",
+      "A coin at the published silent-payment output, signed on the device with "
+      + "the tweaked spend key. The panel opens Scan and walks the review."));
+    this.body.appendChild(element("p", "wal-path", SP_SCAN_PATH));
+    this.sayInto(this.body);
+    var row = element("div", "wal-actions");
+    row.appendChild(this.button("Back", false, function () {
+      self.stopPresenting();
+      self.stopReading();
+      self.view = "balance";
+      self.step = null;
+      self.sending = null;
+      self.error = "";
+      if (self.canvas) self.canvas.hidden = true;
+      self.render();
+    }));
+    this.body.appendChild(row);
+  };
+
+  Wallet.prototype.renderSpSend = function () {
+    var self = this;
+    if (this.step) return this.renderSending();
+    this.body.appendChild(element("p", "wal-say",
+      "The abandon test seed pays the published tsp1 address. The device ECDH-derives "
+      + "the taproot output and returns an unfinalized PSBT for the panel to finish."));
+    this.body.appendChild(element("p", "wal-path", SP_SEND_SCAN_PATH));
+    this.sayInto(this.body);
+    var row = element("div", "wal-actions");
+    row.appendChild(this.button("Back", false, function () {
+      self.stopPresenting();
+      self.stopReading();
+      self.view = "balance";
+      self.step = null;
+      self.sending = null;
+      self.error = "";
+      if (self.canvas) self.canvas.hidden = true;
+      self.render();
+    }));
+    this.body.appendChild(row);
+  };
+
   Wallet.prototype.renderSending = function () {
     var self = this;
     var reached = false;
@@ -1485,18 +2546,27 @@
 
     if (this.step === "show") {
       this.body.appendChild(element("p", "wal-say", "Show this to your signer."));
-      this.body.appendChild(element("p", "wal-path", "On the device, go to Scan"));
-      this.body.appendChild(this.canvas);
-      this.body.appendChild(element("p", "wal-note",
-        (this.sending.frames.length === 1
-          ? "One code. "
-          : this.sending.frames.length + " codes, cycling. ")
-        + "The device's camera is pointed at this canvas, so nothing has to be "
-        + "held anywhere and no webcam is opened."));
+      this.body.appendChild(element("p", "wal-path",
+        this.sending && this.sending.send ? SP_SEND_SCAN_PATH
+          : this.sending && this.sending.silent ? SP_SCAN_PATH
+          : "On the device, go to Scan"));
+      if (E2E) {
+        this.body.appendChild(element("p", "wal-note",
+          "The test driver injects the PSBT into the device Scan screen."));
+      } else {
+        this.body.appendChild(this.canvas);
+        var frames = this.sending && this.sending.frames;
+        this.body.appendChild(element("p", "wal-note",
+          ((frames && frames.length === 1)
+            ? "One code. "
+            : (frames ? frames.length + " codes, cycling. " : ""))
+          + "The device's camera is pointed at this canvas, so nothing has to be "
+          + "held anywhere and no webcam is opened."));
+      }
     } else if (this.step === "review") {
       this.body.appendChild(element("p", "wal-say",
-        "The device has it. Work through its own review screens and approve it "
-        + "there: what it is showing you is the transaction this panel built."));
+        "The device has it. The panel is walking Continue, the stock review, "
+        + "and Approve on the device's own screens."));
     } else if (this.step === "finish") {
       this.body.appendChild(element("p", "wal-say",
         "Reading the signature off the device's screen."));
@@ -1526,6 +2596,27 @@
 
   // ------------------------------------------------------- what the page uses
 
+  function publishE2e(wallet) {
+    if (!E2E) return;
+    var sending = wallet.sending;
+    var prior = scope.__bitsagaE2e || {};
+    var psbt = sending && sending.psbt || null;
+    scope.__bitsagaE2e = {
+      stage: wallet.stage,
+      step: wallet.step,
+      error: wallet.error || "",
+      progress: wallet.progress || "",
+      spImported: !!wallet.spImported,
+      view: wallet.view,
+      txid: sending && sending.txid || null,
+      faucet: sending && sending.faucet || null,
+      psbt: psbt,
+      send: !!(sending && sending.send),
+      injected: !!(prior.injected && prior.psbt === psbt),
+      signedPsbt: (prior.psbt === psbt && prior.signedPsbt) ? prior.signedPsbt : null,
+    };
+  }
+
   scope.WalletCoordinator = {
     mount: function (options) {
       var wallet = new Wallet(options);
@@ -1538,6 +2629,7 @@
         tag.src = "jsQR.js";
         document.head.appendChild(tag);
       }
+      publishE2e(wallet);
       return wallet;
     },
 

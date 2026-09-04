@@ -28,7 +28,15 @@
 (function (scope) {
   "use strict";
 
-  var API = "https://signet.bitsaga.be/api";
+  var API = (function () {
+    if (typeof location === "undefined") return "https://signet.bitsaga.be/api";
+    var params = new URLSearchParams(location.search);
+    var local = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+    // ?e2e=1 on localhost: simserve.py proxies /api to signet.bitsaga.be so
+    // Playwright can drive the working tree without a cross-origin block.
+    if (params.has("e2e") && local) return location.origin + "/api";
+    return "https://signet.bitsaga.be/api";
+  })();
 
   // ------------------------------------------------------------ bytes
 
@@ -752,8 +760,9 @@
   function serialiseTx(inputs, outputs) {
     return concat([u32le(2), varint(inputs.length)]
       .concat(inputs.map(function (input) {
+        var seq = input.sequence != null ? input.sequence : 0xfffffffd;
         return concat([unhex(input.txid).reverse(), u32le(input.vout),
-                       varint(0), u32le(0xfffffffd)]);
+                       varint(0), u32le(seq >>> 0)]);
       }))
       .concat([varint(outputs.length)])
       .concat(outputs.map(function (out) {
@@ -1028,6 +1037,227 @@
     ]));
   }
 
+  /**
+   * A PSBTv2 that spends one silent-payment taproot output (BIP-376).
+   *
+   * v2, not v0, and that is the whole point of this function. The script is
+   * OP_1 plus the BIP-352 output key rather than a BIP-341 TapTweak of it, so
+   * the device is told which seed key to start from and which 32-byte tweak to
+   * add. BIP-376 gives both a home:
+   *
+   *   0x1f  PSBT_IN_SP_SPEND_BIP32_DERIVATION, keyed by the 33-byte COMPRESSED
+   *         spend pubkey (not x-only), value = fingerprint + path
+   *   0x20  PSBT_IN_SP_TWEAK, no keydata, value = the 32-byte tweak
+   *
+   * Both are declared v2-only, and a conforming parser refuses them in a v0
+   * PSBT. This builder used to emit v0 and smuggle the tweak through as an
+   * "unknown" 0x20, which worked only while the simulator patched its own
+   * parser in at runtime. Against an embit that implements BIP-376 the whole
+   * PSBT is rejected, the wallet falls back to stock parsing, sees an ordinary
+   * taproot input and signs nothing.
+   *
+   * Sparrow 2.5+ already sends the v2 form, so emitting it here means the test
+   * path and the path a real user takes are the same bytes.
+   */
+  function buildSpSpendPsbt(spend) {
+    var script = spend.scriptPubkey;
+    var spendPub = spend.spendPubkey;
+    var tweak = spend.tweak;
+    if (script.length !== 34) throw new Error("a silent-payment script is OP_1 plus 32 bytes");
+    if (!spendPub || spendPub.length !== 33) {
+      throw new Error("BIP-376 keys PSBT_IN_SP_SPEND_BIP32_DERIVATION by the 33-byte compressed spend pubkey");
+    }
+    if (tweak.length !== 32) throw new Error("the silent-payment tweak is 32 bytes");
+
+    var value = BigInt(spend.value);
+    var derivation = concat([unhex(spend.fingerprint)]
+      .concat(pathToIndices(String(spend.path).replace(/^m\//, "")).map(u32le)));
+
+    var globals = [
+      keyPair(new Uint8Array([0x02]), u32le(2)),            // PSBT_GLOBAL_TX_VERSION
+      keyPair(new Uint8Array([0x04]), new Uint8Array([0x01])),  // INPUT_COUNT
+      keyPair(new Uint8Array([0x05]), new Uint8Array([0x01])),  // OUTPUT_COUNT
+      keyPair(new Uint8Array([0x06]), new Uint8Array([0x00])),  // TX_MODIFIABLE: nothing
+      keyPair(new Uint8Array([0xfb]), u32le(2)),            // PSBT_GLOBAL_VERSION = 2
+      new Uint8Array([0x00]),
+    ];
+
+    // The txid is reversed on the way in: a PSBT carries it in internal byte
+    // order while everything a human reads shows display order. Getting this
+    // backwards produces a PSBT that parses cleanly and spends nothing.
+    var inputMap = [
+      keyPair(new Uint8Array([0x0e]), unhex(spend.txid).reverse()),  // PREVIOUS_TXID
+      keyPair(new Uint8Array([0x0f]), u32le(spend.vout)),            // OUTPUT_INDEX
+      keyPair(new Uint8Array([0x10]),
+              u32le(spend.sequence != null ? spend.sequence : 0xfffffffe)),
+      keyPair(new Uint8Array([0x01]),                                // WITNESS_UTXO
+              concat([u64le(value), varint(script.length), script])),
+      keyPair(concat([new Uint8Array([0x1f]), spendPub]), derivation),
+      keyPair(new Uint8Array([0x20]), tweak),
+      new Uint8Array([0x00]),
+    ];
+
+    var outputMap = [
+      keyPair(new Uint8Array([0x03]), u64le(BigInt(spend.destValue))),  // AMOUNT
+      keyPair(new Uint8Array([0x04]), spend.destScript),               // SCRIPT
+      new Uint8Array([0x00]),
+    ];
+
+    return toBase64(concat([unhex("70736274ff")].concat(globals, inputMap, outputMap)));
+  }
+
+  /**
+   * One taproot keypath witness, already final, spliced into the unsigned tx.
+   *
+   * The overlay writes PSBT_IN_FINAL_SCRIPTSWITNESS (0x08). That value is the
+   * serialised witness: one 64-byte Schnorr signature. The p2wpkh finalise
+   * above looks for a partial ECDSA sig (0x02) and would say this input came
+   * back unsigned.
+   */
+  /**
+   * PSBTv2 send to a silent payment address (BIP-375).
+   *
+   * The SP output carries only PSBT_OUT_SP_V0_INFO (scan + spend pubkeys).
+   * The device ECDH-derives PSBT_OUT_SCRIPT at signing time.
+   */
+  function buildSpSendPsbt(spend) {
+    var input = spend.input;
+    var source = spend.source;
+    var scan = spend.scanPubkey;
+    var spendPub = spend.spendPubkey;
+    if (scan.length !== 33 || spendPub.length !== 33) {
+      throw new Error("silent payment pubkeys are 33-byte compressed keys");
+    }
+    var spAmount = BigInt(spend.spAmount);
+    var outputs = [{ value: spAmount, script: null, sp: true }];
+    var changeAt = -1;
+    if (spend.change) {
+      changeAt = 1;
+      outputs.push({
+        value: BigInt(spend.change.value),
+        script: spend.change.scriptPubkey,
+      });
+    }
+    var globals = [
+      keyPair(new Uint8Array([0x02]), u32le(2)),
+      keyPair(new Uint8Array([0x04]), new Uint8Array([0x01])),
+      keyPair(new Uint8Array([0x05]), new Uint8Array([outputs.length])),
+      keyPair(new Uint8Array([0x06]), new Uint8Array([0x03])),
+      keyPair(new Uint8Array([0xfb]), u32le(2)),
+      new Uint8Array([0x00]),
+    ];
+    var inputMap = [
+      keyPair(new Uint8Array([0x0e]), unhex(input.txid).reverse()),
+      keyPair(new Uint8Array([0x0f]), u32le(input.vout)),
+      keyPair(new Uint8Array([0x10]), u32le(spend.sequence != null ? spend.sequence : 0xfffffffe)),
+      keyPair(new Uint8Array([0x01]),
+              concat([u64le(input.value), varint(source.scriptPubkey.length), source.scriptPubkey])),
+      keyPair(concat([new Uint8Array([0x06]), source.pubkey]),
+              concat([unhex(source.fingerprint)]
+                .concat(pathToIndices(source.path.replace(/^m\//, "")).map(u32le)))),
+      keyPair(new Uint8Array([0x03]), new Uint8Array([0x01, 0x00, 0x00, 0x00])),
+      new Uint8Array([0x00]),
+    ];
+    var outputMaps = outputs.map(function (out, at) {
+      var pairs = [keyPair(new Uint8Array([0x03]), u64le(out.value))];
+      if (out.sp) {
+        pairs.push(keyPair(new Uint8Array([0x09]), concat([scan, spendPub])));
+      } else {
+        pairs.push(keyPair(new Uint8Array([0x04]), out.script));
+        if (at === changeAt && spend.change) {
+          pairs.push(keyPair(
+            concat([new Uint8Array([0x02]), spend.change.pubkey]),
+            concat([unhex(spend.change.fingerprint)]
+              .concat(pathToIndices(spend.change.path.replace(/^m\//, "")).map(u32le)))
+          ));
+        }
+      }
+      pairs.push(new Uint8Array([0x00]));
+      return concat(pairs);
+    });
+    return toBase64(concat([unhex("70736274ff")].concat(globals, inputMap, outputMaps)));
+  }
+
+  /**
+   * Finish a signed PSBTv2 silent-payment send. PSBTv2 has no global unsigned
+   * transaction; rebuild from per-input and per-output maps, then splice witnesses.
+   */
+  function finaliseSpSend(psbtBase64, source) {
+    var maps = psbtMaps(psbtBase64);
+    var inputMap = maps[1] || [];
+    var txid = null;
+    var vout = 0;
+    var sequence = 0xfffffffd;
+    inputMap.forEach(function (entry) {
+      if (entry.key.length === 1 && entry.key[0] === 0x0e) txid = entry.value;
+      if (entry.key.length === 1 && entry.key[0] === 0x0f) vout = entry.value[0] | (entry.value[1] << 8);
+      if (entry.key.length === 1 && entry.key[0] === 0x10) {
+        sequence = entry.value[0] | (entry.value[1] << 8)
+          | (entry.value[2] << 16) | (entry.value[3] << 24);
+      }
+    });
+    if (!txid) throw new Error("that PSBTv2 send has no input txid");
+
+    var outputs = [];
+    for (var o = 2; o < maps.length; o++) {
+      var amount = null;
+      var script = null;
+      maps[o].forEach(function (entry) {
+        if (entry.key.length === 1 && entry.key[0] === 0x03) {
+          var read = reader(entry.value);
+          amount = read.u64();
+        }
+        if (entry.key.length === 1 && entry.key[0] === 0x04) script = entry.value;
+      });
+      if (amount === null) throw new Error("output " + (o - 2) + " has no amount");
+      if (!script) throw new Error("output " + (o - 2) + " has no script after signing");
+      outputs.push({ value: amount, script: script });
+    }
+
+    var unsigned = serialiseTx(
+      [{ txid: hex(Array.from(txid).reverse()), vout: vout, sequence: sequence >>> 0 }],
+      outputs.map(function (out) { return { value: out.value, script: out.script }; })
+    );
+
+    var wanted = hex(source.pubkey);
+    var signature = null;
+    inputMap.forEach(function (entry) {
+      if (entry.key[0] === 0x02 && hex(entry.key.subarray(1)) === wanted) {
+        signature = entry.value;
+      }
+    });
+    if (!signature) throw new Error("the signed PSBT came back without an input signature");
+
+    var witness = concat([varint(2), varint(signature.length), signature,
+                          varint(source.pubkey.length), source.pubkey]);
+    return hex(concat([
+      unsigned.subarray(0, 4), new Uint8Array([0x00, 0x01]),
+      unsigned.subarray(4, unsigned.length - 4),
+      witness,
+      unsigned.subarray(unsigned.length - 4),
+    ]));
+  }
+
+  function finaliseTaproot(psbtBase64) {
+    var maps = psbtMaps(psbtBase64);
+    var unsigned = null;
+    maps[0].forEach(function (entry) {
+      if (entry.key.length === 1 && entry.key[0] === 0x00) unsigned = entry.value;
+    });
+    if (!unsigned) throw new Error("that PSBT does not carry a transaction");
+    var witness = null;
+    (maps[1] || []).forEach(function (entry) {
+      if (entry.key.length === 1 && entry.key[0] === 0x08) witness = entry.value;
+    });
+    if (!witness) throw new Error("that PSBT came back without a taproot witness");
+    return hex(concat([
+      unsigned.subarray(0, 4), new Uint8Array([0x00, 0x01]),
+      unsigned.subarray(4, unsigned.length - 4),
+      witness,
+      unsigned.subarray(unsigned.length - 4),
+    ]));
+  }
+
   // ------------------------------------------------------------ the network
 
   // A request that never answers would leave the tutorial waiting forever with
@@ -1100,9 +1330,13 @@
     transactionOutputs: transactionOutputs,
     buildPsbt: buildPsbt,
     buildPsbtSingle: buildPsbtSingle,
+    buildSpSpendPsbt: buildSpSpendPsbt,
+    buildSpSendPsbt: buildSpSendPsbt,
     partialSignatures: partialSignatures,
     finalise: finalise,
     finaliseSingle: finaliseSingle,
+    finaliseSpSend: finaliseSpSend,
+    finaliseTaproot: finaliseTaproot,
     network: network,
   };
 })(typeof self !== "undefined" ? self : this);

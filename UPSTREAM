@@ -51,6 +51,25 @@ tag    = SeSi-0.8.7+ShSi-B11
 wallet_zip_sha256          = 22e6034509b547242db58ea7303d3f605007c60e637444b173e505eabbb834ca
 wallet_zip_contents_sha256 = d2527f58d122a7155343b215b596dc94991dad5e893b9f5ec30da6ffe1463684
 
+# Our own fork of the fork above, adding BIP-352 silent payments: the receive
+# flow behind a setting that is off by default, and BIP-375/376 send and spend
+# parsing. This is the wallet the DoomSigner device image is built from, so the
+# simulator and that device run the same code -- which is the whole reason it has
+# a zip of its own rather than borrowing the smartcard one and being patched at
+# runtime, as it was until 2026-09-03.
+#
+# Unlike the two above, this pin is OURS. Its hashes are what our own CI
+# produces, not what an upstream project publishes, and that difference is the
+# point rather than something to paper over: rebuilding it checks that we built
+# what we said we did, not that upstream did.
+[doomsigner]
+repo   = https://github.com/bitsagarob/seedsigner.git
+commit = d7785c774a6926c5ea6734b7fbfa0ad99970525c
+tag    = bitsaga-sp-v0.3
+
+wallet_zip_sha256          = 624af8fc0caa98ce7ea10c9e5dbf0009e41ed5ea70d64f83ed1a8c44cd5efc05
+wallet_zip_contents_sha256 = 2e78bc0bf15323c4bf19c96903ce8b5bdd62bf75cf661cfd6f60b3d2852d1d76
+
 # The two smartcard applets, pinned as a reference rather than as an input.
 #
 # Nothing here builds these. They are JavaCard, they run on a secure element,
@@ -80,13 +99,17 @@ repo   = https://github.com/Toporin/Seedkeeper-Applet.git
 commit = 2e59f0653c5dd39f6793ee5c41ee7344ffdeb48f
 tag    = v0.2-0.1
 
-# The boot game, which is not a firmware and does not replace one.
+# The boot game. Not a firmware and not a wallet: this pins the tree the
+# browser build of the GAME is compiled from. Renamed from [doomsigner] when a
+# doomsigner WALLET pin was added below, because build-wallet-zip.sh looks up
+# [<firmware>] and would otherwise have tried to build a wallet from the OS repo.
 #
-# DoomSigner is SeedSigner OS with a game in front of the wallet: the device
-# boots into DOOM and hands off on KEY1, KEY2, KEY3, and the wallet it hands off
-# to is the smartcard fork pinned above, unchanged. So there is no third wallet
-# zip here and there should not be. What is pinned is the tree the browser build
-# of the game is compiled from.
+# DoomSigner is SeedSigner OS with a game in front of the wallet. It USED to hand
+# off to the smartcard fork unchanged, and this comment used to say so and say
+# there should never be a third wallet zip. That stopped being true: the wallet is
+# now the fork pinned in [doomsigner] above, which adds BIP-352 silent payments.
+# What this section pins is the tree the browser build of the GAME is compiled
+# from, which is a different thing and still not a firmware.
 #
 # A tag, like every other pin in this file, and for a reason this repository has
 # already met: main over there has been force-pushed, and a pin that follows a
@@ -98,7 +121,7 @@ tag    = v0.2-0.1
 # so the browser is handed the RGB565 the panel would be sent rather than DOOM's
 # native 320x200 put on a canvas.
 
-[doomsigner]
+[doomsigner-game]
 repo   = https://github.com/bitsagarob/doomsigner.git
 commit = 4285bda39b59e3344fd04f0794791580f70e3b0c
 tag    = doomsigner-v0.1

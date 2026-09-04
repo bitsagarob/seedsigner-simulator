@@ -3,7 +3,7 @@
 #
 # This repository ships a great deal of upstream code verbatim and around 1,600
 # lines of its own. Writing our own tests for the wallet's behaviour is
-# reinventing a wheel upstream already turns: both firmwares ship a pytest suite
+# reinventing a wheel upstream already turns: every firmware ships a pytest suite
 # written by the people who wrote the code it tests. Running them costs one job
 # and nothing else, and they are a much better check of the wallet than anything
 # we would think to write.
@@ -56,7 +56,7 @@ jobs:
 
     # A matrix, and it is genuinely the simpler shape. The five substantial
     # steps (clone the pin, read our table, install, list, run) are the same
-    # steps asking the same question of both firmwares, and the places the two
+    # steps asking the same question of every firmware, and the places they
     # differ are small enough to be data: which section of UPSTREAM to read,
     # which lines of upstream's requirements.txt name a dependency a wallet zip
     # cannot carry, how many of those there should be, and what pytest needs
@@ -64,7 +64,7 @@ jobs:
     # data are the two extra steps stock needs and the fork does not, and they
     # carry an `if:` saying so.
     strategy:
-      # Both are asked, always. A green suite on one firmware says nothing about
+      # All are asked, always. A green suite on one firmware says nothing about
       # the other, and fail-fast would stop it being asked.
       fail-fast: false
       matrix:
@@ -82,6 +82,21 @@ jobs:
             # See the long note in the run step.
             pytest_args: '--ignore=tests/test_smartcard_hardware.py'
             # The fork's tests/conftest.py puts the wallet on sys.path itself.
+            src_on_path: ''
+
+          # DoomSigner: our fork of the fork above. Same shape as smartcard,
+          # because it IS that tree plus BIP-352 silent payments -- including
+          # this repository's only tests that are genuinely ours rather than
+          # upstream's, the silent payments suite in the fork.
+          #
+          # Worth running here for the same reason as the other two, and one
+          # more: the build table swaps embit for the BIP-352 branch on this
+          # firmware alone, so this job is the only place that combination is
+          # exercised against a real test suite.
+          - firmware: doomsigner
+            compiled_pattern: '^(Pillow|pycryptodomex|cryptography|cffi|pycparser)[=<>]'
+            compiled_count: 5
+            pytest_args: '--ignore=tests/test_smartcard_hardware.py'
             src_on_path: ''
 
           # Stock SeedSigner. 23 test files, about 4,700 lines.
@@ -139,7 +154,7 @@ jobs:
 
           # Same section-aware awk idiom build-wallet-zip.sh reads the pin with,
           # against the same file. One place to look, one place to change, and
-          # section-aware because UPSTREAM describes two firmwares: a parser that
+          # section-aware because UPSTREAM describes several firmwares: a parser that
           # ignored the headers would clone the other one.
           field() {
             awk -F= -v want="[${FIRMWARE}]" -v key="$1" '

@@ -5,7 +5,7 @@
 // responsive, and input is handed over through a SharedArrayBuffer so the
 // worker's blocking loop can be woken without any change to SeedSigner itself.
 
-importScripts("pyodide/pyodide.js", "wallet-camera.js", "wallet-cards.js");
+importScripts("pyodide-e24b45d3/pyodide.js", "wallet-camera.js", "wallet-cards.js");
 
 let pyodide = null;
 let keyBuffer = null; // Int32Array over SharedArrayBuffer: [state, keycode]
@@ -16,6 +16,18 @@ let debug = false;    // ?debug=1 on the page; otherwise js_log says nothing
 // Which of the two built wallet zips to unpack. The page decides; see
 // FIRMWARES in wallet.html for what the names mean and how one is chosen.
 let firmware = "smartcard";
+// "M" mainnet or "T" testnet — matches SettingsConstants in the wallet zip.
+let bitcoinNetwork = "T";
+
+// PSBTv2 silent-payment send used to verify the embit overlay in Doomsigner.
+const SP_SEND_REF_B64 = (
+  "cHNidP8BAgQCAAAAAQQBAQEFAQIBBgEDAfsEAgAAAAABAR9QwwAAAAAAABYAFNDEo+8J6Ze26Z45flGP4+QaEYyh"
+  + "AQMEAQAAACIGAuerJTe11J6XAwmq4G6eSfNs4cn+u9ROyODRzKC0+cMZGHPF2gpUAACAAQAAgAAAAIAAAAAAAAAAAAE"
+  + "OIKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqAQ8EAAAAAAEQBP7///8AAQMIQJwAAAAAAAABCUICWTKHbNif"
+  + "lwZh86L1fMDc+ZVZCwzyoMTz5yfJnPGDo6ICp5k9NUvvmYv5X22Y0MDnOu8TtBXJYBOB6w9XV6HXlTQAIgIDXUnszVTQC"
+  + "Z5DZ2J3x6bUYl1hHaiKXfSb+VF6d5Gnd6UYc8XaClQAAIABAACAAAAAgAEAAAAAAAAAAQMIKCMAAAAAAAABBBYAFC80"
+  + "qhzwClOwVaKRoDp9RfCmmItSAA=="
+);
 
 const STATE = 0;
 const KEYCODE = 1;
@@ -39,6 +51,7 @@ self.onmessage = async (event) => {
     cards = event.data.cardBuffer ? CardTray.forWorker(event.data.cardBuffer) : null;
     debug = !!event.data.debug;
     if (event.data.firmware) firmware = event.data.firmware;
+    if (event.data.bitcoinNetwork) bitcoinNetwork = event.data.bitcoinNetwork;
     try {
       await boot(event.data.width, event.data.height);
     } catch (error) {
@@ -49,7 +62,7 @@ self.onmessage = async (event) => {
 
 async function boot(width, height) {
   post("status", { stage: "python", message: "loading python…" });
-  pyodide = await loadPyodide({ indexURL: "pyodide/" });
+  pyodide = await loadPyodide({ indexURL: "pyodide-e24b45d3/" });
 
   post("status", { stage: "libraries", message: "loading libraries…" });
   // Pillow and pycryptodome are wanted whichever firmware this is: the renderer
@@ -65,13 +78,21 @@ async function boot(width, height) {
   //
   // numpy is never reachable: decode_qr imports it inside a try that starts with
   // "import cv2", and opencv is not in this list, so np is None either way.
-  await pyodide.loadPackage(firmware === "smartcard"
+  const smartcard = firmware === "smartcard" || firmware === "doomsigner";
+  await pyodide.loadPackage(smartcard
     ? ["Pillow", "pycryptodome", "cryptography"]
     : ["Pillow", "pycryptodome"]);
 
   post("status", { stage: "wallet-zip", message: "unpacking wallet…" });
   // One zip per firmware, each built by build/build-wallet-zip.sh from its own
   // section of UPSTREAM and published with its own pair of hashes.
+  // doomsigner is the smartcard zip plus a Silent Payments overlay. The zip
+  // that is hashed and unpacked is the published build; the overlay files are
+  // written on top after that, so the hash still describes those zip bytes.
+  // Each firmware loads its own zip. This used to map doomsigner onto the
+  // smartcard zip, because doomsigner had no build of its own and was patched
+  // after unpack; wallet.html carried a second copy of the same mapping, and
+  // fixing only that one left this one quietly loading the wrong wallet.
   const zip = await (await fetch(`wallet-${firmware}.zip`)).arrayBuffer();
 
   // Hash what arrived, before unpacking it, and hand it to the page: the panel
@@ -83,6 +104,14 @@ async function boot(width, height) {
   post("zip-sha256", { sha256: hex(digest) });
 
   await pyodide.unpackArchive(zip, "zip", { extractDir: "/wallet" });
+
+  // doomsigner used to be patched here: the smartcard zip was unpacked and then
+  // ~1,500 lines of silent payments were written over it at runtime, because
+  // there was no fork to build a zip from. There is now, so the code arrives in
+  // wallet-doomsigner.zip like every other line the wallet runs, and the browser
+  // executes exactly what the device image does. The check that used to guard
+  // the overlay is gone with it: a zip that could not do this would fail its own
+  // build, which is a better place to find out than here.
 
   const driver = await (await fetch("browser_display.py")).text();
   pyodide.FS.writeFile("/wallet/browser_display.py", driver);
@@ -141,7 +170,7 @@ async function boot(width, height) {
   pyodide.globals.set("js_camera", camera);
   pyodide.globals.set("js_cards", cards);
 
-  pyodide.runPython(shims(width, height));
+  pyodide.runPython(shims(width, height, bitcoinNetwork));
   post("ready", {});
 
   // Blocks for the lifetime of the worker. This is the whole reason the wallet
@@ -149,11 +178,44 @@ async function boot(width, height) {
   try {
     post("log", { message: "starting controller…" });
     pyodide.runPython(`
-import traceback
+import traceback, os
 from seedsigner.controller import Controller
 js_log("controller imported")
 try:
-    Controller.get_instance().start()
+    controller = Controller.get_instance()
+    # Simulator-only convenience: typing twelve words on the device keyboard is
+    # not the thing being proved, so Doomsigner starts with seeds already loaded.
+    # These are earthdiver's first published test seed from SeedSigner #769 and
+    # the published abandon sender. Neither holds coins.
+    #
+    # Gated on the firmware, not on a file. It used to test for the runtime
+    # silent-payments overlay, which was a fair proxy while that overlay was the
+    # only thing that made this firmware different; the code is in the zip now,
+    # so there is no such file and the test silently stopped loading anything.
+    if ${JSON.stringify(firmware)} == "doomsigner":
+        from seedsigner.models.seed import Seed
+        import json as _json
+        from seedsigner.models.settings import SettingsConstants, Settings
+
+        # A mainnet branch used to sit here, loading real seeds that the overlay
+        # had fetched into the Pyodide filesystem from two gitignored .local.json
+        # files. The overlay is gone, so nothing writes those files and the branch
+        # could only ever take the else path. Removed rather than left to rot --
+        # and it must not come back in this form now that this file is public:
+        # whatever loads a mainnet seed must not name a private file here.
+        # Receiver FIRST. It is the seed this firmware is about -- the page
+        # says "fingerprint 24c323b5" and every receive walkthrough starts on
+        # it -- so it must be Seeds > the first entry. The sender only exists
+        # so the send demo has something to spend, and having it first made
+        # the whole flow silently operate on the wrong seed.
+        receiver = ("initial tilt corn easily leave weather strategy return "
+                    "topple gesture sad day").split()
+        controller.storage.seeds.append(Seed(mnemonic=receiver))
+        sender = ("abandon abandon abandon abandon abandon abandon abandon "
+                  "abandon abandon abandon abandon about").split()
+        controller.storage.seeds.append(Seed(mnemonic=sender))
+        js_log("loaded published silent-payments test seeds (receiver + sender)")
+    controller.start()
     js_log("controller.start() returned")
 except BaseException:
     js_log("controller raised:\\n" + traceback.format_exc()[-1200:])
@@ -163,9 +225,36 @@ except BaseException:
   }
 }
 
-function shims(width, height) {
+function shims(width, height, network) {
+  const net = JSON.stringify(network || "T");
+  const spSendRef = JSON.stringify(SP_SEND_REF_B64);
   return `
 import sys, json, importlib, importlib.abc, importlib.util, threading
+
+# The wallet's own logging, surfaced to the browser console.
+#
+# Without this, logger.info() inside seedsigner/ goes nowhere: only the tracing
+# shims below reach js_log, so a view could report exactly why it refused a
+# transaction and the message would be invisible. Debugging the signing path
+# meant guessing from screen names alone until this existed.
+#
+# Only when the page asked for debug, and INFO rather than DEBUG, because DEBUG
+# on this codebase is thousands of lines per boot.
+import logging as _logging
+
+
+class _JsLogHandler(_logging.Handler):
+    def emit(self, record):
+        try:
+            js_log("[%s] %s" % (record.name.split(".")[-1], record.getMessage()))
+        except Exception:
+            pass
+
+
+if ${debug ? "True" : "False"}:
+    _root = _logging.getLogger()
+    _root.setLevel(_logging.INFO)
+    _root.addHandler(_JsLogHandler())
 sys.path.insert(0, "/wallet")
 
 # The device's own settings file, written before the wallet reads it. Settings
@@ -174,20 +263,24 @@ sys.path.insert(0, "/wallet")
 # would have them, and nothing under seedsigner/ is touched to get them.
 #
 #   display_config  the SeedSigner Plus panel, which is the screen drawn here.
-#   network         Testnet, where SeedSigner's own default is Mainnet. Nothing
-#                   in a browser tab should be pointed at real coins, and the
-#                   rest of the page spends its time saying so, so mainnet is
-#                   not where a visitor should land without having asked. It is
-#                   still in Settings > Advanced > Bitcoin network and still
-#                   selectable there, exactly as on hardware: what changes is
-#                   where this starts, not what it can reach.
+#   network         Mainnet when the page asks for ?network=mainnet; otherwise
+#                   testnet. Still changeable in Settings on hardware.
+#   silent_payments Doomsigner only. It ships disabled, because on a real device
+#                   it is an experiment the owner opts into rather than a menu
+#                   entry everyone scrolls past. This firmware exists to show it,
+#                   so the simulator configures it on -- the same way an owner
+#                   would, through the settings file, rather than by changing
+#                   what the wallet defaults to.
 #
-# Both keys and both values are SettingsConstants, and the same ones in either
-# firmware: SETTING__DISPLAY_CONFIGURATION, SETTING__NETWORK and TESTNET.
+# Every key and value here is a SettingsConstants: SETTING__DISPLAY_CONFIGURATION,
+# SETTING__NETWORK, TESTNET, SETTING__SILENT_PAYMENTS and OPTION__ENABLED.
 import os, json
 os.chdir("/wallet")
+_settings = {"display_config": "st7789_320x240", "network": ${net}}
+if ${JSON.stringify(firmware)} == "doomsigner":
+    _settings["silent_payments"] = "E"
 with open("/wallet/settings.json", "w") as handle:
-    json.dump({"display_config": "st7789_320x240", "network": "T"}, handle)
+    json.dump(_settings, handle)
 
 # --- no real threads in the browser -----------------------------------------
 class _NoThread:
@@ -500,7 +593,7 @@ browser_qr.install(_poll_button)
 # not be padded with a package that firmware can never reach. The flag says which
 # firmware this is rather than catching ImportError, because a missing module
 # here would then be indistinguishable from a broken build.
-if js_cards is not None and ${firmware === "smartcard" ? "True" : "False"}:
+if js_cards is not None and ${firmware === "smartcard" || firmware === "doomsigner" ? "True" : "False"}:
     from smartcard import simulated_card
     simulated_card.install(js_cards, js_log)
 
@@ -677,6 +770,19 @@ def _traced_set_value(self, *args, **kwargs):
     _report_network()
     return result
 Settings.set_value = _traced_set_value
+
+import os
+if os.path.exists("/wallet/sp_overlay_install.py"):
+    import sp_overlay_install
+    sp_overlay_install.install()
+    js_log("silent-payments overlay installed")
+    import base64 as _b64
+    from embit.silent_payments import SilentPaymentsPSBT as _SPPSBT
+    _sample = ${spSendRef}
+    _psbt = _SPPSBT.parse(_b64.b64decode(_sample))
+    if not _psbt.has_sp_outputs or _psbt.outputs[0].sp_data is None:
+        raise RuntimeError("post-install SP send parse failed")
+    js_log("post-install SP send parse ok")
 
 _report_network()
 

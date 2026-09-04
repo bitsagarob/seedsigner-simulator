@@ -107,9 +107,9 @@ while [ "$#" -gt 0 ]; do
 done
 
 case "${FIRMWARE}" in
-    smartcard|stock) ;;
-    "")  echo "which firmware? one of: smartcard stock" >&2; usage >&2; exit 2 ;;
-    *)   echo "no such firmware: ${FIRMWARE} (one of: smartcard stock)" >&2; exit 2 ;;
+    smartcard|stock|doomsigner) ;;
+    "")  echo "which firmware? one of: smartcard stock doomsigner" >&2; usage >&2; exit 2 ;;
+    *)   echo "no such firmware: ${FIRMWARE} (one of: smartcard stock doomsigner)" >&2; exit 2 ;;
 esac
 
 die() {
@@ -176,7 +176,13 @@ fi
 # a wallet that cannot import.
 
 case "${FIRMWARE}" in
-smartcard)
+smartcard|doomsigner)
+
+# doomsigner shares this table because it IS the smartcard fork, plus silent
+# payments. The single difference is applied as one delta after the table rather
+# than by copying sixty near-identical lines: a reader can see the whole of what
+# differs in one place, which is the same reason stock has its own list instead
+# of being expressed as this one minus a few rows.
 
 # Deliberately NOT in this table, and why:
 #
@@ -260,6 +266,19 @@ git|pysatochip|pysatochip-3rdIteration|d77e311e0cd39193c9b2c03a1ab5f69421b8f4d5|
 git|specter_card|specter-card|06dcde629cdc1057934b434afc46d822c2d2425d|https://github.com/3rdIteration/specter-javacard.git|06dcde629cdc1057934b434afc46d822c2d2425d|py
 git|urtypes|urtypes|7fb280eab3b3563dfc57d2733b0bf5cbc0a96a6a|https://github.com/selfcustody/urtypes.git|7fb280eab3b3563dfc57d2733b0bf5cbc0a96a6a|src
 DEPS
+
+# The one row doomsigner changes: embit from notTanveer's BIP-352 branch
+# (embit#145) instead of the 0.8.0 release, at the same commit the app fork pins
+# in requirements.txt and the device image pins in Buildroot. All three have to
+# agree or the simulator runs code the device does not.
+#
+# No prebuilt libsecp256k1 comes with it, and that costs nothing here: a browser
+# cannot load an ARM or x86 shared object anyway, so embit uses its pure-Python
+# backend in Pyodide exactly as it already did with the 0.8.0 sdist.
+if [ "${FIRMWARE}" = "doomsigner" ]; then
+    DEPENDENCIES="$(printf '%s\n' "${DEPENDENCIES}" | grep -v '^pypi|embit|')
+git|embit|embit-silent-payments|533cd850f5f4d4f52c21dc1abae18133d98e394e|https://github.com/notTanveer/embit.git|533cd850f5f4d4f52c21dc1abae18133d98e394e|src"
+fi
 
 EXPECTED_TOP_LEVEL=(
     LICENSE.md

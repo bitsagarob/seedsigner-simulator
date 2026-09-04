@@ -1,7 +1,7 @@
 # Architecture
 
 How real SeedSigner device firmware ends up running in a browser tab, and why the
-code looks the way it does. Two firmwares are built and the page runs one of
+code looks the way it does. Three firmwares are built and the page runs one of
 them: stock SeedSigner, and the 3rdIteration smartcard fork. Everything below is
 true of both unless it says otherwise, and where they differ the difference is
 almost always the smartcard.

@@ -54,7 +54,7 @@
     ".ssd-ctl .ssd-hover,.ssd-ctl .ssd-press{opacity:0}",
     // Only a live device reacts; the decorative build stays inert illustration.
     ".ssd-live .ssd-ctl{pointer-events:auto;cursor:pointer}",
-    ".ssd-live .ssd-cap{transition:transform .07s ease-out}",
+    ".ssd-live .ssd-cap{transition:transform .05s ease-out}",
     ".ssd-live .ssd-ctl .ssd-hover{transition:opacity .13s ease}",
     // Hover only where there is a pointer that can hover. A touch that lands on
     // a key would otherwise leave it lit until something else was touched.
@@ -77,6 +77,11 @@
   // How long a key stays visibly down. A tap can be over in 40 milliseconds,
   // which is not long enough to see, so the state is held to this floor.
   var PRESSED_MS = 130;
+  // A shade longer than a finger's, because a driven press has no finger to lift
+  // and the eye has to catch it between one screen and the next. Not much
+  // longer: at 220 the key was still sinking while the screen it caused had
+  // already changed, which reads as lag rather than as a press.
+  var FLASH_MS = 130;
 
   /**
    * One press per finger, from a drawn key and nowhere else.
@@ -658,8 +663,26 @@
     // SeedSigner has no touchscreen, so only the drawn keys answer here either.
     if (live && onKey) bindControls(svgEl, onKey);
 
+    /**
+     * Show a press nobody's finger made.
+     *
+     * The tutorial drives this device through the same channel the wallet reads
+     * GPIO on, which is invisible: the screen changed and nothing said which of
+     * the eight keys did it. This is the same class a finger puts on, held a
+     * little longer because there is no finger to lift off it.
+     *
+     * A key already down is left alone, so this cannot cut a real press short.
+     */
+    function flash(channel) {
+      var key = svgEl.querySelector('[data-ssd-channel="' + channel + '"]');
+      if (!key || key.classList.contains("ssd-down")) return;
+      key.classList.add("ssd-down");
+      setTimeout(function () { key.classList.remove("ssd-down"); }, FLASH_MS);
+    }
+
     return {
       svg: svgEl,
+      press: flash,
       screen: slotEl,
       screenRect: { x: n(L.screenX), y: n(L.screenY), width: n(L.sw), height: n(L.sh) },
       width: n(L.viewW),

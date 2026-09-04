@@ -3,159 +3,471 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<title>SeedSigner simulator</title>
-<meta name="description" content="Real SeedSigner device firmware running in a browser tab. A simulator, not a wallet.">
+<meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="https://bitsaga.be/seedsigner-simulator/">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>SeedSigner simulator · Bitsaga</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#07111f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SeedSigner">
 <style>
-  /* Deliberately plain, and deliberately self-contained: the page's own CSP
-     forbids anything external, so no webfonts and no third-party anything. The
-     palette matches wallet.html so the two pages read as one thing. */
+  /* The two faces bitsaga.be uses, kept in this directory so the page stays
+     self-contained. Nothing is fetched off-origin; if the files ever go
+     missing, font-display swaps in system-ui and the page is unharmed. */
+  @font-face {
+    font-family: Outfit; font-style: normal; font-weight: 100 900; font-display: swap;
+    src: url("fonts/outfit_v15_QGYvz_MVcBeNP4NJtEtq.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Space Grotesk"; font-style: normal; font-weight: 100 900; font-display: swap;
+    src: url("fonts/spacegrotesk_v22_V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2") format("woff2");
+  }
+
   :root {
     color-scheme: dark;
-    --bg: #0b0c0e;
-    --panel: #12151a;
-    --line: #2a2f36;
-    --text: #d7dbe0;
-    --muted: #7c848f;
-    --accent: #f7931a;
+    --radius: 38px;
+    --paper: #f9fbfc;
+    --charcoal: #07111f;
+    --orange: #f7931a;
+    --amber: #ffc64d;
+    --display: "Space Grotesk", Outfit, system-ui, sans-serif;
   }
+  @media (max-width: 520px) { :root { --radius: 32px; } }
+
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
-    margin: 0 auto; padding: 3rem 1.25rem 4rem; max-width: 44rem;
-    background: var(--bg); color: var(--text);
-    font: 16px/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    margin: 0; background: var(--charcoal); color: var(--paper);
+    font-family: Outfit, system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
-  h1 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 .5rem; font-weight: 600; }
-  h2 { font-size: 1.05rem; margin: 2.5rem 0 .75rem; font-weight: 600; }
-  p { margin: 0 0 1rem; }
-  a { color: var(--accent); }
-  .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
-  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; }
+  a { color: inherit; text-decoration: none; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 650; letter-spacing: -.055em; margin: 0; }
 
-  /* The safety note is the most important thing on the page, so it is first and
-     it is bordered -- but not red and not shouting. Someone who reads it should
-     come away informed, not alarmed. */
-  .note {
-    border: 1px solid var(--line); border-left: 3px solid var(--accent);
-    background: var(--panel); border-radius: 8px; padding: 1rem 1.25rem;
-    margin: 0 0 2rem;
+  .shell { width: min(1220px, calc(100% - 24px)); margin-inline: auto; }
+
+  .eyebrow {
+    margin: 0 0 16px; color: var(--amber); font-size: 12px; line-height: 1;
+    font-weight: 950; text-transform: uppercase; letter-spacing: .22em;
   }
-  .note p:last-child { margin-bottom: 0; }
-  .note strong { color: #fff; }
-
-  .start { margin: 0 0 .5rem; }
-  .button {
-    display: inline-block; text-decoration: none;
-    border: 1px solid var(--accent); border-radius: 8px;
-    padding: .7rem 1.4rem; font-weight: 600; color: var(--accent);
+  .lead {
+    max-width: 640px; margin: 26px 0 0; color: rgba(255, 249, 239, .68);
+    font-size: clamp(17px, 1.4vw, 22px); line-height: 1.5;
   }
-  .button:hover { background: var(--accent); color: #0b0c0e; }
-  .after { color: var(--muted); font-size: .9rem; }
 
-  ul { margin: 0 0 1rem; padding-left: 1.2rem; }
-  li { margin: .35rem 0; }
-  li > strong { color: var(--text); }
-  .muted { color: var(--muted); }
-
-  footer {
-    margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--line);
-    color: var(--muted); font-size: .9rem;
+  /* --- nav ------------------------------------------------------------- */
+  .nav {
+    position: fixed; z-index: 80; top: 18px; left: 50%; transform: translateX(-50%);
+    width: min(1220px, calc(100% - 24px));
+    display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 18px;
+    padding: 13px 14px;
+    border: 1px solid rgba(255, 255, 255, .32); border-radius: var(--radius);
+    background: rgba(7, 17, 31, .68); backdrop-filter: blur(32px) saturate(1.3);
+    box-shadow: 0 22px 70px rgba(7, 17, 31, .24), inset 0 1px 0 rgba(255, 255, 255, .14);
   }
-  footer a { color: var(--muted); }
-  footer p { margin: 0 0 .5rem; }
+  .brand {
+    display: flex; align-items: baseline; gap: 9px; padding-left: 10px;
+    font-family: var(--display); font-size: 21px; font-weight: 650; letter-spacing: -.04em;
+  }
+  .brand small {
+    font-family: Outfit, system-ui, sans-serif; font-size: 11px; font-weight: 850;
+    text-transform: uppercase; letter-spacing: .18em; color: rgba(255, 249, 239, .5);
+  }
+  .links { display: flex; gap: 4px; font-size: 12px; font-weight: 850; text-transform: uppercase; letter-spacing: .13em; }
+  .links a { padding: 10px 13px; border-radius: 999px; color: rgba(255, 249, 239, .88); }
+  .links a:hover { background: rgba(255, 249, 239, .12); color: #fff9ef; }
 
-  @media (max-width: 32rem) {
-    body { padding: 2rem 1rem 3rem; font-size: 15px; }
-    h1 { font-size: 1.35rem; }
+  /* --- buttons, lifted from the site ----------------------------------- */
+  .btn {
+    display: inline-flex; min-height: 50px; align-items: center; justify-content: center;
+    padding: 0 22px; border: 1px solid rgba(255, 249, 239, .24); border-radius: 999px;
+    font: inherit; font-weight: 900; cursor: pointer;
+  }
+  .btn.primary {
+    position: relative; overflow: hidden; border: 1px solid transparent; color: #fff7e8;
+    background:
+      linear-gradient(135deg, rgba(255, 154, 31, .96), rgba(247, 147, 26, .94) 46%, rgba(216, 111, 8, .92)) padding-box,
+      linear-gradient(135deg, rgba(247, 147, 26, .44), rgba(216, 111, 8, .58) 46%, rgba(255, 244, 214, .08) 62%, rgba(168, 82, 0, .46)) border-box;
+    box-shadow: 0 10px 24px rgba(247, 147, 26, .22), 0 2px 8px rgba(159, 90, 0, .10),
+      inset 0 1px 0 rgba(255, 244, 214, .18), inset 0 -5px 12px rgba(90, 43, 0, .08);
+    text-shadow: 0 1px 9px rgba(64, 25, 4, .38);
+    transition: filter .25s ease, box-shadow .25s ease, transform .25s ease;
+  }
+  .btn.primary::after {
+    content: ""; position: absolute; inset: 1px; border-radius: inherit; pointer-events: none;
+    background:
+      linear-gradient(115deg, transparent 6%, rgba(255, 244, 214, .10) 24%, transparent 40%),
+      radial-gradient(circle at 24% 0%, rgba(247, 147, 26, .08), transparent 34%);
+    mix-blend-mode: screen;
+  }
+  .btn.primary:hover {
+    transform: translateY(-1px); filter: saturate(1.06) brightness(1.04);
+    box-shadow: 0 14px 30px rgba(247, 147, 26, .26), 0 3px 12px rgba(159, 90, 0, .12),
+      inset 0 1px 0 rgba(255, 244, 214, .20), inset 0 -5px 12px rgba(90, 43, 0, .08);
+  }
+  .btn.light {
+    position: relative; overflow: hidden; color: #fff4d6;
+    border: 1px solid rgba(247, 147, 26, .42);
+    background: linear-gradient(135deg, rgba(255, 249, 239, .10), rgba(255, 249, 239, .045));
+    backdrop-filter: blur(12px) saturate(1.08);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 244, 214, .12);
+    transition: filter .25s ease, box-shadow .25s ease, transform .25s ease, border-color .25s ease, background .25s ease;
+  }
+  .btn.light::after {
+    content: ""; position: absolute; left: 18px; right: 18px; top: 0; height: 1px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(247, 147, 26, .62), transparent);
+  }
+  .btn.light:hover {
+    transform: translateY(-1px); border-color: rgba(247, 147, 26, .68); filter: brightness(1.04);
+    background: linear-gradient(135deg, rgba(247, 147, 26, .18), rgba(255, 249, 239, .055));
+  }
+  .navcta { padding: 14px 22px; min-height: 0; font-size: 14px; font-weight: 950; justify-self: end; }
+  .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
+
+  /* --- hero ------------------------------------------------------------ */
+  .hero {
+    position: relative; overflow: hidden;
+    padding: clamp(118px, 15vh, 176px) 0 clamp(64px, 8vh, 104px);
+    background:
+      radial-gradient(circle at 14% 8%, rgba(74, 111, 165, .30), transparent 26rem),
+      radial-gradient(circle at 86% 22%, rgba(247, 147, 26, .13), transparent 25rem),
+      linear-gradient(180deg, #0b1728, #07111f);
+  }
+  .hero-grid {
+    display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(0, .98fr);
+    gap: clamp(34px, 5vw, 76px); align-items: center;
+  }
+  .hero-grid.no-device { grid-template-columns: minmax(0, 1fr); }
+  .hero h1 {
+    font-size: clamp(42px, 5.4vw, 82px); line-height: .92; letter-spacing: -.062em;
+    text-wrap: balance; max-width: 12ch;
+  }
+  .hero h1 em { position: relative; display: inline-block; font-style: italic; color: #fff8eb; }
+  .hero h1 em::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -.03em; height: 2px;
+    background: var(--orange); transform-origin: left center; transform: scaleX(.96); opacity: .95;
+  }
+
+  .facts {
+    position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    max-width: 850px; margin: clamp(28px, 3vw, 44px) auto 0;
+    border-radius: var(--radius); overflow: hidden;
+    background: rgba(255, 249, 239, .18);
+  }
+  .facts::after {
+    content: ""; position: absolute; inset: 0; border-radius: var(--radius); padding: 2px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, .15), rgba(74, 111, 165, .25), rgba(247, 147, 26, .35));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: 2;
+  }
+  .facts span {
+    position: relative; z-index: 1; background: rgba(7, 17, 31, .54); backdrop-filter: blur(12px);
+    padding: 16px 12px; min-height: 62px; font-size: 13px; font-weight: 850;
+    color: rgba(255, 249, 239, .82); display: grid; place-items: center; text-align: center;
+  }
+
+  /* --- device ---------------------------------------------------------- */
+  .device-wrap { display: grid; justify-items: center; width: 100%; min-width: 0; }
+  /* The renderer sizes its container in px, so the whole lockup - SVG, screen
+     slot and glass - has to be scaled as one thing to stay registered. Taking
+     the scaler out of flow keeps that fixed width from blowing out the grid;
+     the stage's height is set in script to match whatever the scale works out to. */
+  .device-stage { position: relative; width: 100%; max-width: 520px; min-width: 0; margin-inline: auto; }
+  .device-scaler { position: absolute; top: 0; left: 50%; width: max-content; transform-origin: top left; }
+  #screen { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+
+  /* --- safety notice --------------------------------------------------- */
+  .notice { padding: clamp(56px, 8vw, 96px) 0; background: #050b14; }
+  .notice-card {
+    position: relative; padding: clamp(26px, 4vw, 48px) clamp(24px, 4vw, 54px);
+    border: 1px solid rgba(255, 255, 255, .10); border-radius: 0 var(--radius) var(--radius) 0;
+    background: linear-gradient(145deg, rgba(20, 45, 72, .62), rgba(9, 23, 40, .62));
+  }
+  .notice-card::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; border-radius: 2px;
+    background: linear-gradient(180deg, transparent 0%, transparent 20%, rgba(247, 147, 26, .38) 34%,
+      rgba(247, 147, 26, .95) 50%, rgba(247, 147, 26, .38) 66%, transparent 80%, transparent 100%);
+    box-shadow: 0 0 16px rgba(247, 147, 26, .26);
+  }
+  .notice h2 { font-size: clamp(26px, 3vw, 42px); line-height: 1.04; margin-bottom: 6px; }
+  .notice-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: clamp(20px, 3vw, 44px); margin-top: 28px;
+  }
+  .notice-grid p { margin: 0; color: rgba(255, 249, 239, .66); line-height: 1.66; font-size: 15.5px; }
+  .notice-grid strong { color: var(--paper); font-weight: 850; }
+
+  /* --- how it works ---------------------------------------------------- */
+  .how {
+    position: relative; overflow: hidden; padding: clamp(80px, 11vw, 150px) 0;
+    background: linear-gradient(135deg, #050b14 0%, #07111f 28%, #0d2138 52%, #091827 74%, #050b14 100%);
+    border-block: 1px solid rgba(255, 255, 255, .10);
+  }
+  .how::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(circle at 82% 18%, rgba(247, 147, 26, .10), transparent 24rem),
+      radial-gradient(circle at 18% 82%, rgba(74, 111, 165, .18), transparent 30rem);
+  }
+  .how .shell { position: relative; z-index: 1; }
+  .how h2 { font-size: clamp(34px, 4.4vw, 64px); line-height: .98; max-width: 18ch; }
+  .how-head { padding-bottom: clamp(34px, 5vw, 62px); margin-bottom: clamp(40px, 5vw, 68px); border-bottom: 1px solid rgba(255, 255, 255, .14); }
+  .how-list {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    border: 1px solid rgba(255, 255, 255, .11); background: rgba(255, 255, 255, .10);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .how-card {
+    background: linear-gradient(180deg, rgba(12, 26, 43, .92), rgba(7, 17, 31, .96));
+    padding: clamp(28px, 3.4vw, 48px); display: grid; align-content: start; gap: 16px;
+  }
+  .how-card .tag { font-size: 12px; text-transform: uppercase; letter-spacing: .16em; color: var(--orange); font-weight: 950; }
+  .how-card h3 { font-size: clamp(23px, 2.3vw, 32px); line-height: 1; letter-spacing: -.04em; }
+  .how-card p { margin: 0; color: rgba(255, 249, 239, .66); line-height: 1.68; font-size: 15.5px; }
+
+  .how-source {
+    margin: 26px 4px 0; color: rgba(255, 249, 239, .55); font-size: 14.5px; line-height: 1.6;
+    max-width: 68ch;
+  }
+  .how-source a,
+  .notice-grid a { color: #f3a13d; text-decoration: underline; text-underline-offset: 3px; }
+  .how-source code { font-size: .92em; color: rgba(255, 249, 239, .72); }
+
+  /* --- footer ----------------------------------------------------------- */
+  .footer { background: #050b14; color: rgba(255, 249, 239, .62); padding: 46px 0 30px; font-size: 13px; }
+  .footer-row { display: flex; flex-wrap: wrap; gap: 14px 26px; align-items: center; justify-content: space-between; }
+  .footer a { color: rgba(255, 249, 239, .58); }
+  .footer a:hover { color: rgba(255, 249, 239, .9); }
+  .footer-note { margin: 22px 0 0; padding-top: 20px; border-top: 1px solid rgba(255, 249, 239, .12);
+    font-size: 11px; line-height: 1.7; color: rgba(255, 249, 239, .42); }
+
+  @media (max-width: 980px) {
+    .links { display: none; }
+    .nav { grid-template-columns: 1fr auto; gap: 12px; padding: 11px 12px; }
+    .navcta { padding: 12px 16px; font-size: 13px; }
+    .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 46px; }
+    .hero h1 { max-width: 14ch; }
+    .how-list { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .brand small { display: none; }
+    .facts { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 520px) {
+    .actions .btn { width: 100%; }
+    .hero h1 { font-size: clamp(38px, 11vw, 54px); }
   }
 </style>
 </head>
 <body>
 
-<h1>SeedSigner simulator</h1>
-<p class="lead">Real SeedSigner device firmware, the actual Python off the device,
-running in this browser tab. Its screen is a canvas, its buttons are your keyboard,
-and its camera is your webcam.</p>
+<nav class="nav">
+  <a class="brand" href="https://bitsaga.be/">bitsaga<small>Simulator</small></a>
+  <div class="links">
+    <a href="https://bitsaga.be/">Home</a>
+    <a href="https://bitsaga.be/services">Services</a>
+    <a href="https://bitsaga.be/insights">Insights</a>
+    <a href="/shop/">Products</a>
+  </div>
+  <a class="btn primary navcta" href="wallet.html">Open the simulator</a>
+</nav>
 
-<div class="note">
-  <p><strong>This is a simulator, not a wallet.</strong> It runs in a browser tab on
-  an ordinary computer: no secure element, no air gap, nothing hidden from the rest
-  of the machine.</p>
-  <p>Treat every key it shows you as public, and
-  <strong>never enter a seed phrase you rely on</strong>. If you want something to
-  type in, use a BIP39 test vector; they exist for exactly this.</p>
-</div>
+<header class="hero">
+  <div class="shell">
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">SeedSigner &middot; in your browser</p>
+        <h1>Hold the device before you <em>buy</em> it.</h1>
+        <p class="lead">A real SeedSigner, not a video and not a mock-up. The firmware
+        runs in this tab, draws its own 320&times;240 screen, and scans QR codes through
+        your webcam. Nothing to install, nothing to buy first.</p>
+        <div class="actions">
+          <a class="btn primary" href="wallet.html">Open the wallet simulator</a>
+          <a class="btn light" href="#how">How it works</a>
+        </div>
+      </div>
 
-<p class="start"><a class="button" href="wallet.html">Open the simulator</a></p>
-<p class="after">First load fetches about 30 MB (Python and the wallet) and takes a
-few seconds. After that it runs offline. Arrow keys move, Enter selects,
-<code>1</code> <code>2</code> <code>3</code> are the side buttons, or click the
-buttons on the device.</p>
+      <div class="device-wrap">
+        <div class="device-stage" id="device-stage" hidden>
+          <div class="device-scaler" id="device-scaler"><div id="device"></div></div>
+        </div>
+      </div>
+    </div>
 
-<h2>What it actually is</h2>
-<p>Not a re-creation. The wallet's own Python is executed by
-<a href="https://pyodide.org" rel="noopener">Pyodide</a> (CPython compiled to
-WebAssembly) inside a Web Worker, and the firmware's own entry point is what runs.
-The menus, the seed handling, the PSBT parsing and the QR encoders are all
-upstream's, unmodified.</p>
-<p>Two firmwares are built and the simulator says which one it is running: stock
-SeedSigner, what a plain device runs, and the 3rdIteration smartcard fork, a third
-party fork that adds SeedKeeper and Satochip support. The control under the device
-switches between them.</p>
-<p>Only the four places the firmware reaches for hardware are replaced, from the
-outside, and the fourth only exists in the fork:</p>
-<ul>
-  <li><strong>Display:</strong> the panel driver is swapped beneath SeedSigner's
-  own renderer, and raw frames are painted into a canvas.</li>
-  <li><strong>Buttons:</strong> the worker is blocked inside the wallet's main loop
-  and can never answer a message, so keypresses cross on shared memory and wake it.</li>
-  <li><strong>Camera:</strong> your webcam. SeedSigner reads QR codes with a C
-  library that has no WebAssembly build, so the browser decodes the image and hands
-  the raw bytes to the firmware's own unmodified decoder.</li>
-  <li><strong>Smartcard:</strong> simulated SeedKeeper and Satochip cards answering
-  real APDUs, because browsers have no smartcard API at all. The smartcard fork
-  only: stock SeedSigner has no card code for them to answer.</li>
-</ul>
-<p>Each firmware is pinned to a single upstream commit, and a build script in the
-repository rebuilds it from that commit, so the claim that this is real device
-firmware is one you can check rather than take on trust.</p>
+    <div class="facts">
+      <span>Runs entirely offline</span>
+      <span>Real webcam QR scanning</span>
+      <span>Nothing to install</span>
+    </div>
+  </div>
+</header>
 
-<h2>What works, and what does not</h2>
-<ul>
-  <li><strong>Works:</strong> the full menu tree, loading a seed by QR or by hand,
-  passphrases, xpub export, loading and signing a PSBT, SeedQR backup, and every
-  screen that draws a QR.</li>
-  <li><strong>Partly, and on the smartcard fork only:</strong> three simulated
-  smartcards go in and out of the reader, each a SeedKeeper or a Satochip, and can
-  be initialised with a PIN. A seed can be saved onto a SeedKeeper and loaded back
-  off it. Signing on a card is not implemented yet.</li>
-  <li><strong>Not at all:</strong> microSD, so settings reset when you reload.
-  Animations do not animate, because this environment has no threads.</li>
-</ul>
-<p class="muted">Nothing leaves the tab. This page and the simulator both declare a
-content security policy that permits no connections to any other origin, and there is no
-server to send anything to.</p>
+<section class="notice">
+  <div class="shell notice-card">
+    <p class="eyebrow">Before you touch it</p>
+    <h2>Never type a real seed phrase here.</h2>
+    <div class="notice-grid">
+      <p><strong>Not a wallet.</strong> It is a simulator, so you can try the device
+      before buying one. It is not audited and it is not the signed firmware build. Treat
+      every key it shows you as worthless. When you have real hardware,
+      <a href="https://verify.bitsaga.be">check the real firmware before you flash it</a>.</p>
+      <p><strong>A real SeedSigner is air-gapped</strong> precisely so your seed never
+      touches an internet-connected machine. Typing one into a browser &mdash; this one or
+      any other &mdash; defeats the entire point of the device.</p>
+      <p><strong>Nothing you type can leave.</strong> This page carries a content security
+      policy that forbids it from contacting any other server, and it loads nothing from
+      third parties. You need not take that on faith: once it has loaded, disconnect from
+      the internet and it keeps working, exactly like the hardware.</p>
+    </div>
+  </div>
+</section>
 
-<h2>If the simulator does not start</h2>
-<p>It needs to be served with <code>Cross-Origin-Opener-Policy: same-origin</code>
-and <code>Cross-Origin-Embedder-Policy: require-corp</code>; without them the
-browser withholds the shared memory every keypress travels on, and the wallet never
-starts. Scanning additionally needs a secure context: https, or localhost. Both are
-covered in the repository's self-hosting notes.</p>
+<section class="how" id="how">
+  <div class="shell">
+    <div class="how-head">
+      <p class="eyebrow">What this actually is</p>
+      <h2>The device's own code, executed by your browser.</h2>
+      <p class="lead">No re-implementation and no screenshots stitched together. The
+      Python that ships on the hardware runs unmodified on WebAssembly, and only the
+      things it would touch in the physical world are stood in for.</p>
+    </div>
+    <div class="how-list">
+      <div class="how-card">
+        <span class="tag">Firmware</span>
+        <h3>Real, not re-created</h3>
+        <p>Pyodide puts CPython in the tab and the wallet boots into it. Every frame you
+        see is rendered by the device's own display code at its native 320&times;240,
+        pixel for pixel.</p>
+      </div>
+      <div class="how-card">
+        <span class="tag">Camera</span>
+        <h3>Your webcam is the lens</h3>
+        <p>The camera driver is wired to your webcam, so holding a genuine QR code up to
+        it &mdash; a PSBT, an xpub, a SeedQR &mdash; scans exactly as it would on the
+        hardware. Decoding happens in the tab; no frame is uploaded anywhere.</p>
+      </div>
+      <div class="how-card">
+        <span class="tag">Smartcard</span>
+        <h3>A card in the slot</h3>
+        <p>The SeedSigner Plus card reader is simulated too, so you can walk through the
+        smartcard flow &mdash; insert, unlock, store, wipe &mdash; without owning a card.</p>
+      </div>
+    </div>
+    <p class="how-source">The wallet is the <a href="https://github.com/3rdIteration/seedsigner" target="_blank" rel="noopener">3rdIteration smartcard fork</a> of SeedSigner, pinned to its <code>SeSi-0.8.7+ShSi-B11</code> release, the same tag the hardware image is built from. The simulator, and a build script that rebuilds this wallet from that pin so you can check that claim yourself, is on GitHub: <a href="https://github.com/bitsagarob/seedsigner-simulator" target="_blank" rel="noopener">bitsagarob/seedsigner-simulator</a>.</p>
+  </div>
+</section>
 
-<footer>
-  <p>Source, and the build script that rebuilds the wallet from its pinned upstream
-  commit:
-  <a href="https://github.com/bitsagarob/seedsigner-simulator" rel="noopener">github.com/bitsagarob/seedsigner-simulator</a>.</p>
-  <p>MIT licensed. SeedSigner itself is MIT too, Copyright (c) 2021 SeedSigner; the
-  firmware running here is their work.</p>
-  <p>An independent project, not affiliated with or endorsed by the SeedSigner
-  project. Running this proves nothing about a real device.</p>
+
+<footer class="footer">
+  <div class="shell">
+    <div class="footer-row">
+      <span>Bitsaga &middot; Turnhout, Belgium</span>
+      <span>
+        <a href="https://bitsaga.be/">bitsaga.be</a> &middot;
+        <a href="https://bitsaga.be/contact">Contact</a> &middot;
+        <a href="https://seedsigner.com/" target="_blank" rel="noopener">SeedSigner project</a> &middot;
+        <a href="https://github.com/bitsagarob/seedsigner-simulator" target="_blank" rel="noopener">Source on GitHub</a>
+      </span>
+    </div>
+    <p class="footer-note">A simulator, for demonstration only. It is not audited
+    software, it is not the signed firmware release, and it must never be used to generate
+    or hold a key that guards real funds.</p>
+  </div>
 </footer>
 
+<script src="seedsigner-device.js"></script>
+<script>
+// The device art lives in its own file; if it has not been deployed the page
+// simply goes without the illustration rather than falling over.
+const DEVICE_SCALE = 1.5;
+const W = 320, H = 240;
+
+const stage = document.getElementById("device-stage");
+const scaler = document.getElementById("device-scaler");
+const container = document.getElementById("device");
+
+let device = null;
+
+// A SeedSigner-ish idle screen, so the illustration is not a dead black
+// rectangle before anyone has pressed anything.
+const IDLE_SCREEN = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" width="100%" height="100%"
+     preserveAspectRatio="none" aria-hidden="true">
+  <rect width="320" height="240" fill="#000"/>
+  <text x="160" y="27" fill="#f9fbfc" font-family="Outfit, system-ui, sans-serif"
+        font-size="17" font-weight="600" text-anchor="middle">SeedSigner</text>
+  <rect x="18" y="42" width="284" height="1" fill="#2a2e35"/>
+  <g font-family="Outfit, system-ui, sans-serif" font-size="19" font-weight="500">
+    <rect x="18" y="54" width="284" height="40" rx="7" fill="#f7931a"/>
+    <text x="66" y="81" fill="#0b0c0e" font-weight="700">Scan</text>
+    <text x="66" y="127" fill="#d7dbe0">Seeds</text>
+    <text x="66" y="173" fill="#d7dbe0">Tools</text>
+    <text x="66" y="219" fill="#d7dbe0">Settings</text>
+  </g>
+  <g fill="none" stroke-width="2.6" stroke-linecap="round">
+    <path stroke="#0b0c0e" d="M36 70v-5h6M50 65h6v5M56 79v5h-6M42 84h-6v-5"/>
+    <path stroke="#7c848f" d="M36 121h20M36 113h20M40 129h12"/>
+    <path stroke="#7c848f" d="M38 167h16M46 159v16"/>
+    <path stroke="#7c848f" d="M38 213h16M46 205v16M40 207l12 12M52 207l-12 12"/>
+  </g>
+</svg>`;
+
+function fit() {
+  if (!device) return;
+  const k = Math.min(1, stage.clientWidth / device.width);
+  scaler.style.transform = "translateX(" + (-device.width * k / 2) + "px) scale(" + k + ")";
+  stage.style.height = device.height * k + "px";
+}
+
+function mount(interactive, onKey) {
+  device = window.SeedSignerDevice.render(container, {
+    screenWidth: W, screenHeight: H, scale: DEVICE_SCALE,
+    interactive: interactive, onKey: onKey,
+  });
+  fit();
+}
+
+if (window.SeedSignerDevice) {
+  stage.hidden = false;
+  mount(false, null);
+  device.screen.innerHTML = IDLE_SCREEN;
+  addEventListener("resize", fit);
+} else {
+  stage.closest(".hero-grid").classList.add("no-device");
+  stage.remove();
+}
+</script>
+
+<script>
+// Offline cache. Failure-tolerant: the page must behave identically without it.
+if ("serviceWorker" in navigator) {
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+
+<script src="wallet-track.js"></script>
+<script>
+// What this page is for is getting somebody into the simulator, so the only
+// thing worth counting on it is whether they went. Delegated and href-sniffed
+// rather than hung off each link, which is how the rest of bitsaga.be counts
+// its clicks (webapp/includes/footer.html) and which means a link added to this
+// page is counted without anybody remembering to wire it up.
+document.addEventListener("click", function (event) {
+  var link = event.target.closest && event.target.closest("a[href]");
+  if (!link || !window.Track) return;
+  var href = link.getAttribute("href") || "";
+  if (href === "wallet.html") {
+    // The same destination twice: the bar that follows you down the page, and
+    // the button in the hero. Which one gets pressed is the question.
+    window.Track.event("landing", "open-simulator", link.closest(".nav") ? "nav" : "hero");
+  } else if (href === "#how") {
+    window.Track.event("landing", "how-it-works", "hero");
+  } else if (href.indexOf("github.com") !== -1) {
+    window.Track.event("landing", "github", href);
+  }
+}, true);
+</script>
 </body>
 </html>

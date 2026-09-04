@@ -109,21 +109,40 @@
     // card has to shrink with it.
     ".cardtray-cell{display:flex;flex-direction:column;gap:.35rem;",
     "width:7.4rem;flex-shrink:1;min-width:0}",
-    ".cardtray-card{box-sizing:border-box;font:inherit;text-align:left;cursor:pointer;padding:.55rem .6rem;",
-    "display:flex;flex-direction:column;gap:.4rem;border-radius:7px;",
-    "background:linear-gradient(160deg,#20242b,#15171b);border:1px solid #2f343c;",
+    // The card, seen from above. It was a dark grey panel with a chip glued to
+    // the corner and no proportions of its own; the thing it stands for is a
+    // matte black smartcard, and a smartcard is 85.6 by 54mm whatever else is
+    // true of it. So: that ratio, black, the contact plate where the contact
+    // plate is, the name printed small along the bottom the way it is printed
+    // on the real one, and nothing drawn behind it.
+    ".cardtray-card{box-sizing:border-box;font:inherit;text-align:left;cursor:pointer;",
+    "position:relative;aspect-ratio:1.586;padding:.5rem .55rem;",
+    "display:flex;flex-direction:column;justify-content:space-between;border-radius:6px;",
+    "background:#0a0a0b;border:1px solid #24262b;",
     "color:#d7dbe0;transition:transform .12s ease,border-color .12s ease,box-shadow .12s ease}",
+    // The one thing that says this is a physical object rather than a black
+    // rectangle: light falling across it, faint enough to be light.
+    ".cardtray-card::after{content:\"\";position:absolute;inset:0;border-radius:5px;",
+    "pointer-events:none;background:linear-gradient(145deg,rgba(255,255,255,.055),",
+    "rgba(255,255,255,0) 42%,rgba(255,255,255,.02) 70%,rgba(255,255,255,0))}",
     ".cardtray-card:hover{border-color:#4a515c;transform:translateY(-2px)}",
     ".cardtray-card[aria-pressed=true]{border-color:#f7931a;transform:translateY(-7px);",
     "box-shadow:0 6px 14px rgba(0,0,0,.55),0 0 0 1px rgba(247,147,26,.35)}",
     ".cardtray-card:focus-visible{outline:2px solid #f7931a;outline-offset:2px}",
 
-    ".cardtray-top{display:flex;align-items:center;justify-content:space-between;gap:.4rem}",
-    ".cardtray-name{font-weight:600}",
-    ".cardtray-in{font-size:.72rem;letter-spacing:.08em;color:#f7931a;visibility:hidden}",
+    ".cardtray-top{display:flex;align-items:flex-start;justify-content:space-between;gap:.4rem}",
+    // Printed on the card, not written above it, and printed with what it is:
+    // SeedKeeper A rather than Card A, because the card in the reader is the
+    // one the panel keeps naming.
+    // One line, always: a name that wraps stops looking printed on the card and
+    // starts looking like a paragraph that fell on it.
+    ".cardtray-name{font-size:.7rem;font-weight:600;letter-spacing:.02em;",
+    "color:#e6e8ec;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".cardtray-marks{display:flex;flex-direction:column;align-items:flex-end;gap:.2rem}",
+    ".cardtray-in{font-size:.68rem;letter-spacing:.08em;color:#f7931a;visibility:hidden}",
     ".cardtray-card[aria-pressed=true] .cardtray-in{visibility:visible}",
-    ".cardtray-pill{align-self:flex-start;font-size:.75rem;padding:.05rem .45rem;border-radius:999px;",
-    "border:1px solid #363b44;color:#8b939e;background:#0e1013}",
+    ".cardtray-pill{align-self:flex-end;font-size:.68rem;padding:.05rem .4rem;border-radius:999px;",
+    "border:1px solid #363b44;color:#8b939e;background:rgba(0,0,0,.45)}",
     ".cardtray-pill[data-kind=initialised]{color:#9fb4d0;border-color:#3c4c63}",
     ".cardtray-pill[data-kind=seeded]{color:#f7931a;border-color:#6b4614;background:#1a1206}",
     ".cardtray-tries{font-size:.72rem;color:#7c848f;min-height:1em}",
@@ -140,11 +159,15 @@
     ".cardtray-kind:focus-visible{outline:2px solid #f7931a;outline-offset:2px}"
   ].join("");
 
+  // The contact plate, as it is on the card: eight pads inside a rounded gold
+  // rectangle, sitting up near the top left rather than centred on anything.
   var CHIP =
-    '<svg width="26" height="20" viewBox="0 0 26 20" aria-hidden="true" focusable="false">' +
-    '<rect x=".5" y=".5" width="25" height="19" rx="3" fill="#c9973a"/>' +
-    '<rect x="2.5" y="2.5" width="21" height="15" rx="2" fill="#e0b25c"/>' +
-    '<path d="M9 2.5v15M17 2.5v15M2.5 7h21M2.5 13h21" stroke="#a87e2c" stroke-width="1"/>' +
+    '<svg width="30" height="23" viewBox="0 0 30 23" aria-hidden="true" focusable="false">' +
+    '<rect x=".5" y=".5" width="29" height="22" rx="3" fill="#b8912f"/>' +
+    '<rect x="1.6" y="1.6" width="26.8" height="19.8" rx="2.2" fill="#d9b45f"/>' +
+    '<path d="M10.5 1.6v19.8M19.5 1.6v19.8M1.6 8h26.8M1.6 15h26.8" ' +
+    'stroke="#9c7a25" stroke-width=".9"/>' +
+    '<rect x="11.6" y="9.1" width="6.8" height="4.8" rx="1" fill="#c8a24a"/>' +
     "</svg>";
 
   function runPage(sab, container) {
@@ -180,14 +203,16 @@
       cell.className = "cardtray-cell";
       cell.innerHTML =
         '<button type="button" class="cardtray-card" data-index="' + i + '" aria-pressed="false">' +
-        '<span class="cardtray-top">' + CHIP + '<span class="cardtray-in">IN</span></span>' +
-        '<span class="cardtray-name">' + labelFor(i) + "</span>" +
-        '<span class="cardtray-pill">?</span>' +
+        '<span class="cardtray-top">' + CHIP +
+        '<span class="cardtray-marks"><span class="cardtray-in">IN</span>' +
+        '<span class="cardtray-pill">?</span></span></span>' +
+        '<span class="cardtray-name"></span>' +
         '<span class="cardtray-tries"></span></button>' +
         '<button type="button" class="cardtray-kind" data-index="' + i + '"></button>';
       row.appendChild(cell);
       cards.push({
         button: cell.querySelector(".cardtray-card"),
+        name: cell.querySelector(".cardtray-name"),
         pill: cell.querySelector(".cardtray-pill"),
         tries: cell.querySelector(".cardtray-tries"),
         kind: cell.querySelector(".cardtray-kind")
@@ -244,6 +269,16 @@
         var cardKind = kindOf(i);
         var state = describe(Atomics.load(hdr, stateSlot(i, cardKind)));
         card.button.setAttribute("aria-pressed", String(i === current));
+        // What is printed on the card is what the card is: SeedKeeper A, and
+        // Satochip A once it has been swapped for one. labelFor stays what it
+        // is -- Card A is this slot's name, shared with the Python side and
+        // with the reader's own line, and it is not printed on anything.
+        card.name.textContent = KINDS[cardKind] + " "
+                              + String.fromCharCode(65 + i);
+        // The letter on its own, for the compact rail the walkthrough puts this
+        // tray in: three cards at that size cannot each afford to write
+        // SeedKeeper, and the letter is the only part that differs.
+        card.name.dataset.letter = String.fromCharCode(65 + i);
         card.pill.textContent = state.label;
         if (state.known) card.pill.dataset.kind = state.kind;
         else delete card.pill.dataset.kind;
@@ -308,7 +343,14 @@
     paint();
     return {
       insert: insert, eject: eject, inserted: inserted,
-      setKind: setKind, kind: kindOf, count: CARD_COUNT, kinds: KINDS
+      setKind: setKind, kind: kindOf, count: CARD_COUNT, kinds: KINDS,
+      // What the wallet has published about a card: blank, initialised or
+      // seeded, the same three the pill on it shows. The walkthrough asks,
+      // because whether a step that writes to a card can be run again is a
+      // question about the card rather than about the step.
+      state: function (index) {
+        return describe(Atomics.load(hdr, stateSlot(index, kindOf(index)))).kind;
+      },
     };
   }
 

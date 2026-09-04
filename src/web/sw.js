@@ -24,7 +24,10 @@
 // file here is enough to install this worker again, and install adds the new
 // entries to the cache that is already there. Bump it when something cached
 // must be thrown away, not when something new is added.
-const VERSION = "sim-v7";
+// v8: the panel was rebuilt and phones were still being handed the old one out
+// of this cache. That is what a bump is for, and it costs a few kilobytes now
+// that activate carries the immutable half over instead of dropping it.
+const VERSION = "sim-v10";
 const CACHE = "seedsignersim-" + VERSION;
 
 // Small enough to fetch up front so a first-run offline load still works.
@@ -71,8 +74,8 @@ const SHELL = [
   "./browser_qr.py",
   "./browser_display.py",
   "./manifest.json",
-  "./icon-192.png",
-  "./icon-512.png",
+  "./icon-192-1ebb8267.png",
+  "./icon-512-2c740b57.png",
   "./apple-touch-icon.png",
 ];
 
@@ -86,7 +89,11 @@ const SHELL = [
 // network-first would re-download twenty-eight megabytes on every visit to a
 // page that is meant to be playable in a second. doom.wasm goes with it. The
 // glue in doom.js does not: it is built here and moves when the build does.
-const IMMUTABLE = /\/(pyodide\/|fonts\/|icon-|apple-touch-icon|doom\.wasm|freedoom\d*\.wad)/;
+// Only content-addressed paths. A name that carries a hash of what is in
+// it cannot go stale: change the bytes and the URL changes with them. The
+// apple-touch-icon is deliberately absent, because its path is a
+// convention Safari looks for and so cannot carry a hash.
+const IMMUTABLE = /\/(pyodide-[0-9a-f]{8}\/|doom-[0-9a-f]{8}\/|fonts\/|icon-\d+-[0-9a-f]{8}\.png|freedoom\d*-[0-9a-f]{8}\.wad)/;
 
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
@@ -101,10 +108,26 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
-    const names = await caches.keys();
-    await Promise.all(names
-      .filter((n) => n.startsWith("seedsignersim-") && n !== CACHE)
-      .map((n) => caches.delete(n)));
+    const mine = await caches.open(CACHE);
+    for (const name of await caches.keys()) {
+      if (!name.startsWith("seedsignersim-") || name === CACHE) continue;
+      const old = await caches.open(name);
+      // The immutable half moves across rather than being re-fetched. It is
+      // twenty-six megabytes of Pyodide that is versioned in its own path and
+      // cannot go stale, and making a version bump cost that download is
+      // precisely what made a version bump the thing nobody was willing to do
+      // -- which is how a visitor ends up holding a script from three deploys
+      // ago with no way to shake it loose. Bumping has to be cheap, or the one
+      // lever this worker has for throwing something away is a lever nobody
+      // pulls.
+      for (const req of await old.keys()) {
+        if (!IMMUTABLE.test(new URL(req.url).pathname)) continue;
+        if (await mine.match(req)) continue;
+        const hit = await old.match(req);
+        if (hit) await mine.put(req, hit);
+      }
+      await caches.delete(name);
+    }
     await self.clients.claim();
   })());
 });

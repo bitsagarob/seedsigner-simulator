@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
+<meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="https://bitsaga.be/seedsigner-simulator/wallet">
 <!-- One host is named beyond 'self', and only one: signet.bitsaga.be, which is
      the faucet and the read-only chain endpoints of Bitsaga Signet. Nothing
      asks it anything until the simulator wallet is opened or the multisig
@@ -22,7 +23,13 @@
     margin: 0; padding: 2rem 1rem; background: #0b0c0e; color: #d7dbe0;
     font: 15px/1.6 ui-sans-serif, system-ui, sans-serif;
     display: flex; flex-direction: column; align-items: center; gap: 1rem;
+    /* The page fills the screen and its last row sits on the bottom of it. The
+       content ended wherever it happened to end, which on a phone left the
+       firmware switch and the one line about buying a real device floating in
+       the middle with a screenful of black under them. */
+    box-sizing: border-box; min-height: 100vh; min-height: 100dvh;
   }
+  body > footer { margin-top: auto; }
   /* Everything is width-bounded: the device is landscape and wider than a
      phone, so it scales rather than overflowing.
 
@@ -48,6 +55,9 @@
     display: flex; flex-direction: column; align-items: center; gap: .5rem;
   }
   #tutorial-slot { width: 100%; min-width: 0; }
+  /* Empty until a walkthrough fills it, and taking no room until then. */
+  #device-say { width: min(46rem, 100%); }
+  #device-say:empty { display: none; }
   /* Closed, and taking no room, until the drawer is pulled out. */
   #wallet-slot { display: none; }
   body.wallet-open #wallet-slot { display: block; width: 100%; min-width: 0; }
@@ -65,18 +75,31 @@
      managed. One rule for both, because there is one split. */
   body.paired #stage { max-width: min(94rem, 100%); }
   @media (min-width: 62rem) {
-    /* Centred against the panel beside it, not hung off the top of it: the
-       device is the shorter of the two columns and a shell pinned to the top of
-       a tall panel reads as an afterthought next to it. */
+    /* Two columns that share a top edge and a centre line.
+       They used to be centred against each other vertically and to take a share
+       each of whatever the window was, which was fine while the panel held the
+       whole of the run. It does not any more: the phase, the step and the line
+       saying what is happening moved under the device, so at rest the panel is a
+       title and one button, and stretching that across four hundred pixels and
+       floating it halfway down the window made it read as a banner somebody left
+       behind. It gets a width of its own now, the device column takes what it
+       needs rather than what is left, both start at the top, and the pair is
+       centred in the window instead of filling it. */
     body.paired #stage {
-      flex-direction: row; align-items: center; gap: 1.25rem;
+      display: grid; grid-template-columns: minmax(0, 44rem) 26rem;
+      align-items: start; justify-content: center; gap: .9rem 1.75rem;
     }
     /* min-width:0, or the column will not shrink below the device's own natural
        width -- which is about 1500px -- and squeezes the companion to nothing. */
     body.paired #stage-device {
-      flex: 1 1 36rem; min-width: 0; width: auto; position: sticky; top: 1rem;
+      grid-column: 1; grid-row: 1 / span 3;
+      min-width: 0; width: auto; position: sticky; top: 1rem;
     }
-    body.paired #tutorial-slot, body.paired #wallet-slot { flex: 1 1 26rem; width: auto; }
+    body.paired #device-say,
+    body.paired #tutorial-slot, body.paired #wallet-slot { grid-column: 2; width: auto; }
+    /* The lines under the device belong to the device, so they end where it
+       ends rather than where the column does. */
+    body.paired #device-say, body.paired #cardtray { width: 100%; }
     /* Both at once only happens at ?tutorial=offer, where the tutorial's column
        is one button. It keeps its width rather than a third of the row. */
     body.wallet-open #tutorial-slot { flex: 0 0 auto; }
@@ -88,20 +111,191 @@
       background: #0b0c0e;
     }
   }
-  /* The device on its own is the device on its own. */
-  body.solo .wal, body.solo .wal-openrow, body.solo #getone { display: none; }
+  /* One screen, on a phone held upright.
+     Paired means the device has a companion: the tutorial driving it, or the
+     wallet it talks to. The two have to be watched together, because what is
+     being demonstrated is one answering the other -- a QR going up on the panel
+     and the device's screen changing because of it. Sticky kept the device on
+     screen but let the panel scroll under it, so the half that moved was
+     whichever half you were not looking at, and a code that went up and was
+     read inside a second happened off screen.
+     So the page stops being a page. The viewport is the console: the device
+     takes the top of it at a height that leaves room, the companion takes the
+     rest and scrolls inside itself, and nothing moves the two apart.
+     dvh, not vh: vh is the tallest a phone's viewport ever gets, which is the
+     one number that puts the bottom of the panel under the browser's own bar. */
+  @media (max-width: 61.99rem) and (orientation: portrait) {
+    body.paired {
+      box-sizing: border-box;      /* or the padding is a screenful plus a bit */
+      height: 100vh; height: 100dvh; overflow: hidden;
+      padding: .5rem .6rem; gap: .45rem;
+    }
+    /* The title is the one thing on here the visitor already knows: they
+       pressed something to arrive. The whole header goes, rather than the
+       heading alone, because what is left of it is one circled i floating in
+       the middle of the screen with nothing beside it to belong to. The footer
+       goes too: the panel that replaced it carries its own way out -- the
+       wallet has Close, the tutorial has its own controls -- and choosing a
+       firmware mid-ceremony reloads the page anyway. */
+    body.paired header { display: none; }
+    /* The footer stays for one thing: which firmware this is. It is a choice
+       about the device, it belongs under the device, and hiding the whole
+       footer to save a row took it out with the rest. Everything else in there
+       is either gone from this layout already (the tray came up under the
+       device) or has its own way out (the wallet panel has Close). */
+    body.paired footer { gap: .45rem; margin-top: 0; }
+    body.paired footer > *:not(.running-row) { display: none; }
+    body.paired #wallet-open-slot { display: none; }
+    /* One line, not the stacked column a narrow screen otherwise gets: two
+       firmwares and a label fit across a phone, and the column was three rows
+       tall on the layout that has none to spare. */
+    body.paired #firmware-switch { flex-direction: row; }
+    body.paired #firmware-switch .label { margin: 0 .5rem 0 0; }
+    body.paired #firmware-switch button { width: auto; padding: .25rem .55rem; margin: 0 0 0 -1px; }
+    body.paired #firmware-switch button:first-of-type {
+      margin-left: 0; border-radius: 5px 0 0 5px;
+    }
+    body.paired #firmware-switch button:last-of-type { border-radius: 0 5px 5px 0; }
+    body.paired #stage { flex: 1 1 auto; min-height: 0; gap: .45rem; }
+    body.paired #stage-device {
+      position: static; flex: 0 0 auto; padding-bottom: 0; gap: .25rem;
+    }
+    /* Height-bound rather than width-bound, so the share the panel gets is the
+       same on every phone. The aspect is the shell's own, as in fullscreen. */
+    body.paired #device { width: min(100%, calc(34dvh * var(--ssd-aspect, 2))); }
+    body.paired #tutorial-slot, body.paired #wallet-slot {
+      flex: 1 1 auto; min-height: 0; overflow-y: auto;
+    }
+    /* Two lines rather than four, and the sentence that matters kept. */
+    body.paired .warn { font-size: .78rem; line-height: 1.35; padding: .4rem .6rem; }
+
+    /* The card tray, while a walkthrough is running it.
+       A demo whose whole subject is three smartcards was running with the cards
+       nowhere on the screen: the tray lives in the footer, and the footer is
+       what this layout gives up to keep the device and the panel together. So
+       the tray comes up here, under the device, and loses everything on it that
+       is a control rather than a card. Nobody drives this tray during a driven
+       run: the reader box, the eject button, the type switch and the PIN counter
+       are all things the walkthrough works itself, and together they are more
+       height than the cards they surround.
+       What is left is the three cards, which one is in, and what is on it. */
+    body.paired #cardtray .cardtray-reader,
+    body.paired #cardtray .cardtray-kind,
+    body.paired #cardtray .cardtray-tries,
+    body.paired #cardtray .cardtray-in { display: none; }
+    body.paired #cardtray { flex: 0 0 auto; }
+    body.paired #cardtray .cardtray { gap: 0; }
+    body.paired #cardtray .cardtray-row { gap: .45rem; }
+    body.paired #cardtray .cardtray-cell { width: 5.2rem; gap: 0; }
+    body.paired #cardtray .cardtray-card { padding: .35rem .4rem; }
+    /* The letter, not the name. Three cards side by side at this size spend
+       most of their width writing SeedKeeper three times; which one this is, is
+       the only part that differs and the only part being pointed at. The full
+       name stays in the element, unrendered, so what a screen reader is handed
+       is still SeedKeeper A. */
+    body.paired #cardtray .cardtray-name { font-size: 0; }
+    body.paired #cardtray .cardtray-name::after {
+      content: attr(data-letter); font-size: .78rem; letter-spacing: .04em;
+    }
+    body.paired #cardtray .cardtray-pill { font-size: .6rem; padding: 0 .3rem; }
+  }
+  /* The device on its own is the device on its own -- until the sheet is
+     pulled up, which is the one place those two are allowed back. */
+  body.solo:not(.sheet-open) .wal,
+  body.solo:not(.sheet-open) .wal-openrow,
+  body.solo #getone, body.solo #about { display: none; }
+  /* The one control that exists in fullscreen besides the way out. Bottom
+     right, where a thumb is, rather than beside the way out, where a thumb
+     would find the wrong one of the two. */
+  #controls { display: none; }
+  /* One control per corner, down the right hand edge.
+     Both used to sit in the top right corner, and they cannot: the device here
+     is fitted to the screen's height, so the only space it leaves is the four
+     wedges under its rounded ends. That wedge is widest in the extreme corner
+     and closes as you move inboard, so the second button, fifty pixels further
+     in, was on the shell. Each takes a corner of its own, where the wedge is
+     widest: the way out at the top, the sheet's button at the bottom, next to
+     the edge the sheet arrives from. Same size, same inset, one edge. */
+  body.solo #controls {
+    display: inline-flex; align-items: center; justify-content: center;
+    position: fixed; z-index: 62; right: .5rem; top: auto; bottom: .5rem;
+    min-width: 2.6rem; min-height: 2.6rem;
+    font: inherit; font-size: .9em; color: #8b939e;
+    background: #1d2026; border: 1px solid #2a2e35; border-radius: 7px;
+    padding: .55rem; cursor: pointer;
+  }
+  /* A thumb, not a cursor. Forty-four pixels is the smallest target every
+     accessibility guideline agrees a finger can be asked to hit, and this one
+     sits on a line with a red warning either side of it. */
+  #fullscreen {
+    min-width: 2.6rem; min-height: 2.6rem; justify-content: center;
+  }
+  #fullscreen svg { width: 1.4em; height: 1.4em; }
+  body.solo #controls svg {
+    width: 1.05em; height: 1.05em; flex: none;
+    fill: none; stroke: currentColor; stroke-width: 1.6;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  body.solo #controls:hover { color: #d7dbe0; border-color: #3a3f47; }
+  body.solo.sheet-open #controls {
+    color: #f7931a; border-color: #f7931a; background: #16181c;
+  }
+  body.solo #controls:focus-visible { outline: 2px solid #f7931a; outline-offset: 2px; }
+  /* Off the bottom of the screen rather than display:none, so it slides and so
+     the wallet inside it keeps its state between openings. Capped, and it
+     scrolls inside itself: the wallet is a whole panel and this is a phone. */
+  #sheet { display: none; }
+  body.solo #sheet {
+    display: flex; flex-direction: column; align-items: center; gap: .9rem;
+    position: fixed; z-index: 59; left: 0; right: 0; bottom: 0;
+    box-sizing: border-box;
+    /* Clear of the two controls it shares a corner with: they float above it,
+       and what was under them was the wallet panel's own Close. And as tall as
+       the screen allows, because on a phone in landscape 85% of 390 pixels is
+       not enough for the panel and what it cost was the panel's heading. */
+    padding: 3.6rem .75rem 1.25rem;
+    max-height: 100dvh; overflow-y: auto;
+    background: #101216; border-top: 1px solid #2a2f36;
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -1rem 2rem rgba(0, 0, 0, .55);
+    transform: translateY(101%);
+  }
+  body.solo.sheet-open #sheet { transform: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    body.solo #sheet { transition: transform .22s ease; }
+  }
+  /* Inside the sheet the wallet is the sheet's content, not a column in a
+     stage: the console rules that give it its own scroll do not apply here. */
+  body.solo #sheet #wallet-slot { display: block; width: 100%; flex: none; overflow: visible; }
+  body.solo #sheet .wal { width: 100%; }
   /* Which network the wallet is on: a fact worth having up, not a sentence
      worth reading, so it is one small word in the corner rather than a line of
      its own under the device. Mainnet is the exception and shouts, below. */
   /* In the flow, directly under the device, and no taller than the line it
      holds. The band the two of these used to share was reserved above the
      device with padding, so moving it costs nothing: the padding goes. */
+  /* What is left of the band. The status is drawn on the device's own screen,
+     the network label has gone up beside the title, and the way into fullscreen
+     is beside the warning, so on an ordinary visit there is nothing in here at
+     all: no min-height, or it is a reserved line under the device for a visit
+     that never uses it. It still exists because an error puts the status back
+     into it, and z-index because the note above opens over the device. */
   #device-band {
     position: relative; z-index: 4; width: 100%;
     display: flex; flex-wrap: wrap; align-items: center;
-    justify-content: center; gap: .5rem; min-height: 1.15em;
+    justify-content: center; gap: .5rem;
   }
+  /* Under the title, with the other i. Both are the same kind of thing -- a word
+     with an explanation folded behind it -- and they were at opposite ends of
+     the page. flex-basis 100% so it takes the line under the heading rather than
+     sitting beside it, which is where "under the other i" is. */
   #network-line { display: flex; align-items: center; gap: .3rem; }
+  /* The opener, its lamp and the network, on one line under the device. */
+  #wallet-open-slot {
+    display: flex; flex-wrap: wrap; align-items: center;
+    justify-content: center; gap: .4rem .8rem;
+  }
+  #wallet-open-slot:has(#network:empty) { gap: 0; }
   #network {
     margin: 0; font-size: .68rem; letter-spacing: .06em;
     text-transform: uppercase; color: #656c76;
@@ -135,6 +329,26 @@
     box-shadow: 0 1rem 2rem rgba(0, 0, 0, .55);
   }
   #network-note > div a { color: #f7931a; }
+  /* The red line and the control that makes the device fill the screen. The
+     control is an icon, so it costs the width of a thumb at the end of a line
+     the page was already drawing, instead of a row of its own under the device
+     on the one layout with no rows to spare. */
+  #warn-row {
+    display: flex; flex-wrap: nowrap; align-items: center; justify-content: center;
+    gap: .5rem; width: 100%;
+  }
+  /* The sentence is the part that can give way. Wrapping put the two controls
+     on a line of their own under it, which is a row of buttons floating in the
+     middle of the page pointing at nothing. */
+  #warn-row .warn { flex: 0 1 auto; min-width: 0; }
+  /* One line on a phone, with two 42 pixel controls beside it: the sentence is
+     six words and breaking it across two lines to keep a roomier box is the
+     wrong way round. Only while it is the short half -- on Mainnet it grows a
+     second sentence and is meant to take the room it needs. */
+  @media (max-width: 30rem) {
+    body:not(.mainnet) #warn-row .warn { font-size: .82em; padding: .45rem .6rem; }
+  }
+  #warn-row #about, #warn-row #fullscreen { flex: none; }
   footer {
     display: flex; flex-direction: column; align-items: center; gap: .8rem;
     width: 100%; margin-top: 1rem;
@@ -149,10 +363,106 @@
      for that with a permanently empty line above the device. Taking it out of
      the flow costs nothing either way: it says "loading python" over the band
      and the device has not moved because it was never below anything. */
+  /* On the screen, because that is where a device says what it is doing. It sat
+     under the shell, in the band, which is where the page says things about the
+     device: for forty seconds of boot the only thing on this page that was not
+     saying anything was the screen. Absolute inside the slot the wallet paints
+     into, so it scales and travels with the device, including into fullscreen,
+     and it is emptied the moment the wallet has something of its own to draw. */
+  /* The whole loading state: the pixel grid, the word, the clock, and under all
+     three the line saying which part of the boot is running. Over the screen
+     while it is loading and back in the flow the rest of the time, because the
+     one thing that outlives a load is a failure, and a failure is a paragraph
+     under the device rather than four words across the middle of it. */
+  #boot {
+    z-index: 3; pointer-events: none;
+    display: flex; flex-direction: column; align-items: center; gap: .3rem;
+    /* Said out loud because the shell zeroes it: .ssd-root carries line-height:0
+       so the drawn device has no inline gaps in it, and a paragraph that
+       inherits that is a paragraph with no height. */
+    line-height: 1.35;
+  }
+  #boot.loading {
+    position: absolute; left: 0; right: 0; top: 50%;
+    transform: translateY(-50%);
+  }
   #status {
-    margin: 0; text-align: center; pointer-events: none;
-    font-size: .68rem; letter-spacing: .06em; text-transform: uppercase;
-    color: #656c76;
+    margin: 0; text-align: center;
+    font-size: .82rem; letter-spacing: .05em; text-transform: uppercase;
+    color: #8b939e;
+  }
+  /* Three by three cells with a chevron of light driving right across them. The
+     cycle is shorter than the sweep, so two fronts are always in flight, which
+     is what makes a fifteen pixel wide thing read as working rather than as
+     blinking. Beside it the word, lit by a gradient sliding through it, and the
+     clock, in mono figures of a fixed width so the tenths do not shove the
+     seconds about ten times a second.
+
+     Hidden until the script says otherwise: a spinner and a clock stuck at zero
+     is worse than no spinner, and that is what a page whose script never ran
+     would be left holding.
+
+     The pattern, the timings and the shape of the clock are the pixel-grid
+     loader from Shane Levine's beautiful-ui, Dots variant, in this page's
+     palette. */
+  #boot-load {
+    display: none; align-items: center; justify-content: center;
+    gap: .45rem; margin: 0;
+  }
+  #boot.loading #boot-load { display: flex; }
+  #boot-pixels { display: grid; grid-template-columns: repeat(3, 4px); gap: 1.5px; }
+  #boot-pixels span {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: #e6eaef; opacity: .15;
+  }
+  #boot-label {
+    font-size: .82rem; font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase; color: #e6eaef;
+  }
+  #boot-elapsed {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .76rem; font-variant-numeric: tabular-nums; color: #767d87;
+  }
+  /* Nothing moves for anyone who asked for nothing to move: the grid stays at
+     its dim opacity and the word is simply lit. The clock still counts, because
+     how long this has taken is the one thing somebody waiting for it wants, and
+     a number changing is not motion in the sense being asked about. */
+  @media (prefers-reduced-motion: no-preference) {
+    #boot-pixels span { animation: pixel-on 650ms ease-in-out infinite; }
+    /* Column plus distance from the middle row, in 90ms steps: that is the
+       chevron. Written out per cell because a delay is the one thing a grid
+       cannot inherit. */
+    #boot-pixels span:nth-child(4) { animation-delay: 0ms; }
+    #boot-pixels span:nth-child(1),
+    #boot-pixels span:nth-child(5),
+    #boot-pixels span:nth-child(7) { animation-delay: 90ms; }
+    #boot-pixels span:nth-child(2),
+    #boot-pixels span:nth-child(6),
+    #boot-pixels span:nth-child(8) { animation-delay: 180ms; }
+    #boot-pixels span:nth-child(3),
+    #boot-pixels span:nth-child(9) { animation-delay: 270ms; }
+    #boot-label {
+      color: transparent;
+      background-image: linear-gradient(90deg, #8b939e 35%, #e6eaef 50%, #8b939e 65%);
+      background-size: 200% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      animation: shimmer-text 1.4s linear infinite;
+    }
+  }
+  @keyframes pixel-on {
+    0%, 100% { opacity: .15; }
+    18%, 42% { opacity: 1; }
+    62% { opacity: .15; }
+  }
+  @keyframes shimmer-text {
+    from { background-position: 150%; }
+    to { background-position: -50%; }
+  }
+  /* An error is not a caption: it is long, it wraps, and it has to be readable
+     rather than atmospheric, so it goes back under the device where there is
+     room for it. The script moves it; this is what it looks like once moved. */
+  #status.err {
+    position: static; inset: auto; text-align: center;
   }
   /* An empty one is not a gap. The band is a flex row, so a p with nothing in
      it would still claim its share of the gap and push the network label off
@@ -178,26 +488,72 @@
     justify-content: center; gap: .5rem;
   }
   h1 { font-size: 1.6rem; margin: 0; font-weight: 600; }
+  /* The page's one i, beside the one control it shares a line with, at the same
+     size. It was two i's at the top of a page whose whole explanation is one
+     panel, and both of them were thumbnail-sized next to a 42 pixel button. */
   #about > summary {
-    list-style: none; cursor: pointer; width: 1.35rem; height: 1.35rem;
+    list-style: none; cursor: pointer; width: 2.6rem; height: 2.6rem;
     border-radius: 50%; border: 1px solid #3a4048; color: #9aa3ae;
-    display: grid; place-items: center; font: italic 600 .85rem/1 serif;
+    display: grid; place-items: center; font: italic 600 1rem/1 serif;
+    position: relative; z-index: 91;
   }
+  #about[open] > summary { color: #f7931a; border-color: #f7931a; }
   #about > summary::-webkit-details-marker { display: none; }
   #about > summary:hover { color: #f7931a; border-color: #f7931a; }
-  #about > div {
-    position: absolute; left: 50%; transform: translateX(-50%); z-index: 10;
-    margin-top: .5rem; box-sizing: border-box;
-    width: min(46rem, calc(100vw - 2rem));
-    background: #12151a; border: 1px solid #2a2f36; border-radius: 10px;
-    padding: 1rem 1.25rem; font-size: .88rem; color: #b6bec8; text-align: left;
-    /* Bounded and scrolling itself. Unbounded it is long enough to cover the
-       device and the controls under it and swallow every click that lands on
-       them, which is exactly what it did the first time it was moved up here.
-       The script below closes it on a click outside or on Escape. */
-    max-height: min(70vh, 42rem); overflow: auto; overscroll-behavior: contain;
-    box-shadow: 0 1rem 2rem rgba(0, 0, 0, .55);
+  /* A page over the page. It used to hang off the icon and be bounded so it did
+     not swallow clicks meant for the device underneath; a panel that has to be
+     kept small enough not to break the page behind it is a panel negotiating
+     with the page behind it. This one covers everything and stops negotiating.
+     The i stays above it, because that is what closes it. */
+  /* The band the i sits on while the panel is scrolled.
+     The i has to stay reachable, because it is what closes this, and left to
+     itself it hovered over running text: scroll far enough and it lands in the
+     middle of a sentence. So the top of the screen is opaque down to where the
+     text begins, and lines disappear behind it rather than under it. Same
+     height as the padding below, from the same measurement. */
+  #about[open]::before {
+    content: ""; position: fixed; left: 0; right: 0; top: 0; z-index: 90;
+    height: var(--about-top, 5rem); background: #0b0c0e;
   }
+  #about > div {
+    position: fixed; inset: 0; z-index: 89; box-sizing: border-box;
+    background: #0b0c0e; color: #c3cad3; text-align: left;
+    /* Set to clear the i itself, in script, because where that icon sits depends
+       on whether the title above it has wrapped. It was a fixed 4.4rem, and on a
+       phone the icon is lower than that: the first paragraph ran under it. */
+    padding: var(--about-top, 5rem) 1.15rem 3rem;
+    overflow-y: auto; overscroll-behavior: contain;
+    /* Reading, not scanning: a line long enough to hold a thought and short
+       enough to find the next one, and the air to tell paragraphs apart. */
+    font-size: 1rem; line-height: 1.65;
+  }
+  /* One column down the middle. The margin shorthands below have to carry the
+     auto themselves: "margin: 0 0 1.15em" is a shorthand, so it reset the
+     margin-inline:auto this rule sets and left every paragraph against the left
+     edge of the screen while the build panel underneath stayed centred. */
+  #about > div > * { max-width: 34rem; margin-inline: auto; }
+  #about > div p { margin: 0 auto 1.15em; }
+  #about > div p strong { color: #e6eaef; }
+  #about > div ul { margin: 0 auto 1.15em; padding-left: 1.1rem; box-sizing: border-box; }
+  #about > div li { margin: 0 0 .6em; }
+  #about > div li strong { color: #e6eaef; }
+  /* The build half is the same column, not a panel of its own beside it. */
+  #about #build { max-width: 34rem; margin-inline: auto; }
+  /* Inside the demo's i, this stops being a panel of its own. One i holds
+     everything, so this one loses its icon and its full-screen positioning and
+     becomes the top of the other one's body. The element is moved whole rather
+     than taken apart, because every rule above is scoped to "#about > div" and
+     unpicking it would take this panel's typography with it. */
+  #about.folded > summary { display: none; }
+  #about.folded[open]::before { display: none; }
+  #about.folded > div {
+    position: static; inset: auto; z-index: auto; padding: 0 0 .2rem;
+    background: none; overflow: visible; font-size: .92rem; line-height: 1.6;
+  }
+  #about.folded > div > *, #about.folded #build { max-width: none; }
+  /* .note is a centred grey line where it came from and a paragraph here. The
+     class is carried for what it does on Mainnet, not for how it looked. */
+  #about .note { text-align: left; font-size: inherit; color: inherit; }
   #about > div a { color: #f7931a; }
   #about ul { padding-left: 1.1rem; }
   #about li { margin: .35rem 0; }
@@ -237,31 +593,48 @@
   /* The firmware control, in the card tray's idiom: a plain two-way switch and
      nothing shaped like a card or a slot, because this page says microSD is not
      emulated and a slot to push something into would promise otherwise. */
-  /* Wraps, because there are three of these now and a 360 pixel phone cannot
-     hold the label and all three on one line. Centred so a wrapped row does not
-     hang off to one side. */
+  /* One control, not three buttons. Three separate pills read as three things
+     to press, and on a phone they stack into three full-width boxes that look
+     like the two above them, so the page became a column of buttons that all
+     looked alike. Joined into a segmented group with the shared borders
+     collapsed: the shape itself says pick one of these, before the words are
+     read. Centred so a wrapped row does not hang off to one side. */
   #firmware-switch {
     display: flex; flex-wrap: wrap; justify-content: center;
-    align-items: center; gap: .35rem;
+    align-items: center; gap: 0;
   }
-  #firmware-switch .label { color: #7c848f; }
+  #firmware-switch .label { color: #7c848f; margin-right: .6rem; }
   #firmware-switch button {
     font: inherit; color: #8b939e; background: #1d2026; border: 1px solid #2a2e35;
-    border-radius: 5px; padding: .2rem .6rem; cursor: pointer;
+    border-radius: 0; padding: .2rem .6rem; cursor: pointer; margin-left: -1px;
   }
+  #firmware-switch button:first-of-type { margin-left: 0; border-radius: 5px 0 0 5px; }
+  #firmware-switch button:last-of-type { border-radius: 0 5px 5px 0; }
   #firmware-switch button:hover { color: #d7dbe0; border-color: #3a3f47; }
+  /* Which one is running, said by fill rather than by colour: the selected one
+     looks pressed in, which is what a segmented control says, and the page's
+     orange stays on the one control that does something. Raised, so its own
+     border is the one drawn over the pair it collapsed into. */
+  /* The one that is running, in the colour this page uses for the thing that is
+     live. Fill alone said "pressed in", which is a shade of grey against two
+     other shades of grey and reads as nothing at a glance on a phone. */
   #firmware-switch button[aria-pressed=true] {
-    color: #f7931a; border-color: #f7931a; background: #16181c; cursor: default;
+    color: #f7931a; background: #241a0c; border-color: #f7931a;
+    font-weight: 600; cursor: default; position: relative; z-index: 1;
   }
-  #firmware-switch button:focus-visible { outline: 2px solid #f7931a; outline-offset: 2px; }
-  /* Stacked on a phone. Three names and a label do not fit one line at 360px,
-     so they wrapped: two buttons on one row and the third alone under them,
-     which reads as a group of two and an afterthought rather than as three
-     choices. A column is three choices. Sized to the widest of them so the
-     edges line up, rather than each button being as wide as its own word. */
+  #firmware-switch button:focus-visible {
+    outline: 2px solid #f7931a; outline-offset: 2px; position: relative; z-index: 2;
+  }
+  /* Stacked on a phone. Four names and a label do not fit one line at 360px,
+     so they wrapped into a broken row. A column is four choices. Sized to the
+     widest of them so the edges line up, rather than each button being as
+     wide as its own word. */
   @media (max-width: 30rem) {
-    #firmware-switch { flex-direction: column; gap: .4rem; }
-    #firmware-switch button { width: 11rem; padding: .35rem .6rem; }
+    #firmware-switch { flex-direction: column; gap: 0; }
+    #firmware-switch .label { margin: 0 0 .35rem; }
+    #firmware-switch button { width: 12rem; padding: .35rem .6rem; margin: -1px 0 0; }
+    #firmware-switch button:first-of-type { margin-top: 0; border-radius: 5px 5px 0 0; }
+    #firmware-switch button:last-of-type { border-radius: 0 0 5px 5px; }
   }
   /* The build half of the panel: same voice and same column as the prose above
      it, set off only by its headings, because it is the end of one argument
@@ -373,11 +746,18 @@
      one press away rather than gone. Not the Fullscreen API, which an iPhone
      offers for nothing but a video, so it would work in the one place it is
      least needed. */
+  /* Off the screen but not out of the accessibility tree: a control whose whole
+     job is "turn the phone" says that in a drawn phone with a turn around it,
+     and the words beside it were the widest thing under the device. */
+  .offscreen {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+  }
   #fullscreen {
-    display: none; align-items: center; gap: .45rem;
+    display: none; align-items: center; gap: 0;
     font: inherit; font-size: .9em; color: #8b939e;
     background: #1d2026; border: 1px solid #2a2e35; border-radius: 5px;
-    padding: .35rem .8rem; cursor: pointer;
+    padding: .5rem .55rem; cursor: pointer;
   }
   /* Drawn in strokes that inherit the button's colour, so the icon changes with
      the label rather than needing a second rule per state. */
@@ -386,17 +766,20 @@
     fill: none; stroke: currentColor; stroke-width: 1.6;
     stroke-linecap: round; stroke-linejoin: round;
   }
-  /* Turned once it is on, so the icon says which way round the device now is
-     and the control reads as the way back rather than the way in again. */
-  #fullscreen[aria-pressed=true] svg { transform: rotate(90deg); }
   @media (prefers-reduced-motion: no-preference) {
-    #fullscreen svg { transition: transform .18s ease; }
+    #fullscreen svg path { transition: d .18s ease; }
   }
   #fullscreen:hover { color: #d7dbe0; border-color: #3a3f47; }
   #fullscreen[aria-pressed=true] { color: #f7931a; border-color: #f7931a; background: #16181c; }
   #fullscreen:focus-visible { outline: 2px solid #f7931a; outline-offset: 2px; }
+  /* Offered on a device that can be turned, and nowhere else. It used to be a
+     question of size alone, so a desktop window dragged narrow grew a control
+     that lays the device across the screen -- and a monitor does not turn, so
+     what that produced was a page on its side that nobody could read. Size and
+     a coarse pointer together: small enough to need it, and held rather than
+     sat in front of. */
   @media (max-width: 46rem), (max-height: 30rem) {
-    #fullscreen { display: inline-flex; }
+    body.touch #fullscreen { display: inline-flex; }
   }
   body.solo { overflow: hidden; }
   /* Filling the screen outranks pinning the device to the top of a scrolling
@@ -406,6 +789,12 @@
   body.solo #stage-device {
     position: static; z-index: auto; background: none;
   }
+  /* And the band with it, now that the way out of fullscreen lives on it. The
+     band carries z-index:4 so the network panel opens over the device, and a
+     z-index on a positioned element is a stacking context: the fixed control
+     inside it could climb to 60 and still be under a backdrop at 49, because
+     60 was being measured inside a box that ends at 4. */
+  body.solo #device-band { z-index: auto; }
   body.solo::before { content: ""; position: fixed; inset: 0; z-index: 49; background: #0b0c0e; }
   body.solo #device {
     position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 50;
@@ -419,12 +808,47 @@
   /* Upright phone: the same fit against swapped axes, because the shell is
      turned across it. */
   @media (orientation: portrait) {
-    body.solo #device {
+    body.touch.solo #device {
       transform: translate(-50%, -50%) rotate(90deg);
       width: min(100svh, calc(100svw * var(--ssd-aspect, 2))) !important;
     }
+    /* And everything floating over it turns with it. This is the hold where the
+       page is upright and the device is laid across it, so somebody using it has
+       turned the phone, and the page's own axes are not the ones they are
+       looking at. With the device rotated clockwise the map is:
+
+         page left edge   -> what they see as the bottom
+         page bottom edge -> their right
+         page right edge  -> their top
+         page top edge    -> their left
+
+       So a sheet that slides up from the page's bottom arrives from their right,
+       lying on its side, and the button that opens it sat in the page's
+       bottom-right corner, which is their top-right. Everything below is that
+       map applied: the sheet is a strip along the page's left edge that slides
+       in from it, and the button is in the page's bottom-left corner, which is
+       under their thumb at the bottom-right. */
+    body.touch.solo #controls, body.touch.solo #fullscreen { transform: rotate(90deg); }
+    /* Their top right is the page's bottom right in this hold, and two buttons
+       side by side to them are stacked up the page's right edge. */
+    body.touch.solo #fullscreen { top: auto; bottom: .5rem; right: .5rem; }
+    body.touch.solo #controls { top: auto; bottom: .5rem; left: .5rem; right: auto; }
+    body.touch.solo #sheet {
+      top: 0; bottom: auto; left: 0; right: auto;
+      width: 100svh; max-height: 62svw;
+      padding: 1rem .9rem;
+      border-radius: 0 0 14px 14px;
+      box-shadow: 0 -1rem 2rem rgba(0, 0, 0, .55);
+      transform-origin: 0 0;
+      /* Rotated about the top-left corner, which lays it down the page's left
+         edge with its own top facing the page's right -- upright, to them. Off
+         the screen until it is asked for: rotated alone it sits just past the
+         left edge, and the translate along its own y is what brings it in. */
+      transform: rotate(90deg);
+    }
+    body.touch.solo.sheet-open #sheet { transform: rotate(90deg) translateY(-100%); }
   }
-  body.solo #fullscreen { position: fixed; z-index: 60; top: .4rem; right: .4rem; }
+  body.solo #fullscreen { position: fixed; z-index: 62; top: .5rem; right: .5rem; }
   @media (max-width: 30rem) {
     body { padding: 1rem .75rem; gap: .75rem; }
     h1 { font-size: 1.3rem; }
@@ -438,6 +862,8 @@
 <body>
   <header>
     <h1>SeedSigner wallet simulator</h1>
+
+
     <!-- One panel, not two.
 
          It used to be split: an "i" that said what the simulator is, and a
@@ -451,73 +877,46 @@
          The rows below the prose are filled in from wallet-<firmware>.build-info.json,
          which the build writes beside the zip from the pins it built from, except
          the received hash, which comes from the worker. -->
-    <details id="about">
+
+  
+  
+  </header>
+  <!-- The short half is always up. A real seed typed while the device is on
+       Testnet is the same seed, and its mainnet keys are compromised the moment
+       it is entered, so the sentence that says not to type one is not a mainnet
+       sentence. What mainnet adds is the rest: this page then holds the correct
+       mainnet keys, and there is no secure element under them. One line either
+       way; the long form of both is behind the i at the top. -->
+  <!-- The one line of red, and beside it the way to make the device fill the
+       screen. The control was under the device on a row of its own, which is the
+       one screen with no row to spare; it is an icon now, so it fits at the end
+       of a line that was already there. -->
+  <div id="warn-row">
+  <!-- One sentence. "Use a throwaway test seed" was the same instruction the
+       first half already gives, and it was the second line of red on a phone. -->
+  <p class="warn" id="warning"><strong>Never enter a real seed
+  phrase</strong><span class="mainnet-only"
+  id="warning-mainnet">. On Mainnet this page holds the real mainnet keys for
+  whatever you give it, with no secure element under them: treat anything typed
+  in as public.</span></p>
+      <!-- Only offered where it is any use: on a phone, where the page around the
+           device is what is making the device small. -->
+  <details id="about">
       <summary aria-label="About this simulator" title="About this simulator">i</summary>
       <div>
+        <!-- class=note, so it goes when the device is put on Mainnet: it is a
+             sentence about being on a test network, and it stops being true the
+             moment somebody changes that in the device's own Settings. -->
+        <p><strong>Never treat this as secure.</strong> Not on a phone, and not
+        on an airgapped laptop with the network unplugged. Making device firmware
+        run in a browser took a great deal of custom wiring, any of which could
+        have introduced a critical bug. Treat every key it shows as public and
+        never enter a seed phrase you rely on.</p>
+
         <p><strong>This is device firmware, not a re-creation of it.</strong> The
-        actual Python that runs on a SeedSigner runs here, executed by Pyodide
-        (CPython compiled to WebAssembly) in a Web Worker. The wallet's own code
-        is untouched: nothing in it is patched, and the pinned release it is built
-        from is rebuilt below rather than pasted in. Two builds are on offer,
-        stock SeedSigner and the 3rdIteration smartcard fork, and the control
-        under the device says which is running and switches between them.</p>
-
-        <p>What a browser cannot provide is replaced at the four points where the
-        firmware reaches for hardware, and each is replaced from outside it:</p>
-        <ul>
-          <li><strong>Display:</strong> the device's own driver renders the frames
-          and hands them to the page, which paints them at its native 320&times;240,
-          pixel for pixel.</li>
-          <li><strong>Buttons:</strong> the worker sits blocked inside the wallet's
-          main loop and can never answer a message, so keys cross on a
-          SharedArrayBuffer and wake it with Atomics.</li>
-          <li><strong>Camera:</strong> your webcam, through getUserMedia. SeedSigner
-          reads QR codes with pyzbar, a C library with no WebAssembly build, so the
-          decode happens in the browser and the bytes reach the unmodified decoder
-          exactly as pyzbar would have returned them.</li>
-          <li id="about-smartcard"><strong>Smartcard:</strong> simulated SeedKeeper
-          and Satochip cards answering real APDUs, because browsers have no
-          smartcard API at all. The fork only; stock has no card code to answer.</li>
-        </ul>
-
-        <p><strong>Driving it.</strong> Click the device's own buttons, or use the
-        keyboard: the arrows move, Enter selects, and 1, 2 and 3 are the three
-        side buttons.</p>
-
-        <p><strong>Nothing leaves your browser.</strong> The wallet has no network
-        of any kind, and this page's content security policy names exactly one
-        other origin it may reach: <code>signet.bitsaga.be</code>, the faucet and
-        chain endpoints of Bitsaga Signet, which nothing asks anything until you
-        open the simulator wallet or start the multisig tutorial.</p>
-
-        <p><strong>That one origin is mine.</strong> Bitsaga Signet is a Bitcoin
-        test network I run, and it exists so that the simulator wallet and the
-        multisig tutorial can finish:</p>
-        <ul>
-          <li><strong>What it is:</strong> a signet with Testnet address prefixes,
-          a faucet, and a block every thirty seconds, so a wallet can be funded and
-          a spend can be watched into a block in about a minute rather than
-          whenever a public test network gets round to it. Its coins exist only
-          there, cannot be sold or sent to anyone, and are worth nothing.</li>
-          <li><strong>What this page asks it:</strong> only the two things a browser
-          cannot do for itself, which are seeing the chain and reaching the network.
-          The wallet is built, the addresses derived, the PSBT assembled and the
-          transaction finalised here in the tab; Signet is asked for the faucet
-          payment, for what a list of addresses holds, for whether a transaction
-          has made it into a block, and to relay the finished one. No key, xpub
-          or descriptor is ever sent to it, and the device's own firmware never
-          talks to it at all.</li>
-        </ul>
-
-        <p><strong>It is still a simulator</strong>, running in a tab on an
-        ordinary computer, with no secure element and no air gap. Treat every key
-        it shows as public and never type a seed phrase you rely on. Mainnet works
-        here exactly as it does on hardware, and that is the danger rather than a
-        feature: on Mainnet this page derives the real mainnet account keys and
-        produces valid mainnet signatures. It sits in the device's own Settings
-        and Advanced menus where it always has, neither hidden nor recommended,
-        and the multisig tutorial has no use for it, because Bitsaga Signet does
-        the whole thing.</p>
+        Python that runs on a SeedSigner runs here, under Pyodide (CPython
+        compiled to WebAssembly). Nothing in the wallet is patched, and the
+        release it is built from is rebuilt below.</p>
 
         <div id="build">
           <h3>What is running</h3>
@@ -558,22 +957,51 @@
           <a href="https://github.com/bitsagarob/seedsigner-simulator" rel="noopener">source</a> ·
           <a href="https://github.com/bitsagarob/seedsigner-simulator/releases/latest" rel="noopener">latest release</a> ·
           <a href="https://github.com/bitsagarob/doomsigner" rel="noopener">device images</a> ·
-          <a href="https://github.com/bitsagarob/doomsigner" rel="noopener">DoomSigner</a></p>
+          <a href="?doom">DOOM on it</a></p>
         </div>
+
+        <p>Four things a browser cannot do, replaced from outside the firmware
+        and never inside it:</p>
+        <ul>
+          <li><strong>Display:</strong> the device's own driver renders the
+          frames; the page paints them at 320&times;240, pixel for pixel.</li>
+          <li><strong>Buttons:</strong> the worker is blocked inside the wallet's
+          main loop, so keys cross on a SharedArrayBuffer.</li>
+          <li><strong>Camera:</strong> your webcam. pyzbar has no WebAssembly
+          build, so decoding happens in the browser and reaches the unmodified
+          decoder unchanged.</li>
+          <li id="about-smartcard"><strong>Smartcard:</strong> simulated SeedKeeper
+          and Satochip cards answering real APDUs.</li>
+        </ul>
+
+        <p><strong>Driving it.</strong> Press the drawn buttons, or the
+        keyboard: arrows move, Enter selects, 1 to 3 are the side buttons.</p>
+
+        <p><strong>Nothing leaves your browser.</strong> The wallet has no
+        network at all, and this page may reach one origin:
+        <a href="/signet">signet.bitsaga.be</a>.</p>
+
+        <p class="note"><strong>That origin is mine.</strong> Bitsaga Signet is a
+        test network I run, asked only to see the chain and relay a transaction.
+        No key, xpub or descriptor is ever sent to it, and the firmware never
+        talks to it at all.</p>
       </div>
     </details>
-  </header>
-  <!-- The short half is always up. A real seed typed while the device is on
-       Testnet is the same seed, and its mainnet keys are compromised the moment
-       it is entered, so the sentence that says not to type one is not a mainnet
-       sentence. What mainnet adds is the rest: this page then holds the correct
-       mainnet keys, and there is no secure element under them. One line either
-       way; the long form of both is behind the i at the top. -->
-  <p class="warn" id="warning"><strong>Never enter a seed phrase you rely
-  on.</strong> Use a throwaway test seed.<span class="mainnet-only"
-  id="warning-mainnet"> On Mainnet this page holds the real mainnet keys for
-  whatever you give it, with no secure element under them: treat anything typed
-  in as public.</span></p>
+      <button type="button" id="fullscreen" aria-pressed="false">
+        <!-- Four corners pushed outwards, which is what this does: it gives the
+             device the whole viewport. It used to draw a phone being turned,
+             and that was a promise it does not keep -- turning the phone on its
+             own leaves you on the ordinary page in landscape, with the device
+             half off the bottom of it. The arrows come back in when it is on. -->
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path id="fs-tl" d="M4 9.5V4h5.5"></path>
+          <path id="fs-tr" d="M20 9.5V4h-5.5"></path>
+          <path id="fs-bl" d="M4 14.5V20h5.5"></path>
+          <path id="fs-br" d="M20 14.5V20h-5.5"></path>
+        </svg>
+        <span id="fullscreen-label" class="offscreen">Fill the screen</span>
+      </button>
+  </div>
   <!-- The device, and the tutorial that drives it, and nothing between them.
        Everything else the page has to say sits in the footer under both: the
        warning, the switch, what is running and what it is. Earlier this page put
@@ -593,20 +1021,22 @@
            alone in the corner up there, where it was a word nobody connected
            to anything. -->
       <div id="device-band">
-        <p id="status">starting…</p>
-      <!-- The network, and the one paragraph that is about the network, behind an
-           i in front of it. The paragraph used to sit in the footer, where it
-           explained the label at the top of the page from the bottom of it. -->
-      <div id="network-line">
-        <details class="note" id="network-note">
-          <summary aria-label="About this network" title="About this network">i</summary>
-          <div>This is a simulator, and it starts on Testnet, so you can use it
-          with <a href="/signet">Bitsaga Signet</a>, my own test network. These
-          are not real bitcoin. They exist only on that test network, cannot be
-          sold or sent to anyone, and are worth nothing.</div>
-        </details>
-        <p id="network"></p>
-      </div>
+        <!-- What the device is doing while it boots: the loader and the clock on
+             one line, and under them the stage the boot has actually reached.
+             The clock is the part that was missing: forty seconds of Pyodide on
+             a laptop is minutes of it on a phone, and a caption changing four
+             times in that window cannot say whether the wait is normal. It ships
+             at zero and the script starts it. -->
+        <div id="boot">
+          <p id="boot-load">
+            <span id="boot-pixels" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>
+            <span id="boot-label">Loading</span>
+            <span id="boot-elapsed">0.0s</span>
+          </p>
+          <p id="status">starting…</p>
+        </div>
+
+
       </div>
       <!-- What the side buttons are for while the device is playing DOOM, and
            why the wallet is not up. Filled in by the boot below and emptied
@@ -616,22 +1046,30 @@
            camera has gone quiet. Filled in by the camera channel and emptied
            again the moment frames come back. -->
       <p id="camera-hint"></p>
-      <!-- Only offered where it is any use: on a phone, where the page around the
-           device is what is making the device small. -->
-      <!-- The icon is a phone with a turn around it, because that is what the
-           control does on a phone held upright: the shell is laid along the
-           viewport's long side, so it rotates and the page goes away. Inline,
-           since the page's own CSP allows nothing external, and aria-hidden
-           because the label beside it already says it. -->
-      <button type="button" id="fullscreen" aria-pressed="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <rect x="8.5" y="2.5" width="7" height="13" rx="1.6"></rect>
-          <path d="M4.6 12.4a7.6 7.6 0 0 0 7 9.1"></path>
-          <path d="M4.2 16.3l.4-3.9 3.7 1.2"></path>
-        </svg>
-        <span id="fullscreen-label">Fill the screen</span>
-      </button>
+
+
+    <!-- What opens the wallet, under the device it talks to. It used to be the
+         first thing in the footer, which was fine until the footer was pinned to
+         the bottom of the screen: the one action on this page then sat a
+         screenful away from the thing it acts on. -->
+    <div id="wallet-open-slot">
+      <!-- Which network the device is on, beside the wallet it is about to talk
+           to. It sat under the page title, which is the one place on the page
+           where nothing else is about state: a visitor reads TESTNET when they
+           are deciding whether to trust what the wallet is showing them, and
+           that decision happens here. -->
+      <div id="network-line">
+        <p id="network"></p>
+      </div>
     </div>
+    </div>
+    <!-- The phase, the step and the line saying what is happening. On a phone
+         this sits under the device, because the two have to be read against each
+         other and the panel is the other half of the viewport. On a wide screen
+         it goes to the top of the column the panel is in, where it reads as the
+         heading of the thing it is describing rather than a caption under the
+         device. Same element either way; the stage decides where it lands. -->
+    <div id="device-say"></div>
     <!-- Either one button, or, once it has been pressed, the tutorial itself.
          Nothing else is added to the page at rest. -->
     <div id="tutorial-slot"></div>
@@ -644,7 +1082,6 @@
        the device rather than something found by accident at the edge of the
        screen. Filled in by wallet-coordinator.js, and left empty on a page that
        never starts one. -->
-  <div id="wallet-open-slot"></div>
   <div class="running-row">
     <div id="firmware-switch" role="group" aria-label="Firmware">
       <span class="label">Firmware</span>
@@ -659,19 +1096,37 @@
        repository is not left advertising a shop its host does not run. -->
   <div id="getone" hidden>
     <p>Everything above is a simulation of
-      <a id="getone-link" href="https://shop.bitsaga.be/bitcoin-products/"
-         target="_blank" rel="noopener">hardware you can buy</a>.</p>
+      <a id="getone-link" href="/shop/">hardware you can buy</a>.</p>
   </div>
   </footer>
+
+<!-- Filling the screen used to mean losing everything else: the firmware row
+     and the wallet are hidden while the device is the page, so reaching either
+     meant coming back out first. One control brings them back, and only in that
+     mode, which keeps the device as big as it can be and still leaves the two
+     things a visitor might want to change one press away.
+
+     The way out is not in here. It stays in its own corner, because a control
+     that fills the screen and then hides the way back is a trap, and on a phone
+     it is a trap with no Escape key. -->
+<button type="button" id="controls" aria-expanded="false" aria-controls="sheet">
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M4 7h11"></path><path d="M19 7h1"></path>
+    <path d="M4 17h5"></path><path d="M13 17h7"></path>
+    <circle cx="17" cy="7" r="2"></circle><circle cx="11" cy="17" r="2"></circle>
+  </svg>
+  <span class="offscreen">Controls</span>
+</button>
+<div id="sheet" role="group" aria-label="Controls"></div>
 
 <script src="seedsigner-device.js"></script>
 <script src="wallet-camera.js"></script>
 <script src="wallet-cards.js"></script>
 <script src="qr-encode.js"></script>
 <script src="ur-decode.js"></script>
-<script src="signet-coordinator.js"></script>
+<script src="signet-coordinator.js?doom4"></script>
 <script src="wallet-tutorial.js"></script>
-<script src="wallet-coordinator.js"></script>
+<script src="wallet-coordinator.js?doom4"></script>
 <script src="wallet-track.js"></script>
 <!-- What the device boots into, and the wallet behind it. doom-run.js is DOOM
      and is a placeholder until it is built; doom-boot.js is the boot itself and
@@ -695,6 +1150,8 @@ const track = window.Track || { event() {}, screen() {}, milestone() {} };
 // Tracing is off unless asked for. It narrates every screen, thread and key to
 // the console, which is what the tests read, but it is noise for anyone else.
 const DEBUG = new URLSearchParams(location.search).has("debug");
+// Automated browser tests (?e2e=1): skip DOOM, shorten waits, expose panel hooks.
+const E2E = new URLSearchParams(location.search).has("e2e");
 
 // Which firmware to run. Two are built: "stock" is SeedSigner as its own
 // project publishes it, and it is the default because it is much the lighter
@@ -717,12 +1174,25 @@ const DEBUG = new URLSearchParams(location.search).has("debug");
 //
 // Checked against the list rather than interpolated, so the URL cannot name a
 // file to fetch.
-const FIRMWARES = ["stock", "smartcard"];
+const FIRMWARES = ["stock", "smartcard", "doomsigner"];
 const search = new URLSearchParams(location.search);
-const asked = search.get("firmware");
+const BITCOIN_NETWORK = search.get("network") === "mainnet" ? "M" : "T";
+// Old ?firmware=spreceive links land on Doomsigner, which is where silent
+// payments live now. There is no separate receive firmware.
+const askedRaw = search.get("firmware");
+const asked = askedRaw === "spreceive" ? "doomsigner" : askedRaw;
 const FORK_ASKED_FOR = search.has("doom") || search.get("tutorial") !== null;
 const FIRMWARE = FIRMWARES.includes(asked) ? asked
                : (FORK_ASKED_FOR ? "smartcard" : FIRMWARES[0]);
+const SMARTCARD = FIRMWARE === "smartcard" || FIRMWARE === "doomsigner";
+function walletZipKind(firmware) {
+  // Was `doomsigner -> smartcard`: this firmware had no zip of its own and
+  // borrowed ShieldSigner's, then had silent payments patched on at runtime.
+  // It has its own now, built from bitsagarob/seedsigner like the other two are
+  // built from their upstreams, so the mapping is the identity and this function
+  // survives only to say that it used not to be.
+  return firmware;
+}
 
 // The multisig tutorial. It drives the device, the cards and the camera, so it
 // needs a wallet that has just booted and three cards nobody has touched, which
@@ -748,22 +1218,26 @@ document.body.classList.toggle("paired", TUTORIAL);
 
 // The game, when it is asked for.
 //
-// The device itself boots into DOOM and hides the wallet behind the unlock,
-// which is the whole joke on hardware and is wrong here. This page is called a
-// wallet simulator, it is linked as "open the simulator", and it is measured on
-// whether people reach the wallet. Booting a game by default puts a puzzle in
-// front of the thing everybody came for, and the ones who do not solve it leave
-// thinking that was the product.
-//
-// So DOOM is a door you can open rather than one you have to get through, and
-// the firmware row is where it is opened. ?wallet and ?tutorial stay working and
-// now mean nothing extra, since the wallet is what happens anyway; they are kept
-// because deep links carrying them are already out there and in the suite.
+// ShieldSigner and SeedSigner skip DOOM unless ?doom is on the URL. This page
+// is a wallet simulator; putting a puzzle in front of the wallet on those two
+// is the wrong default. Doomsigner is the other way around: the firmware is
+// the game with a wallet behind it, so it always boots into DOOM. ?wallet does
+// not skip it there. The unlock is five taps on the top of the three side
+// buttons (key 1). Up steers in DOOM, so it cannot be the unlock.
 //
 // Presence is the request, as with ?debug: there is nothing to spell wrong.
 const DOOM_ASKED = new URLSearchParams(location.search).has("doom");
 const WALLET_ASKED = new URLSearchParams(location.search).has("wallet");
-const SKIP_DOOM = !DOOM_ASKED || WALLET_ASKED || TUTORIAL_ASKED !== null;
+// Doomsigner is the game. It always boots into DOOM. ?wallet does not skip
+// it, because that is the firmware, not a gimmick on top of a wallet.
+const SKIP_DOOM = FIRMWARE === "doomsigner"
+  ? E2E
+  : (!DOOM_ASKED || WALLET_ASKED || TUTORIAL_ASKED !== null);
+// The top of the three side buttons (key 1). Up steers in DOOM, so it cannot
+// be the unlock without stealing movement. Five of the same key, both ways.
+const DOOM_UNLOCK = ["key1", "key1", "key1", "key1", "key1"];
+const DOOM_HINT_IN = "Five taps on the top side button open the wallet. Five more bring Doom back.";
+const DOOM_HINT_OUT = "Five taps on the top side button bring DOOM back.";
 
 // How the page names each firmware, on the switch and in the sentence inside
 // the details panel. The switch carries the name each build calls itself --
@@ -785,6 +1259,19 @@ const FIRMWARE_INFO = {
     panel: "SeedSigner as its own project publishes it, which is what a plain " +
            "device runs",
   },
+  doomsigner: {
+    button: "Doomsigner",
+    says: "Running Doomsigner: the ShieldSigner wallet with BIP-352 silent " +
+          "payments built in, behind DOOM. Five taps on the top side button open " +
+          "the wallet; five more bring the game back. A published test seed is " +
+          "already loaded (fingerprint 24c323b5). Seeds > 24c323b5 > Silent payments.",
+    panel: "our fork of the 3rdIteration smartcard fork, adding BIP-352 silent " +
+           "payments, with DOOM in front. This is the same wallet the DoomSigner " +
+           "device image is built from, so the browser runs what the device runs. " +
+           "Five taps on the top side button cycle the game and the wallet. The " +
+           "in-memory seed is earthdiver's first published test vector from " +
+           "SeedSigner #769, fingerprint 24c323b5",
+  },
 };
 
 let W = 320, H = 240;  // corrected by the worker once the renderer exists
@@ -792,9 +1279,56 @@ const canvas = document.getElementById("screen");
 const deviceEl = document.getElementById("device");
 const ctx = canvas.getContext("2d");
 const statusEl = document.getElementById("status");
+// Where the status goes when it stops being a caption and becomes a paragraph.
+const deviceBand = document.getElementById("device-band");
 const doomHint = document.getElementById("doom-hint");
 const cameraHint = document.getElementById("camera-hint");
 const networkEl = document.getElementById("network");
+
+// The loader, the clock, and what decides whether either is up. All three hang
+// off the status line rather than off the boot messages, because every path that
+// loads something -- Pyodide, the wallet zip, DOOM, the wallet again after an
+// unlock -- already says so through this one paragraph, and the only two things
+// that end a load either empty it or mark it an error. So there is nothing to
+// keep in step: watch the paragraph, and the pixels and the clock follow it.
+const bootEl = document.getElementById("boot");
+const elapsedEl = document.getElementById("boot-elapsed");
+let loadingFrom = 0, loadingTick = 0;
+// Tenths, and minutes once there are any: a boot that takes three of them says
+// "2m 26.4s", because "146.4s" is a number nobody can feel.
+function elapsedText(ms) {
+  const total = ms / 1000;
+  if (total < 60) return total.toFixed(1) + "s";
+  return Math.floor(total / 60) + "m " + (total % 60).toFixed(1) + "s";
+}
+// Read off the clock rather than counted in ticks: a background tab has its
+// intervals throttled to one a second, and a counted timer would come back from
+// a switched-away phone claiming the boot took a fraction of what it did.
+function showElapsed() {
+  elapsedEl.textContent = elapsedText(performance.now() - loadingFrom);
+}
+function watchStatus() {
+  const loading = statusEl.parentNode === bootEl
+                  && statusEl.textContent !== "" && statusEl.className !== "err";
+  bootEl.classList.toggle("loading", loading);
+  if (loading === !!loadingTick) return;
+  if (loading) {
+    // From now, not from page load: after an unlock the wait that matters is the
+    // wallet's, and the minutes somebody spent in DOOM first are not part of it.
+    loadingFrom = performance.now();
+    showElapsed();
+    loadingTick = setInterval(showElapsed, 100);
+  } else {
+    clearInterval(loadingTick);
+    loadingTick = 0;
+  }
+}
+// A status change is one assignment or several in the same turn -- the failure
+// path sets the text, moves the paragraph and marks it -- and the observer is
+// handed all of them as a single batch, so no intermediate state is ever drawn.
+new MutationObserver(watchStatus).observe(statusEl,
+  { childList: true, characterData: true, subtree: true, attributes: true });
+watchStatus();  // the page ships with "starting…" in it, which nothing mutated
 
 // The shop link in the footer, on the one host that has a shop behind it.
 // Matomo counts an outbound click by itself, having link tracking on; the event
@@ -851,34 +1385,24 @@ for (const panel of document.querySelectorAll("header > details, #network-note")
 
 // Say which firmware this is, in words, in the details panel.
 document.getElementById("firmware-line").textContent = FIRMWARE_INFO[FIRMWARE].says;
-if (FIRMWARE !== "smartcard") document.getElementById("about-smartcard").remove();
+if (!SMARTCARD) document.getElementById("about-smartcard").remove();
 
 // The switch. Changing firmware reloads rather than swapping anything: the
 // worker is inside Python for the life of the page, so there is no unpacking a
 // different wallet underneath it, and the URL is the only thing that carries
 // the choice anyway.
-// Three to choose from, and one of them is not a firmware in the sense the other
-// two are. DoomSigner runs the same smartcard wallet ShieldSigner does; what it
-// changes is what boots first, because the game lives in the OS rather than in
-// the wallet. Putting it in this row anyway is a decision about what a visitor
-// is actually choosing between, which is three things you could flash to a
-// device, not three Python packages. What the row must not do is go on claiming
-// DOOM is running after the unlock has handed the device over: press 1, 2, 3 and
-// the row moves to ShieldSigner, because that is then the truth.
+//
+// Three to choose from. Doomsigner is our own fork of the ShieldSigner fork,
+// adding BIP-352 silent payments, with DOOM in front; five taps on the top side
+// button cycle the two. The other two land on a wallet. Silent payments live
+// only on Doomsigner.
 const CHOICES = [
-  { id: "doom", label: "DoomSigner", firmware: "smartcard", doom: true },
-  { id: "smartcard", label: "ShieldSigner", firmware: "smartcard", doom: false },
-  { id: "stock", label: "SeedSigner", firmware: "stock", doom: false },
+  { id: "doomsigner", label: "Doomsigner", firmware: "doomsigner" },
+  { id: "smartcard", label: "ShieldSigner", firmware: "smartcard" },
+  { id: "stock", label: "SeedSigner", firmware: "stock" },
 ];
 
-// What is running right now, rather than what the URL asked for. The URL cannot
-// answer this on its own: it says what the page was asked to boot, and after the
-// unlock that is no longer what is on the device.
-let walletHasTheDevice = false;
-
 function chosenNow() {
-  if (!walletHasTheDevice && !SKIP_DOOM && window.DoomBoot
-      && FIRMWARE === "smartcard") return "doom";
   return FIRMWARE;
 }
 
@@ -900,20 +1424,18 @@ for (const choice of CHOICES) {
     track.event("page", "firmware-switch", choice.id);
     const params = new URLSearchParams(location.search);
     params.set("firmware", choice.firmware);
-    // wallet=1 is what skips the game, so choosing DoomSigner is choosing not
-    // to skip it. Deleted rather than set to nothing, so the URL stays clean.
-    if (choice.doom) { params.set("doom", "1"); params.delete("wallet"); }
-    else { params.delete("doom"); params.set("wallet", "1"); }
+    params.delete("doom");
+    if (choice.firmware === "doomsigner") {
+      // The game is the firmware. Dropping wallet lets it boot.
+      params.delete("wallet");
+    } else {
+      params.set("wallet", "1");
+    }
     location.search = params.toString();  // sets it and reloads
   });
   switchEl.appendChild(button);
 }
 paintSwitch();
-// The unlock is the moment DoomSigner stops being what is running.
-addEventListener("seedsigner:wallet-starting", () => {
-  walletHasTheDevice = true;
-  paintSwitch();
-});
 
 // The details panel. Everything in it that describes the build is read out of
 // wallet-<firmware>.build-info.json, which build/build-wallet-zip.sh writes
@@ -993,7 +1515,7 @@ function fillPanel(info) {
 // rather than showing an empty box.
 showVerdict();
 
-fetch(`wallet-${FIRMWARE}.build-info.json`)
+fetch(`wallet-${walletZipKind(FIRMWARE)}.build-info.json`)
   .then((response) => {
     if (!response.ok) throw new Error(response.status + " " + response.statusText);
     return response.json();
@@ -1020,7 +1542,7 @@ const cameraBuffer = CameraChannel.createBuffer();
 // Smartcard fork only. Stock SeedSigner has no card code, so a tray under it
 // would be a control for something that does not exist, and no buffer is
 // allocated to carry what it would have said.
-const cardBuffer = FIRMWARE === "smartcard" ? CardTray.createBuffer() : null;
+const cardBuffer = SMARTCARD ? CardTray.createBuffer() : null;
 
 // An index into BUTTON_NAMES on the Python side. This fork identifies
 // buttons by name rather than GPIO number, and the shared buffer carries ints.
@@ -1030,14 +1552,52 @@ const KEYMAP = {
 };
 
 function sendKey(channel) {
+  // Shown on the shell as well as sent, whoever sent it. The wallet reads this
+  // as a GPIO edge and the screen changes; which of the eight keys caused it was
+  // only ever visible when a finger was on the drawn one, which left both the
+  // tutorial's two hundred presses and every keyboard press unaccounted for.
+  // Guarded on the method, not just the object: these are two files, and a
+  // browser can hold a fresh copy of this page against a cached copy of the
+  // shell that has never heard of press. That happened, and it took the whole
+  // walkthrough down with it. A press nobody can see is a cosmetic loss; a
+  // TypeError here stops the device being driven at all.
+  if (shell && shell.press) shell.press(channel);
   Atomics.store(keyBuffer, 1, channel);
   Atomics.store(keyBuffer, 0, 1);
   Atomics.notify(keyBuffer, 0);
 }
 
+// What the companion panel calls when it presses the device for you. It must
+// go through pressKey, not sendKey alone: pressKey is the one path that knows
+// whether DOOM or the wallet holds the device. sendKey only writes the buffer.
+function devicePress(channel) {
+  pressKey(channel);
+}
+
 // The same eight channels the other way round, for the name a press is counted
 // under. KEYMAP cannot be inverted into this: it has two spellings of select.
 const KEY_NAMES = [null, "up", "down", "left", "right", "select", "key1", "key2", "key3"];
+
+// Which of the two is holding the panel, so wallet frames cannot paint over
+// DOOM and a second five-tap does not construct a second worker.
+let holder = "none";
+let walletStarted = false;
+let lastWalletFrame = null;
+let walletCycleProgress = 0;
+
+function feedWalletCycle(name) {
+  if (FIRMWARE !== "doomsigner" || holder !== "wallet") return false;
+  if (name === DOOM_UNLOCK[walletCycleProgress]) {
+    walletCycleProgress += 1;
+    if (walletCycleProgress === DOOM_UNLOCK.length) {
+      walletCycleProgress = 0;
+      return true;
+    }
+    return false;
+  }
+  walletCycleProgress = name === DOOM_UNLOCK[0] ? 1 : 0;
+  return false;
+}
 
 // A press somebody made, whether they clicked the key or typed it. Counted
 // after the wallet has already been woken, so the worker is never waiting on
@@ -1053,16 +1613,23 @@ const KEY_NAMES = [null, "up", "down", "left", "right", "select", "key1", "key2"
 // and no release at all.
 function pressKey(channel, down) {
   if (window.DoomBoot && DoomBoot.key(channel, down)) return;
-  // The wallet knows only presses: it reads GPIO edges going down and there is
-  // no message that means a button came back up.
   if (down === false) return;
+  const name = KEY_NAMES[channel] || "";
+  if (feedWalletCycle(name)) {
+    track.event("page", "doom", "relock");
+    startDoom();
+    return;
+  }
   sendKey(channel);
-  track.event("device", "key", KEY_NAMES[channel] || String(channel));
+  track.event("device", "key", name || String(channel));
 }
 
 // Rebuilt only when the worker reports a screen the current art was not sized
 // for, because rebuilding detaches the canvas the wallet is painting into.
 let deviceScreen = "";
+// The shell that is on the page right now, kept so a press nobody made can be
+// shown on it. Reset by every rebuild, which is why it is not a const.
+let shell = null;
 function mountDevice(width, height) {
   const size = width + "x" + height;
   if (deviceScreen === size) return;
@@ -1073,6 +1640,12 @@ function mountDevice(width, height) {
     card: false,         // the tray below is what says whether a card is in
   });
   device.screen.appendChild(canvas);
+  // The loading state rides with the screen. Moved rather than copied, and moved
+  // on every rebuild, because a rebuild makes a new slot and leaves the old one
+  // holding it. Not once it has failed: the failure has already been pulled out
+  // of here and put under the device, where there is room to read it.
+  if (statusEl && statusEl.className !== "err") device.screen.appendChild(bootEl);
+  shell = device;
 }
 
 function paint(bytes) {
@@ -1100,25 +1673,129 @@ mountDevice(W, H);
 // Escape, comes back out.
 const fullscreenButton = document.getElementById("fullscreen");
 const fullscreenLabel = document.getElementById("fullscreen-label");
-function setSolo(on) {
+
+// The sheet holds the page's own controls while the page is not there. They are
+// moved rather than copied: the firmware row and the wallet are live objects
+// with listeners and state on them, and a second set of either would be a
+// second answer to "which firmware is running". Where each came from is
+// remembered so leaving fullscreen puts the page back exactly as it was.
+const controlsButton = document.getElementById("controls");
+const sheet = document.getElementById("sheet");
+const lent = [];
+function lendToSheet(on) {
+  if (on === (lent.length > 0)) return;
+  if (on) {
+    for (const node of [document.querySelector(".running-row"),
+                        document.getElementById("wallet-open-slot"),
+                        document.getElementById("wallet-slot")]) {
+      if (!node) continue;
+      lent.push([node, node.parentNode, node.nextSibling]);
+      sheet.appendChild(node);
+    }
+    return;
+  }
+  while (lent.length) {
+    const [node, parent, next] = lent.pop();
+    parent.insertBefore(node, next);
+  }
+}
+function setSheet(open) {
+  document.body.classList.toggle("sheet-open", open);
+  controlsButton.setAttribute("aria-expanded", String(open));
+  if (open) track.event("page", "sheet", "open");
+}
+// Where the page's i actually is, so what it opens can start below it. The
+// title above it wraps on a narrow screen, which moves it, so this is measured
+// when it opens rather than guessed once in the stylesheet.
+const aboutPanel = document.getElementById("about");
+if (aboutPanel) {
+  aboutPanel.addEventListener("toggle", () => {
+    if (!aboutPanel.open) return;
+    const icon = aboutPanel.querySelector("summary").getBoundingClientRect();
+    // On the details rather than on the panel: the band that goes behind the
+    // icon is drawn by the details' own ::before and needs the same number.
+    aboutPanel.style.setProperty("--about-top", Math.round(icon.bottom + 20) + "px");
+  });
+}
+
+controlsButton.addEventListener("click", () => {
+  setSheet(!document.body.classList.contains("sheet-open"));
+  controlsButton.blur();
+});
+
+function setSolo(on, why) {
   // Only when it moves. Escape calls this on every press, solo or not, and a
   // page that counted those would report the device being put away by people
-  // who were dismissing a panel.
+  // who were dismissing a panel. Counted apart when the phone did it rather
+  // than a finger, or turning a phone would read as everybody loving a button.
   if (document.body.classList.contains("solo") !== on) {
-    track.event("page", "fullscreen", on ? "on" : "off");
+    track.event("page", why === "turn" ? "fullscreen-turn" : "fullscreen",
+                on ? "on" : "off");
   }
   document.body.classList.toggle("solo", on);
+  // The controls go into the sheet for as long as fullscreen lasts, and the
+  // sheet itself starts closed every time: arriving in fullscreen behind a
+  // panel is arriving at the thing fullscreen exists to avoid.
+  lendToSheet(on);
+  if (!on) setSheet(false);
   fullscreenButton.setAttribute("aria-pressed", String(on));
-  // The label only, so the icon beside it survives being relabelled.
+  // The same four corners, pointing the other way: out is "make this bigger",
+  // in is "put it back". One icon that changes rather than two that swap.
+  const corners = on
+    ? { "fs-tl": "M9.5 4v5.5H4", "fs-tr": "M14.5 4v5.5H20",
+        "fs-bl": "M9.5 20v-5.5H4", "fs-br": "M14.5 20v-5.5H20" }
+    : { "fs-tl": "M4 9.5V4h5.5", "fs-tr": "M20 9.5V4h-5.5",
+        "fs-bl": "M4 14.5V20h5.5", "fs-br": "M20 14.5V20h-5.5" };
+  for (const [id, d] of Object.entries(corners)) {
+    document.getElementById(id).setAttribute("d", d);
+  }
+  // The label only, so the icon beside it survives being relabelled. It is off
+  // the screen rather than gone: it is still the button's accessible name, and
+  // the title is the same words for a mouse hovering over a lone icon.
   fullscreenLabel.textContent = on ? "Back to the page" : "Fill the screen";
+  fullscreenButton.title = fullscreenLabel.textContent;
 }
+// Set once at the start as well as on every change: the title is the only thing
+// a mouse has to go on now that the words are off the screen, and setSolo is
+// only reached by somebody who has already pressed the thing.
+fullscreenButton.title = fullscreenLabel.textContent;
 fullscreenButton.addEventListener("click", () => {
+  // Pressed by hand: whatever happens next, the turn does not get to undo it.
+  soloByTurn = false;
   setSolo(!document.body.classList.contains("solo"));
   // The wallet reads the keyboard off the document, so focus goes back to it.
   fullscreenButton.blur();
 });
+// A phone turned on its side is asking for the device to fill the screen.
+//
+// That is the whole of what turning it used to get you: the ordinary page in
+// landscape, the device half off the bottom of it, and a control to press to fix
+// that. The turn is the request; pressing something afterwards is the tax.
+//
+// Only where a screen can be turned, and only at phone proportions -- a tablet
+// on its side has room for the page. Coming back upright undoes it, but only if
+// the turn is what caused it: somebody who pressed the control themselves keeps
+// what they asked for.
+const canTurn = matchMedia("(pointer: coarse)").matches
+             || navigator.maxTouchPoints > 0;
+if (canTurn) document.body.classList.add("touch");
+const sideways = matchMedia("(orientation: landscape) and (max-height: 30rem)");
+let soloByTurn = false;
+function followTheTurn(turned) {
+  if (!canTurn) return;
+  const solo = document.body.classList.contains("solo");
+  if (turned && !solo) { soloByTurn = true; setSolo(true, "turn"); }
+  else if (!turned && solo && soloByTurn) { soloByTurn = false; setSolo(false, "turn"); }
+}
+sideways.addEventListener("change", (event) => followTheTurn(event.matches));
+followTheTurn(sideways.matches);
+
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") setSolo(false);
+  if (event.key !== "Escape") return;
+  // The sheet first: Escape dismisses the thing in front, and putting the
+  // device away from under an open panel skips a step nobody asked to skip.
+  if (document.body.classList.contains("sheet-open")) { setSheet(false); return; }
+  setSolo(false);
 });
 
 // Set once the tutorial is mounted, and only then. Everything that talks to it
@@ -1228,10 +1905,22 @@ function narrate(message) {
 // booting CPython in WebAssembly that used to be the first thing this page did
 // to everybody, including the people who never pressed a key.
 function startWallet() {
-  // Said out loud, because more than one thing on the page cares that the game
-  // is over: the firmware row stops claiming DoomSigner is what is running.
+  holder = "wallet";
+  walletCycleProgress = 0;
+  doomHint.textContent = FIRMWARE === "doomsigner" ? DOOM_HINT_OUT : "";
+  if (walletStarted) {
+    if (lastWalletFrame) paint(lastWalletFrame);
+    statusEl.textContent = "";
+    statusEl.className = "ready";
+    return;
+  }
+  walletStarted = true;
+  // Said out loud so anything on the page that cares the game is over can hear
+  // it. Nothing listens today: the firmware row used to, back when DoomSigner
+  // was one of its marks. Kept because it is the only announcement of that
+  // moment and it costs a line.
   dispatchEvent(new Event("seedsigner:wallet-starting"));
-  const worker = new Worker("wallet-worker.js");
+  const worker = new Worker("wallet-worker.js?doom2");
 
   worker.onmessage = (event) => {
     const { type } = event.data;
@@ -1242,6 +1931,8 @@ function startWallet() {
       // percentages, so both stay registered at any viewport width.
       mountDevice(W, H);
     } else if (type === "frame") {
+      lastWalletFrame = event.data.frame;
+      if (holder !== "wallet") return;
       paint(event.data.frame);
       if (statusEl.className !== "ready") {
         statusEl.textContent = "";
@@ -1290,7 +1981,9 @@ function startWallet() {
       document.body.classList.toggle("mainnet", event.data.mainnet);
     } else if (type === "error") {
       statusEl.textContent = "failed: " + event.data.message;
-      statusEl.className = "err";
+      deviceBand.appendChild(statusEl);
+      deviceBand.appendChild(statusEl);
+  statusEl.className = "err";
       // The message is the label, so the Events report lists the actual
       // failures by name rather than only counting them.
       track.event("boot", "failed", event.data.message,
@@ -1313,9 +2006,49 @@ function startWallet() {
 
   const slot = document.getElementById("tutorial-slot");
   if (TUTORIAL) {
+    // The tray comes up into the device's own column for the duration. It is
+    // one tray, moved rather than copied: it is a live thing reading the shared
+    // buffer, and a second one would be a second answer to which card is in.
+    const trayEl = document.getElementById("cardtray");
+    if (trayEl) document.getElementById("stage-device").appendChild(trayEl);
     tutorial = WalletTutorial.mount({
-      container: slot, sendKey, keymap: KEYMAP, tray, screen: canvas,
+      container: slot, sendKey: devicePress, keymap: KEYMAP, tray, screen: canvas,
+      // What is happening now goes under the device; the machinery stays in the
+      // panel. Two glances rather than one ping-pong for six minutes.
+      sayInto: document.getElementById("device-say"),
+      // ?tutorial=hands is what the end of a run offers: the same ceremony with
+      // the visitor pressing the buttons. It reloads rather than carrying on,
+      // because a device that has just finished is not one this starts from.
+      // ?tutorial=hands is what the end of a run offers, ?tutorial=play is what
+      // Begin again reloads into: both come back already running, because the
+      // alternative is a page that looks like it merely refreshed.
+      mode: TUTORIAL_ASKED === "hands" ? "hands"
+          : (TUTORIAL_ASKED === "play" ? "self" : null),
     });
+    // The demo's i goes up beside the warning, in front of the control that
+    // fills the screen: it is the page's "what is all this" and the two other
+    // i's are already at the top. It floats what it opens rather than expanding
+    // in place, or a list of keys and hashes would push the device down.
+    const warnRow = document.getElementById("warn-row");
+    const about = document.getElementById("about");
+    if (warnRow && tutorial.fold) {
+      tutorial.fold.classList.add("floating");
+      warnRow.insertBefore(tutorial.fold, document.getElementById("fullscreen"));
+      // One i, and everything behind it. This used to hide the page's own about
+      // panel, which took the security warning and the build provenance off the
+      // one page whose whole argument is that you can check it. So it is moved
+      // into the demo's i instead of being hidden, whole and still open, losing
+      // only the icon it no longer needs.
+      if (about && tutorial.foldBody) {
+        about.classList.add("folded");
+        about.open = true;
+        tutorial.foldBody.insertBefore(about, tutorial.foldBody.firstChild);
+      } else if (about) {
+        about.hidden = true;
+      }
+    } else if (about) {
+      about.hidden = true;
+    }
   } else if (TUTORIAL_OFFERED) {
     WalletTutorial.offer(slot);
   }
@@ -1325,6 +2058,7 @@ function startWallet() {
   if (!TUTORIAL && window.WalletCoordinator) {
     wallet = WalletCoordinator.mount({
       container: document.getElementById("wallet-slot"), screen: canvas,
+      sendKey: devicePress, keymap: KEYMAP,
     });
   }
 
@@ -1336,6 +2070,40 @@ function startWallet() {
   worker.postMessage({
     type: "init", sharedBuffer: shared, cameraBuffer, cardBuffer,
     width: W, height: H, debug: true, firmware: FIRMWARE,
+    bitcoinNetwork: BITCOIN_NETWORK,
+  });
+}
+
+function startDoom() {
+  holder = "doom";
+  if (!window.DoomBoot) {
+    startWallet();
+    return;
+  }
+  const doomsigner = FIRMWARE === "doomsigner";
+  doomHint.textContent = doomsigner
+    ? DOOM_HINT_IN
+    : "The three side buttons open the wallet: press 1, then 2, then 3.";
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  statusEl.textContent = "";
+  DoomBoot.boot({
+    sequence: doomsigner ? DOOM_UNLOCK : ["key1", "key2", "key3"],
+    width: W, height: H, paint,
+    status(message) { statusEl.textContent = message; },
+    onUnlock() {
+      track.event("page", "doom", "unlock");
+      doomHint.textContent = "";
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!walletStarted) statusEl.textContent = "starting…";
+      startWallet();
+    },
+    onUnavailable(reason) {
+      track.event("page", "doom", "unavailable");
+      doomHint.textContent = "DOOM is not available here (" + reason
+                           + "), so the wallet is starting instead.";
+      if (!walletStarted) statusEl.textContent = "starting…";
+      startWallet();
+    },
   });
 }
 
@@ -1381,40 +2149,13 @@ if (!window.crossOriginIsolated) {
   document.addEventListener("keydown", keyEvent);
   document.addEventListener("keyup", keyEvent);
 
-  // Which of the two the device boots into. DOOM unless the URL asked past it,
-  // and the wallet anyway if the game is not built into this copy of the page.
+  // Which of the two the device boots into. Doomsigner always starts in DOOM.
+  // The other two start the wallet unless ?doom asked for the game, and the
+  // wallet anyway if the game is not built into this copy of the page.
   if (SKIP_DOOM || !window.DoomBoot) {
     startWallet();
   } else {
-    doomHint.textContent = "The three side buttons open the wallet: press 1, then 2, then 3.";
-    DoomBoot.boot({
-      width: W, height: H, paint,
-      status(message) { statusEl.textContent = message; },
-
-      // The sequence, spelled. DOOM has already stopped by the time this is
-      // called, so the wallet gets a panel nothing else is drawing on.
-      onUnlock() {
-        track.event("page", "doom", "unlock");
-        doomHint.textContent = "";
-        // Black, rather than DOOM's last frame frozen under a line saying the
-        // wallet is starting. The device is booting into something else, and
-        // this is what a device doing that looks like.
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        statusEl.textContent = "starting…";
-        startWallet();
-      },
-
-      // Said, and left up. This is a fault rather than a mode: the page is
-      // meant to boot into a game and could not, and whoever deployed it should
-      // be able to see that from the page instead of from a console.
-      onUnavailable(reason) {
-        track.event("page", "doom", "unavailable");
-        doomHint.textContent = "DOOM is not available here (" + reason
-                             + "), so the wallet is starting instead.";
-        statusEl.textContent = "starting…";
-        startWallet();
-      },
-    });
+    startDoom();
   }
 }
 </script>

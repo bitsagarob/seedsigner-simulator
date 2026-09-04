@@ -82,6 +82,9 @@
     var onTrouble = (options && options.onTrouble) || function () {};
     var stream = null;
     var video = null;
+    // A canvas standing in for the camera, when the page handed one over rather
+    // than a stream. Exactly one of this and video is ever set.
+    var still = null;
     var capture = null;
     var preview = null;
     var decoder = null;
@@ -131,6 +134,7 @@
         stream.getTracks().forEach(function (track) { track.stop(); });
         stream = null;
       }
+      still = null;
       if (video) {
         video.srcObject = null;
         video = null;
@@ -271,6 +275,23 @@
       // reason the last one failed.
       Atomics.store(hdr, ERR_LEN, 0);
       return open().then(function (opened) {
+        // A canvas, handed over directly rather than as a MediaStream.
+        //
+        // The substitutes on this page are all canvases: the tutorial's picture
+        // for the device to photograph, the wallet panel's QR held up for it to
+        // scan. Turning one into a stream needs canvas.captureStream, which
+        // Safari does not have, and the tutorial called it unguarded: on an
+        // iPhone the call threw, this layer reported that it could not open a
+        // camera, and the device put up Hardware Error while the page advised
+        // allowing a camera nobody had asked for. Nothing needed a stream in the
+        // first place. drawImage takes a canvas exactly as it takes a video, so
+        // the canvas is the frame source and there is no video element at all.
+        if (opened && typeof opened.getContext === "function") {
+          still = opened;
+          stream = null;
+          video = null;
+          return null;
+        }
         stream = opened;
         video = document.createElement("video");
         video.playsInline = true;
@@ -280,6 +301,7 @@
         video.srcObject = stream;
         return video.play();
       }).then(function () {
+        if (still) return null;
         return new Promise(function (resolve) {
           if (video.videoWidth) return resolve();
           video.addEventListener("loadedmetadata", function () { resolve(); }, { once: true });
@@ -294,7 +316,7 @@
         // when a scan misbehaves on someone else's browser, so it is behind the
         // same ?debug=1 as everything else rather than always on.
         if (new URLSearchParams(location.search).has("debug")) {
-          console.log("[cam] " + video.videoWidth + "x" + video.videoHeight +
+          console.log("[cam] " + frameW() + "x" + frameH() +
                       " decoding with " + decoder.name);
         }
         // The stall clock starts here rather than when the camera was asked
@@ -305,8 +327,13 @@
       }).catch(fail);
     }
 
+    // Whichever of the two is in play, and how big it is. drawImage takes either.
+    function frameSource() { return still || video; }
+    function frameW() { return still ? still.width : (video ? video.videoWidth : 0); }
+    function frameH() { return still ? still.height : (video ? video.videoHeight : 0); }
+
     function publishFrame() {
-      preview.ctx.drawImage(video, 0, 0, PREVIEW_W, PREVIEW_H);
+      preview.ctx.drawImage(frameSource(), 0, 0, PREVIEW_W, PREVIEW_H);
       var rgba = preview.ctx.getImageData(0, 0, PREVIEW_W, PREVIEW_H).data;
       var rgb = new Uint8Array(sab, FRAME_OFFSET, PREVIEW_W * PREVIEW_H * 3);
       for (var src = 0, dst = 0; src < rgba.length; src += 4, dst += 3) {
@@ -340,7 +367,7 @@
       var state = Atomics.load(hdr, STATE);
       if (state === STATES.IDLE) return start();
       if (state !== STATES.RUNNING) return Promise.resolve();
-      if (!video || !video.videoWidth) return Promise.resolve();
+      if (!frameSource() || !frameW()) return Promise.resolve();
 
       publishFrame();
 
@@ -348,7 +375,7 @@
       // only overwrite it, and it is the same QR anyway.
       if (Atomics.load(hdr, QR_LEN) !== 0) return Promise.resolve();
 
-      capture.ctx.drawImage(video, 0, 0, CAPTURE_W, CAPTURE_H);
+      capture.ctx.drawImage(frameSource(), 0, 0, CAPTURE_W, CAPTURE_H);
       var imageData = capture.ctx.getImageData(0, 0, CAPTURE_W, CAPTURE_H);
       return decoder.read(capture.canvas, imageData).then(function (payload) {
         if (payload && payload.length) publishPayload(payload);
