@@ -115,8 +115,15 @@ jobs:
             #
             # Every other test in the suite still runs here, including the
             # silent payments ones, which are the point of this leg.
+            # test_bip85_gpg.py is ignored for the same reason
+            # test_smartcard_hardware.py is: on this newer tree it reaches a
+            # gpg_views path that imports pysatochip, which needs real pyscard.
+            # pyscard is a compiled PC/SC binding that the build table
+            # deliberately leaves out, and src/smartcard/ shadows it with a fake
+            # in the browser but must not stand in for it here.
             pytest_args: >-
               --ignore=tests/test_smartcard_hardware.py
+              --ignore=tests/test_bip85_gpg.py
               --ignore=tests/test_psbt_refusal_screens.py
               --ignore=tests/test_psbt_test_suite.py
             src_on_path: ''
