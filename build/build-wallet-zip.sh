@@ -381,6 +381,7 @@ pypi|ndef|ndeflib|0.3.3|https://files.pythonhosted.org/packages/c9/80/bbc9a4818c
 pypi|OpenSSL|pyOpenSSL|25.1.0|https://files.pythonhosted.org/packages/80/28/2659c02301b9500751f8d42f9a6632e1508aa5120de5e43042b8b30f8d5d/pyopenssl-25.1.0-py3-none-any.whl|2b11f239acc47ac2e5aca04fd7fa829800aeee22a2eb30d744572a157bd8a1ab|.
 pypi|pyaes|pyaes|1.6.1|https://files.pythonhosted.org/packages/44/66/2c17bae31c906613795711fc78045c285048168919ace2220daa372c7d72/pyaes-1.6.1.tar.gz|02c1b1405c38d3c370b085fb952dd8bea3fadcee6411ad99f312cc129c536d8f|pyaes-1.6.1
 pypi|pyasn1|pyasn1|0.6.2|https://files.pythonhosted.org/packages/44/b5/a96872e5184f354da9c84ae119971a0a4c221fe9b27a4d94bd43f2596727/pyasn1-0.6.2-py3-none-any.whl|1eb26d860996a18e9b6ed05e7aae0e9fc21619fcee6af91cca9bad4fbea224bf|.
+git|pydnssec_prover|pydnssec-prover|df72b67f5585c4cfae779ca833db3c5c9304f625|https://github.com/bitsagarob/pydnssec-prover.git|df72b67f5585c4cfae779ca833db3c5c9304f625|src
 pypi|qrcode|qrcode|7.3.1|https://files.pythonhosted.org/packages/94/9f/31f33cdf3cf8f98e64c42582fb82f39ca718264df61957f28b0bbb09b134/qrcode-7.3.1.tar.gz|375a6ff240ca9bd41adc070428b5dfc1dcfbb0f2507f1ac848f6cded38956578|qrcode-7.3.1
 pypi|shamir_mnemonic|shamir-mnemonic|0.3.0|https://files.pythonhosted.org/packages/1d/38/2124e565afe40993949dbc89da6c654a2c9a1b24dd80039812ef7cdbaef3/shamir_mnemonic-0.3.0-py3-none-any.whl|188c6b5bd00d5e756e12e2b186c3cb7c98ff7ff44df608d4c1d2077f6b6e730f|.
 pypi|six.py|six|1.17.0|https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl|4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274|.
@@ -406,6 +407,7 @@ EXPECTED_TOP_LEVEL=(
     pgpy
     pyaes
     pyasn1
+    pydnssec_prover
     pygp
     pysatochip
     qrcode
