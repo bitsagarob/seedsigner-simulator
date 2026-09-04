@@ -78,7 +78,11 @@ async function boot(width, height) {
   //
   // numpy is never reachable: decode_qr imports it inside a try that starts with
   // "import cv2", and opencv is not in this list, so np is None either way.
-  const smartcard = firmware === "smartcard" || firmware === "doomsigner";
+  // doomsigner-musig is Doomsigner plus MuSig2 and is still the smartcard fork,
+  // so it needs the stand-in card packages. Only the zip name differs, which is
+  // the one thing below that keeps using `firmware` itself.
+  const base = firmware === "doomsigner-musig" ? "doomsigner" : firmware;
+  const smartcard = base === "smartcard" || base === "doomsigner";
   await pyodide.loadPackage(smartcard
     ? ["Pillow", "pycryptodome", "cryptography"]
     : ["Pillow", "pycryptodome"]);

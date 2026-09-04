@@ -1174,9 +1174,18 @@ const E2E = new URLSearchParams(location.search).has("e2e");
 //
 // Checked against the list rather than interpolated, so the URL cannot name a
 // file to fetch.
-const FIRMWARES = ["stock", "smartcard", "doomsigner"];
+// doomsigner-musig is reachable by URL and is deliberately absent from CHOICES
+// below, so it has no button and nobody arrives at it by accident. It is a
+// MuSig2 work-in-progress: a spend it signs is not a spend the other three can
+// finish, and putting it in the row would offer that to every visitor.
+const FIRMWARES = ["stock", "smartcard", "doomsigner", "doomsigner-musig"];
 const search = new URLSearchParams(location.search);
-const BITCOIN_NETWORK = search.get("network") === "mainnet" ? "M" : "T";
+// Regtest joins mainnet and testnet because a MuSig2 spend has to be driven
+// against a node that will actually relay it, and the only such node here is a
+// throwaway regtest one. A wrong network is not cosmetic: the review screen
+// renders the destination with the wrong prefix and the demo shows a lie.
+const BITCOIN_NETWORK = search.get("network") === "mainnet" ? "M"
+                      : search.get("network") === "regtest" ? "R" : "T";
 // Old ?firmware=spreceive links land on Doomsigner, which is where silent
 // payments live now. There is no separate receive firmware.
 const askedRaw = search.get("firmware");
@@ -1184,7 +1193,18 @@ const asked = askedRaw === "spreceive" ? "doomsigner" : askedRaw;
 const FORK_ASKED_FOR = search.has("doom") || search.get("tutorial") !== null;
 const FIRMWARE = FIRMWARES.includes(asked) ? asked
                : (FORK_ASKED_FOR ? "smartcard" : FIRMWARES[0]);
-const SMARTCARD = FIRMWARE === "smartcard" || FIRMWARE === "doomsigner";
+// doomsigner-musig is Doomsigner plus MuSig2, so every question except "which
+// zip" wants Doomsigner's answer. Asking about FIRMWARE directly is what made
+// the first attempt boot into a wallet with no simulated card at all, which
+// fails during import and leaves a blank screen with nothing on the console
+// that names the cause.
+const BASE_FIRMWARE = FIRMWARE === "doomsigner-musig" ? "doomsigner" : FIRMWARE;
+// Which firmware actually loaded, readable from outside. A driver that asks the
+// URL is asking what it requested, not what it got, and FIRMWARES silently
+// substitutes the default for a name it does not know -- so a test can pass
+// against the wrong wallet entirely and say nothing.
+window.__firmware = FIRMWARE;
+const SMARTCARD = BASE_FIRMWARE === "smartcard" || BASE_FIRMWARE === "doomsigner";
 function walletZipKind(firmware) {
   // Was `doomsigner -> smartcard`: this firmware had no zip of its own and
   // borrowed ShieldSigner's, then had silent payments patched on at runtime.
@@ -1230,7 +1250,7 @@ const DOOM_ASKED = new URLSearchParams(location.search).has("doom");
 const WALLET_ASKED = new URLSearchParams(location.search).has("wallet");
 // Doomsigner is the game. It always boots into DOOM. ?wallet does not skip
 // it, because that is the firmware, not a gimmick on top of a wallet.
-const SKIP_DOOM = FIRMWARE === "doomsigner"
+const SKIP_DOOM = BASE_FIRMWARE === "doomsigner"
   ? E2E
   : (!DOOM_ASKED || WALLET_ASKED || TUTORIAL_ASKED !== null);
 // The top of the three side buttons (key 1). Up steers in DOOM, so it cannot
@@ -1384,7 +1404,7 @@ for (const panel of document.querySelectorAll("header > details, #network-note")
 }
 
 // Say which firmware this is, in words, in the details panel.
-document.getElementById("firmware-line").textContent = FIRMWARE_INFO[FIRMWARE].says;
+document.getElementById("firmware-line").textContent = FIRMWARE_INFO[BASE_FIRMWARE].says;
 if (!SMARTCARD) document.getElementById("about-smartcard").remove();
 
 // The switch. Changing firmware reloads rather than swapping anything: the
@@ -1586,7 +1606,7 @@ let lastWalletFrame = null;
 let walletCycleProgress = 0;
 
 function feedWalletCycle(name) {
-  if (FIRMWARE !== "doomsigner" || holder !== "wallet") return false;
+  if (BASE_FIRMWARE !== "doomsigner" || holder !== "wallet") return false;
   if (name === DOOM_UNLOCK[walletCycleProgress]) {
     walletCycleProgress += 1;
     if (walletCycleProgress === DOOM_UNLOCK.length) {
@@ -1907,7 +1927,7 @@ function narrate(message) {
 function startWallet() {
   holder = "wallet";
   walletCycleProgress = 0;
-  doomHint.textContent = FIRMWARE === "doomsigner" ? DOOM_HINT_OUT : "";
+  doomHint.textContent = BASE_FIRMWARE === "doomsigner" ? DOOM_HINT_OUT : "";
   if (walletStarted) {
     if (lastWalletFrame) paint(lastWalletFrame);
     statusEl.textContent = "";
@@ -2080,7 +2100,7 @@ function startDoom() {
     startWallet();
     return;
   }
-  const doomsigner = FIRMWARE === "doomsigner";
+  const doomsigner = BASE_FIRMWARE === "doomsigner";
   doomHint.textContent = doomsigner
     ? DOOM_HINT_IN
     : "The three side buttons open the wallet: press 1, then 2, then 3.";
