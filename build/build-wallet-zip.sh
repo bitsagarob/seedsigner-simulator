@@ -176,13 +176,7 @@ fi
 # a wallet that cannot import.
 
 case "${FIRMWARE}" in
-smartcard|doomsigner)
-
-# doomsigner shares this table because it IS the smartcard fork, plus silent
-# payments. The single difference is applied as one delta after the table rather
-# than by copying sixty near-identical lines: a reader can see the whole of what
-# differs in one place, which is the same reason stock has its own list instead
-# of being expressed as this one minus a few rows.
+smartcard)
 
 # Deliberately NOT in this table, and why:
 #
@@ -267,18 +261,136 @@ git|specter_card|specter-card|06dcde629cdc1057934b434afc46d822c2d2425d|https://g
 git|urtypes|urtypes|7fb280eab3b3563dfc57d2733b0bf5cbc0a96a6a|https://github.com/selfcustody/urtypes.git|7fb280eab3b3563dfc57d2733b0bf5cbc0a96a6a|src
 DEPS
 
-# The one row doomsigner changes: embit from notTanveer's BIP-352 branch
-# (embit#145) instead of the 0.8.0 release, at the same commit the app fork pins
-# in requirements.txt and the device image pins in Buildroot. All three have to
-# agree or the simulator runs code the device does not.
+EXPECTED_TOP_LEVEL=(
+    LICENSE.md
+    OpenSSL
+    base58
+    certifi
+    ecdsa
+    embit
+    licenses
+    main.py
+    mnemonic
+    ndef
+    pgpy
+    pyaes
+    pyasn1
+    pygp
+    pysatochip
+    qrcode
+    seedsigner
+    shamir_mnemonic
+    six.py
+    smartcard
+    specter_card
+    typing_extensions.py
+    urtypes
+)
+
+# The simulated smartcards, shadowing pyscard's `smartcard` module. Nothing in
+# stock imports it, so only this firmware stages it. Rows are
+# source:name-in-the-zip:what the licences manifest should call it.
+STAGE_PACKAGES=(
+    "${REPO_ROOT}/src/smartcard:smartcard:fake card, not pyscard"
+)
+
+;;
+doomsigner)
+
+# Our own fork of the fork above. Every row is the smartcard table's, with one
+# exception, and the table is written out in full rather than expressed as a
+# delta for the same reason stock's is: a reader can check it line by line, and
+# the workflow that re-runs upstream's tests reads exactly one table per
+# firmware out of this file. A mechanism that computed this list would have to
+# be understood before either could be trusted.
 #
-# No prebuilt libsecp256k1 comes with it, and that costs nothing here: a browser
-# cannot load an ARM or x86 shared object anyway, so embit uses its pure-Python
-# backend in Pyodide exactly as it already did with the 0.8.0 sdist.
-if [ "${FIRMWARE}" = "doomsigner" ]; then
-    DEPENDENCIES="$(printf '%s\n' "${DEPENDENCIES}" | grep -v '^pypi|embit|')
-git|embit|embit-silent-payments|533cd850f5f4d4f52c21dc1abae18133d98e394e|https://github.com/notTanveer/embit.git|533cd850f5f4d4f52c21dc1abae18133d98e394e|src"
-fi
+# The one row that differs is embit: notTanveer's BIP-352 branch (embit#145) by
+# commit, not the 0.8.0 release. That same commit is pinned by the app fork's
+# requirements.txt and by the device image's Buildroot package, and all three
+# have to agree or the simulator runs code the device does not.
+
+# Deliberately NOT in this table, and why:
+#
+#   Pillow, pycryptodomex, cryptography, cffi, pycparser
+#       Compiled extensions. Pyodide builds and ships its own; the worker asks
+#       for them with loadPackage() at boot (see src/web/wallet-worker.js).
+#       Putting pure-Python stand-ins in the zip would shadow the real ones.
+#       pycryptodomex is not separately available -- the worker aliases the
+#       Cryptodome namespace onto Pyodide's pycryptodome.
+#   pyscard
+#       A C extension binding PC/SC. This is one of the four hardware seams:
+#       src/smartcard/ in this repo deliberately shadows it with a fake card.
+#   pyzbar
+#       Binds libzbar. This fork's decode_qr.py imports it inside a try/except
+#       and sets it to None, so nothing has to stand in for it here; QR decoding
+#       happens in JavaScript (jsQR) instead. Stock imports it unguarded, which
+#       is why the stock table below does have to ship a stand-in.
+#   smbus2, periphery
+#       I2C and GPIO. There is no /dev/i2c in a browser. battery_hat.py guards
+#       both imports, so leaving them out is what makes the simulator correctly
+#       report "no battery HAT" rather than fail later trying to talk to one.
+#   colorama
+#       Upstream marks it Windows-only.
+#
+# certifi IS included even though nothing in a browser opens a TLS socket,
+# because pysatochip imports it at module scope and would fail to import
+# without it.
+#
+# Two entries are not in upstream's requirements.txt at all but are imported by
+# the wallet, so they are pinned here and flagged in THIRD-PARTY.md:
+#
+#   base58     not imported directly; bip38.py uses embit's own base58
+#              submodule. Shipped because upstream's environment provides it
+#   mnemonic   imported by seedsigner/views/seed_views.py and smartcard_views.py
+#
+# ecdsa needs six, which upstream pins but the earlier hand-assembled tree was
+# missing; it is pinned here at upstream's version.
+#
+# pysatochip is the one row whose pin is deliberately NOT the one in upstream's
+# requirements.txt, because the device does not use that file. requirements.txt
+# asks PyPI for pysatochip==0.17.0; the SeedSigner OS image builds
+# 3rdIteration/pysatochip from GitHub at the tag 0.6a through buildroot, and
+# then deletes requirements.txt from the rootfs. Both are in seedsigner-os at
+# the tag whose name matches this firmware's, SeSi-0.8.7+ShSi-B11:
+#
+#   opt/external-packages/python-pysatochip/python-pysatochip.mk
+#       PYTHON_PYSATOCHIP_VERSION = 0.6a
+#       PYTHON_PYSATOCHIP_SITE = $(call github,3rdIteration,pysatochip,...)
+#   opt/pi0-smartcard/configs/pi0-smartcard_defconfig
+#       BR2_PACKAGE_PYTHON_PYSATOCHIP=y
+#   opt/build.sh
+#       rm -rf ${rootfs_overlay}/opt/requirements.txt
+#
+# The two are not the same code. That GitHub tag calls itself pysatochip 0.17.4
+# in its own version.py, four revisions past the newest release on PyPI, and one
+# of those revisions is "correct handling of Password, Descriptor and Data
+# secret types in seedkeeper export": its SEEDKEEPER_DIC_TYPE has
+# 0xC1: 'Descriptor' and PyPI 0.17.0 has no entry for that type at all. Shipping
+# the PyPI one gave this simulator a descriptor failure that does not exist on
+# the device, which is precisely the kind of lie a simulator must not tell. So
+# the row below is the tag, pinned by commit like every other git row here.
+# Stock has no card code and no pysatochip, so none of this touches its build.
+
+read -r -d '' DEPENDENCIES <<'DEPS' || true
+pypi|base58|base58|2.1.1|https://files.pythonhosted.org/packages/4a/45/ec96b29162a402fc4c1c5512d114d7b3787b9d1c2ec241d9568b4816ee23/base58-2.1.1-py3-none-any.whl|11a36f4d3ce51dfc1043f3218591ac4eb1ceb172919cebe05b52a5bcc8d245c2|.
+pypi|certifi|certifi|2025.7.14|https://files.pythonhosted.org/packages/4f/52/34c6cf5bb9285074dc3531c437b3919e825d976fde097a7a73f79e726d03/certifi-2025.7.14-py3-none-any.whl|6b31f564a415d79ee77df69d757bb49a5bb53bd9f756cbbe24394ffd6fc1f4b2|.
+pypi|ecdsa|ecdsa|0.19.1|https://files.pythonhosted.org/packages/cb/a3/460c57f094a4a165c84a1341c373b0a4f5ec6ac244b998d5021aade89b77/ecdsa-0.19.1-py2.py3-none-any.whl|30638e27cf77b7e15c4c4cc1973720149e1033827cfd00661ca5c8cc0cdb24c3|.
+git|embit|embit-silent-payments|533cd850f5f4d4f52c21dc1abae18133d98e394e|https://github.com/notTanveer/embit.git|533cd850f5f4d4f52c21dc1abae18133d98e394e|src
+pypi|mnemonic|mnemonic|0.21|https://files.pythonhosted.org/packages/57/48/5abb16ce7f9d97b728e6b97c704ceaa614362e0847651f379ed0511942a0/mnemonic-0.21-py3-none-any.whl|72dc9de16ec5ef47287237b9b6943da11647a03fe7cf1f139fc3d7c4a7439288|.
+pypi|ndef|ndeflib|0.3.3|https://files.pythonhosted.org/packages/c9/80/bbc9a4818cd74807f914d225611cd724d8c0e56237b952a9a4aa6d583f5c/ndeflib-0.3.3-py2.py3-none-any.whl|c634b1af2ab454754f0fdbe1debd38247ed7bdaf94587359b857726f3ee7decb|.
+pypi|OpenSSL|pyOpenSSL|25.1.0|https://files.pythonhosted.org/packages/80/28/2659c02301b9500751f8d42f9a6632e1508aa5120de5e43042b8b30f8d5d/pyopenssl-25.1.0-py3-none-any.whl|2b11f239acc47ac2e5aca04fd7fa829800aeee22a2eb30d744572a157bd8a1ab|.
+pypi|pyaes|pyaes|1.6.1|https://files.pythonhosted.org/packages/44/66/2c17bae31c906613795711fc78045c285048168919ace2220daa372c7d72/pyaes-1.6.1.tar.gz|02c1b1405c38d3c370b085fb952dd8bea3fadcee6411ad99f312cc129c536d8f|pyaes-1.6.1
+pypi|pyasn1|pyasn1|0.6.2|https://files.pythonhosted.org/packages/44/b5/a96872e5184f354da9c84ae119971a0a4c221fe9b27a4d94bd43f2596727/pyasn1-0.6.2-py3-none-any.whl|1eb26d860996a18e9b6ed05e7aae0e9fc21619fcee6af91cca9bad4fbea224bf|.
+pypi|qrcode|qrcode|7.3.1|https://files.pythonhosted.org/packages/94/9f/31f33cdf3cf8f98e64c42582fb82f39ca718264df61957f28b0bbb09b134/qrcode-7.3.1.tar.gz|375a6ff240ca9bd41adc070428b5dfc1dcfbb0f2507f1ac848f6cded38956578|qrcode-7.3.1
+pypi|shamir_mnemonic|shamir-mnemonic|0.3.0|https://files.pythonhosted.org/packages/1d/38/2124e565afe40993949dbc89da6c654a2c9a1b24dd80039812ef7cdbaef3/shamir_mnemonic-0.3.0-py3-none-any.whl|188c6b5bd00d5e756e12e2b186c3cb7c98ff7ff44df608d4c1d2077f6b6e730f|.
+pypi|six.py|six|1.17.0|https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl|4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274|.
+pypi|typing_extensions.py|typing_extensions|4.14.1|https://files.pythonhosted.org/packages/b5/00/d631e67a838026495268c2f6884f3711a15a9a2a96cd244fdaea53b823fb/typing_extensions-4.14.1-py3-none-any.whl|d1e1e3b58374dc93031d6eda2420a48ea44a36c2b4766a4fdeb3710755731d76|.
+git|pgpy|PGPy-3rdIteration-fork|7cdad000a76ced53c873211241d5ba20019a8488|https://github.com/3rdIteration/PGPy.git|7cdad000a76ced53c873211241d5ba20019a8488|.
+git|pygp|PyGP-3rdIteration-fork|15682ec8fd042b5d0ae3422e9434e9734db6e55b|https://github.com/3rdIteration/pygp.git|15682ec8fd042b5d0ae3422e9434e9734db6e55b|.
+git|pysatochip|pysatochip-3rdIteration|d77e311e0cd39193c9b2c03a1ab5f69421b8f4d5|https://github.com/3rdIteration/pysatochip.git|d77e311e0cd39193c9b2c03a1ab5f69421b8f4d5|.
+git|specter_card|specter-card|06dcde629cdc1057934b434afc46d822c2d2425d|https://github.com/3rdIteration/specter-javacard.git|06dcde629cdc1057934b434afc46d822c2d2425d|py
+git|urtypes|urtypes|7fb280eab3b3563dfc57d2733b0bf5cbc0a96a6a|https://github.com/selfcustody/urtypes.git|7fb280eab3b3563dfc57d2733b0bf5cbc0a96a6a|src
+DEPS
 
 EXPECTED_TOP_LEVEL=(
     LICENSE.md

@@ -67,8 +67,8 @@ repo   = https://github.com/bitsagarob/seedsigner.git
 commit = d7785c774a6926c5ea6734b7fbfa0ad99970525c
 tag    = bitsaga-sp-v0.3
 
-wallet_zip_sha256          = 624af8fc0caa98ce7ea10c9e5dbf0009e41ed5ea70d64f83ed1a8c44cd5efc05
-wallet_zip_contents_sha256 = 2e78bc0bf15323c4bf19c96903ce8b5bdd62bf75cf661cfd6f60b3d2852d1d76
+wallet_zip_sha256          = 6550e16297485d439f31047e18dfd88ddc567b7197a1a9808f664eb2359b9989
+wallet_zip_contents_sha256 = 8cc2a0b3fcf28a5b8341ed5d2840040d4cc07c18634a00abd4b7110c67c79148
 
 # The two smartcard applets, pinned as a reference rather than as an input.
 #
