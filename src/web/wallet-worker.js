@@ -281,7 +281,7 @@ sys.path.insert(0, "/wallet")
 import os, json
 os.chdir("/wallet")
 _settings = {"display_config": "st7789_320x240", "network": ${net}}
-if ${JSON.stringify(base)} == "doomsigner":
+if ${JSON.stringify(firmware === "doomsigner-musig" ? "doomsigner" : firmware)} == "doomsigner":
     _settings["silent_payments"] = "E"
 with open("/wallet/settings.json", "w") as handle:
     json.dump(_settings, handle)
