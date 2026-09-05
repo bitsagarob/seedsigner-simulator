@@ -64,11 +64,11 @@ wallet_zip_contents_sha256 = d2527f58d122a7155343b215b596dc94991dad5e893b9f5ec30
 # what we said we did, not that upstream did.
 [doomsigner]
 repo   = https://github.com/bitsagarob/seedsigner.git
-commit = 7b2d8460ed3884388301703576f2c72b55c5ef34
-tag    = bitsaga-sp-v0.9
+commit = ef318511c7456babe5a68bb264011b16ee3dde97
+tag    = bitsaga-sp-v0.10
 
-wallet_zip_sha256          = a7e6d1f9994ff3e0a999f13f36baa89470cbf0d4170d9125517206f6326bff77
-wallet_zip_contents_sha256 = 6c503a70ff90756fa338b1a35515c5c155546e1a672862383f2676a91664db88
+wallet_zip_sha256          = 185f366eb1731861364ca384a10697ea43de1d52671897d789efe8164f7aa67b
+wallet_zip_contents_sha256 = 44abf0fbd6601a1c5d2b1a58dec06b8e00311c24a2248b9c231bd99d67016669
 
 # The two smartcard applets, pinned as a reference rather than as an input.
 #
