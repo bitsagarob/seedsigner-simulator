@@ -34,6 +34,7 @@ raises, exactly as they do when there is no card in a real one.
 
 import hashlib
 import hmac
+import os
 import time
 
 from embit import bip32, ec
@@ -42,6 +43,7 @@ from pysatochip.JCconstants import (
     JCconstants,
     SEEDKEEPER_DIC_EXPORT_RIGHTS,
     SEEDKEEPER_DIC_ORIGIN,
+    SEEDKEEPER_DIC_TYPE,
     SEEDKEEPER_LOG_RES_DIC,
 )
 
@@ -132,6 +134,8 @@ SW_BIP32_UNINITIALIZED_SEED = _sw(JCconstants.SW_BIP32_UNINITIALIZED_SEED)
 # 0x9C31 exists only here.
 SW_SECRET_NOT_FOUND = _sw(_code_for(SEEDKEEPER_LOG_RES_DIC, "Secret not found"))
 SW_EXPORT_NOT_ALLOWED = _sw(_code_for(SEEDKEEPER_LOG_RES_DIC, "Export not allowed"))
+SW_WRONG_SECRET_TYPE = _sw(_code_for(SEEDKEEPER_LOG_RES_DIC, "Wrong Secret Type"))
+SW_INCORRECT_INITIALIZATION = _sw(JCconstants.SW_INCORRECT_INITIALIZATION)
 
 # The one value of SEEDKEEPER_DIC_EXPORT_RIGHTS that lets a secret leave the card
 # in the clear. The other three -- forbidden, encrypted only, authenticated only --
@@ -143,6 +147,11 @@ PLAINTEXT_EXPORT_ALLOWED = _code_for(SEEDKEEPER_DIC_EXPORT_RIGHTS,
 # Where a secret came from, SEEDKEEPER_DIC_ORIGIN. The card sets this itself: it
 # is a statement about how the bytes arrived, so the client does not get a say.
 ORIGIN_PLAINTEXT_IMPORT = _code_for(SEEDKEEPER_DIC_ORIGIN, "Plaintext import")
+
+# The only secret type a key can be derived from, SEEDKEEPER_DIC_TYPE. A secret
+# holds a master seed as [length | seed], the one-byte prefix the wallet writes
+# in ndef_helper and the applet reads back as masterseed_size.
+SECRET_TYPE_MASTERSEED = _code_for(SEEDKEEPER_DIC_TYPE, "Masterseed")
 
 # ------------------------------------------------ and what upstream cannot say
 #
@@ -158,6 +167,22 @@ CLA_ISO = 0x00
 INS_SELECT = 0xA4
 SW_FILE_NOT_FOUND = (0x6A, 0x82)
 SW_INS_NOT_SUPPORTED = (0x6D, 0x00)
+
+# The MuSig2 nonce vault, which pysatochip has no names for either. These are
+# musig2GenerateNonce and musig2UnsealNonce in the SeedKeeper applet, on the
+# branch that adds them; 0x7E is also the Satochip's nonce generation, and the
+# three status words are the ones that applet already uses.
+INS_MUSIG2_GENERATE_NONCE = 0x7E
+INS_MUSIG2_UNSEAL_NONCE = 0x7F
+SW_BIP327_WRONG_SECNONCE = (0x9C, 0x44)
+SW_BIP327_COUNTER_OVERFLOW = (0x9C, 0x46)
+SW_BIP327_INVALID_ID = (0x9C, 0x47)
+
+# How many unspent nonces the card tracks, BIP327_MAX_NB_ID in the applet. The
+# seventeenth outstanding nonce overwrites the oldest id, and the nonce that id
+# belonged to can no longer be opened. A power of two, because the slot is picked
+# by masking the counter.
+VAULT_MAX_NB_ID = 16
 
 # GlobalPlatform GET DATA, which is not an applet instruction either: it is asked
 # of the card manager. pysatochip sends it from three methods that each write
@@ -265,6 +290,54 @@ def _size(length):
 
 def _read_size(data, offset=0):
     return (data[offset] << 8) + data[offset + 1]
+
+
+def _read_prefixed(data, absent=None):
+    """Split off one length-prefixed field: (field, what is left after it).
+
+    The nonce request packs three of these back to back. A length equal to
+    `absent` means the field was not supplied at all, which for the message is
+    not the same as a message of length zero: BIP-327 hashes the two differently.
+    """
+    length = data[0]
+    if length == absent:
+        return None, data[1:]
+    return bytes(data[1:1 + length]), data[1 + length:]
+
+
+def _tagged_hash(tag, message):
+    """BIP-340's tagged hash: SHA256( SHA256(tag) || SHA256(tag) || message )."""
+    prefix = hashlib.sha256(tag).digest()
+    return hashlib.sha256(prefix + prefix + message).digest()
+
+
+def _seal(key, plaintext):
+    """Wrap a secret nonce so that only this card can read it back.
+
+    A SHA-256 keystream and an HMAC over the result, where the applet uses AES.
+    The bytes never travel between a simulated card and a real one, so the two
+    only have to agree on what a seal is for, not on how it is built: the card
+    can open it, the host cannot, and the id inside it is what makes the nonce
+    single use.
+    """
+    iv = os.urandom(16)
+    stream = b"".join(hashlib.sha256(key + iv + bytes([i])).digest()
+                      for i in range((len(plaintext) + 31) // 32))
+    body = iv + bytes(a ^ b for a, b in zip(plaintext, stream))
+    return body + hmac.new(key, body, hashlib.sha256).digest()[:16]
+
+
+def _unseal(key, sealed):
+    """The other half of _seal, or None if these are not our bytes."""
+    if len(sealed) < 17:
+        return None
+    body, tag = sealed[:-16], sealed[-16:]
+    if not hmac.compare_digest(tag, hmac.new(key, body, hashlib.sha256).digest()[:16]):
+        return None
+    iv, ciphertext = body[:16], body[16:]
+    stream = b"".join(hashlib.sha256(key + iv + bytes([i])).digest()
+                      for i in range((len(ciphertext) + 31) // 32))
+    return bytes(a ^ b for a, b in zip(ciphertext, stream))
 
 
 def _signature(key, message):
@@ -719,6 +792,19 @@ class SimulatedSeedKeeper(SimulatedCard):
         self.importing = None
         self.exporting = None
         self.listing = None
+        # The last key derived by INS 0x6D, which is what the nonce vault makes
+        # nonces for. The applet keeps exactly one, so asking for a nonce means
+        # asking for one under whatever was derived last.
+        self.derived_key = None
+        self.generating = None
+        # The vault: which nonce ids have been handed out and not yet spent, and
+        # the counter that numbers them. Sixteen at a time, as in the applet, so
+        # the seventeenth outstanding nonce evicts the oldest and that one can no
+        # longer be opened. The key that seals them is derived from the card's
+        # UID rather than being random, for the same reason the authentikey is:
+        # a reloaded page has to be the same card.
+        self.vault_ids = [0] * VAULT_MAX_NB_ID
+        self.vault_counter = 1
 
     @property
     def is_seeded(self):
@@ -730,6 +816,10 @@ class SimulatedSeedKeeper(SimulatedCard):
     def _applet_setup(self):
         self.authentikey = ec.PrivateKey(
             hashlib.sha256(b"seedkeeper authentikey" + bytes(self.uid)).digest())
+        # Seals the nonce vault's secret nonces. Derived from the UID for the
+        # same reason as the authentikey above: a reloaded page is the same card.
+        self.vault_key = hashlib.sha256(
+            b"seedkeeper musig2 vault" + bytes(self.uid)).digest()
 
     def _applet(self, ins, p1, p2, data):
         if ins == INS_BIP32_GET_AUTHENTIKEY:
@@ -744,6 +834,12 @@ class SimulatedSeedKeeper(SimulatedCard):
             return self._export_secret(p2, data)
         if ins == INS_SEEDKEEPER_RESET_SECRET:
             return self._reset_secret(data)
+        if ins == INS_BIP32_GET_EXTENDED_KEY:
+            return self._get_extended_key(p1, p2, data)
+        if ins == INS_MUSIG2_GENERATE_NONCE:
+            return self._musig2_generate_nonce(p2, data)
+        if ins == INS_MUSIG2_UNSEAL_NONCE:
+            return self._musig2_unseal_nonce(data)
         # Everything else, including the encrypted halves of import and export,
         # falls through to "instruction not supported". Those two need a session
         # key negotiated with a second card's public key, and there is no second
@@ -884,6 +980,141 @@ class SimulatedSeedKeeper(SimulatedCard):
             return ([], *SW_SECRET_NOT_FOUND)
         _say(f"{self.label} erased secret {secret.sid}")
         return ([], *SW_OK)
+
+    def _get_extended_key(self, depth, option_flags, data):
+        """Derive from a stored master seed, and answer as a Satochip would.
+
+        A SeedKeeper derives on the card as well as exporting: the path arrives
+        with the secret id appended, and the answer has the same shape and the
+        same two signatures as the Satochip's, so the client parses one reply.
+
+        Only the public form is answered here. The private form (0x02) and BIP85
+        (0x04) exist on the card, but nothing in this wallet asks for either, and
+        the nonce vault below does not need them -- it uses the key the card kept.
+        """
+        refused = self._pin_refused()
+        if refused is not None:
+            return refused
+        if option_flags & 0x06:
+            return ([], *SW_INS_NOT_SUPPORTED)
+        if len(data) < 4 * depth + 2:
+            # The path, and then the two bytes saying which secret to derive from.
+            return ([], *SW_INVALID_PARAMETER)
+
+        secret = self.secrets.get(_read_size(data, 4 * depth))
+        if secret is None:
+            return ([], *SW_SECRET_NOT_FOUND)
+        if secret.type != SECRET_TYPE_MASTERSEED:
+            return ([], *SW_WRONG_SECRET_TYPE)
+        if secret.export_rights != PLAINTEXT_EXPORT_ALLOWED:
+            # Deriving reads the seed, so it answers to the export policy. A seed
+            # the card will not hand over is a seed it will not derive from.
+            return ([], *SW_EXPORT_NOT_ALLOWED)
+
+        # The payload is [length | seed], so the seed starts one byte in.
+        seed = bytes(secret.payload[1:1 + secret.payload[0]])
+        path = [int.from_bytes(bytes(data[i:i + 4]), "big")
+                for i in range(0, 4 * depth, 4)]
+        child = bip32.HDKey.from_seed(seed).derive(path)
+        self.derived_key = child.key
+
+        coordx = list(child.sec()[1:])
+        message = list(child.chain_code) + _size(len(coordx)) + coordx
+        return (_signed(self.authentikey, _signed(child.key, message)), *SW_OK)
+
+    def _musig2_generate_nonce(self, p2, data):
+        """One BIP-327 secret nonce, kept where a copy of it is worth nothing.
+
+        MuSig2 signing takes two rounds. The secret nonce made in the first is
+        spent in the second, and signing twice under one secret nonce hands
+        anybody the private key. Held in a file it can be replayed from a copy of
+        that file, so the card holds it instead: it comes back sealed, and the
+        card will open it exactly once.
+
+        Two steps, because the card answers in APDUs and the pair does not fit in
+        one. OP_INIT returns the public nonce and the id; OP_FINAL returns the
+        sealed secret nonce that goes with it.
+
+        The seal here is a SHA256 keystream and an HMAC, where the applet uses
+        AES-CBC and an AES MAC. Nothing compares one against the other -- a seal
+        never travels between a simulated card and a real one -- and what both
+        have to agree on is the id, which is what makes a nonce single use.
+        """
+        refused = self._pin_refused()
+        if refused is not None:
+            return refused
+
+        if p2 == OP_FINAL:
+            if self.generating is None:
+                return ([], *SW_BIP327_WRONG_SECNONCE)
+            sealed, self.generating = self.generating, None
+            return (list(sealed), *SW_OK)
+        if p2 != OP_INIT:
+            return ([], *SW_INCORRECT_P2)
+        if self.derived_key is None:
+            return ([], *SW_INCORRECT_INITIALIZATION)
+
+        aggpk, rest = _read_prefixed(data)
+        if len(aggpk) not in (0, 32):
+            return ([], *SW_INVALID_PARAMETER)
+        msg, rest = _read_prefixed(rest, absent=0xFF)
+        extra, _ = _read_prefixed(rest)
+        if (msg is not None and len(msg) > 32) or len(extra) > 32:
+            return ([], *SW_INVALID_PARAMETER)
+
+        pk = self.derived_key.sec()
+        rand = bytes(a ^ b for a, b in zip(
+            self.derived_key.secret,
+            _tagged_hash(b"MuSig/aux", os.urandom(32))))
+        preimage = (rand + bytes([len(pk)]) + pk
+                    + bytes([len(aggpk)]) + aggpk
+                    + (b"\x00" if msg is None else b"\x01" + len(msg).to_bytes(8, "big") + msg)
+                    + len(extra).to_bytes(4, "big") + extra)
+        k = [_tagged_hash(b"MuSig/nonce", preimage + bytes([i])) for i in (0, 1)]
+        pubnonce = b"".join(ec.PrivateKey(k_i).sec() for k_i in k)
+
+        if self.vault_counter == 0:
+            # Every id has been used. The applet forgets them all and takes a new
+            # MAC key, which kills every sealed nonce still held off the card.
+            self.vault_ids = [0] * VAULT_MAX_NB_ID
+            self.vault_key = hashlib.sha256(self.vault_key).digest()
+            self.vault_counter = 1
+            return ([], *SW_BIP327_COUNTER_OVERFLOW)
+
+        nonce_id = self.vault_counter
+        self.vault_ids[nonce_id & (VAULT_MAX_NB_ID - 1)] = nonce_id
+        self.vault_counter = (self.vault_counter + 1) & 0xFFFF
+        # Padded to 112 bytes, so a sealed nonce is the same 144 bytes here as
+        # it is on a card, and nothing downstream has to care which made it.
+        self.generating = _seal(self.vault_key,
+                                (k[0] + k[1] + pk + nonce_id.to_bytes(2, "big")
+                                 ).ljust(112, b"\x0d"))
+        _say(f"{self.label} made MuSig2 nonce {nonce_id}")
+        return (list(pubnonce) + _size(nonce_id), *SW_OK)
+
+    def _musig2_unseal_nonce(self, data):
+        """Open a sealed secret nonce, once, and forget its id.
+
+        The signing itself happens on the host, with the key the host already
+        holds. All the card decides is whether this nonce may be used at all.
+        """
+        refused = self._pin_refused()
+        if refused is not None:
+            return refused
+
+        opened = _unseal(self.vault_key, bytes(data))
+        if opened is None:
+            return ([], *SW_BIP327_WRONG_SECNONCE)
+
+        nonce_id = int.from_bytes(opened[97:99], "big")
+        if nonce_id not in self.vault_ids or nonce_id == 0:
+            # Either it was opened already, or it was pushed out of the ring by
+            # sixteen newer ones. Both mean this nonce is spent.
+            _say(f"{self.label} refused MuSig2 nonce {nonce_id}, already spent")
+            return ([], *SW_BIP327_INVALID_ID)
+        self.vault_ids[self.vault_ids.index(nonce_id)] = 0
+        _say(f"{self.label} released MuSig2 nonce {nonce_id}")
+        return (list(opened[:97]), *SW_OK)
 
 
 # One of each type per slot, because swapping the type in the tray is swapping

@@ -53,7 +53,7 @@ if WALLET_ZIP is None:
     sys.exit("no wallet-smartcard.zip: run build/build-wallet-zip.sh smartcard first")
 sys.path.append(WALLET_ZIP)
 
-from embit import bip32, bip39
+from embit import bip32, bip39, ec
 from embit.hashes import hash160
 from pysatochip.CardDataParser import CardDataParser
 from pysatochip.JCconstants import (
@@ -315,6 +315,27 @@ def send(ins, p1, p2, data=()):
     return response, (sw1, sw2)
 
 
+def sid_bytes(secret_id):
+    """The two bytes a SeedKeeper derivation appends to say which seed to use."""
+    return bytes([secret_id >> 8, secret_id & 0xFF])
+
+
+# No aggregate key, no message, no extra input: the three length-prefixed fields
+# a nonce request carries, at their emptiest. 0xFF is "no message", which BIP-327
+# hashes differently from a message of length zero.
+NO_AGGPK_NO_MESSAGE = [0x00, 0xFF, 0x00]
+
+
+def musig2_nonce(request=None):
+    """One nonce, in the two steps the card answers it in: the public half and
+    the id first, then the sealed secret half."""
+    pubnonce, sw = send(0x7E, 0x00, 0x01, NO_AGGPK_NO_MESSAGE if request is None else request)
+    assert sw == (0x90, 0x00), sw
+    sealed, sw = send(0x7E, 0x00, 0x03)
+    assert sw == (0x90, 0x00), sw
+    return pubnonce[:66], sealed
+
+
 def path_bytes(*indices):
     """A BIP32 path as CardDataParser.bip32path2bytes() would encode it."""
     return b"".join(index.to_bytes(4, "big") for index in indices)
@@ -500,7 +521,8 @@ check("and not the Satochip one",
                           + simulated_card.SATOCHIP_AID)[1:] == (0x6A, 0x82),
       "which is what makes card_select() move on to the next applet")
 connection = select(service_sk)
-check("nor does it derive BIP32 keys", send(0x6D, 0x00, 0x40)[1] == (0x6D, 0x00))
+check("it does derive BIP32 keys, unlike the Satochip-era class above, but not\n"
+      "     before setup", send(0x6D, 0x00, 0x40)[1] == (0x9C, 0x04))
 
 check("an uninitialised SeedKeeper cannot be asked for its free space",
       send(0xA7, 0x00, 0x00, None)[1] == (0x9C, 0x04))
@@ -597,6 +619,78 @@ check("while the one that allows it still exports",
       export_secret(sid)[2] == (0x90, 0x00))
 check("an encrypted export is not implemented rather than quietly plaintext",
       send(0xA2, 0x02, 0x01, [sid >> 8, sid & 0xFF])[1] == (0x6D, 0x00))
+
+# A SeedKeeper derives on the card as well as exporting, and the path arrives
+# with the id of the seed to derive from appended to it. That is what the MuSig2
+# nonce vault below makes nonces for: the key the card derived last.
+check("a nonce cannot be made before a key has been derived",
+      send(0x7E, 0x00, 0x01, NO_AGGPK_NO_MESSAGE)[1] == (0x9C, 0x13))
+check("deriving from a secret the card does not have says so",
+      send(0x6D, 0x00, 0x40, sid_bytes(0x7FFF))[1] == (0x9C, 0x08))
+check("nor does it derive from something that is not a seed",
+      send(0x6D, 0x00, 0x40, sid_bytes(long_sid))[1] == (0x9C, 0x38))
+response, sw = import_secret(header_fields(TYPE_MASTERSEED, EXPORT_FORBIDDEN, "locked"),
+                             MASTERSEED_SECRET)
+locked_sid = (response[0] << 8) + response[1]
+check("a seed that may not be exported may not be derived from either",
+      send(0x6D, 0x00, 0x40, sid_bytes(locked_sid))[1] == (0x9C, 0x31),
+      "deriving reads the seed, so it answers to the same policy as exporting")
+# That one was imported to be refused, and later checks count what is on the card.
+send(0xA5, 0x00, 0x00, sid_bytes(locked_sid))
+
+path = path_bytes(84 + 0x80000000, 0x80000000, 0x80000000)
+derived, sw = send(0x6D, len(path) // 4, 0x40, path + sid_bytes(sid))
+check("the stored seed derives", sw == (0x90, 0x00), str(sw))
+# The parser checks the derivation against the card's authentikey, so it has to
+# have been given that key first, the same way the wallet gives it one.
+sk_parser = CardDataParser()
+sk_parser.parse_bip32_get_authentikey(send(0x73, 0x00, 0x00)[0])
+pubkey, chaincode = sk_parser.parse_bip32_get_extendedkey(derived)
+expected = bip32.HDKey.from_seed(SEED).derive("m/84h/0h/0h")
+check("and m/84'/0'/0' is the same key as the seed derived outside the card",
+      (pubkey.get_public_key_bytes(True), bytes(chaincode))
+      == (expected.sec(), expected.chain_code))
+
+# The vault. MuSig2 signing takes two rounds, and the secret nonce made in the
+# first is spent in the second; signing twice under one secret nonce hands
+# anybody the private key. So the card keeps it, hands it back sealed, and opens
+# it once. Everything below is about that "once".
+pubnonce, sealed = musig2_nonce()
+check("a nonce is 66 bytes of public nonce and 144 sealed",
+      (len(pubnonce), len(sealed)) == (66, 144),
+      f"{len(pubnonce)} and {len(sealed)}")
+check("the sealed nonce says nothing to look at",
+      bytes(sealed).find(bytes(pubnonce[:33])) == -1,
+      "the public half is not sitting in the clear inside the sealed half")
+
+secnonce, sw = send(0x7F, 0x00, 0x00, sealed)
+check("it opens", sw == (0x90, 0x00), str(sw))
+check("into k1, k2 and the public key they were made for", len(secnonce) == 97,
+      str(len(secnonce)))
+check("which is the key the card derived",
+      bytes(secnonce[64:97]) == expected.sec(),
+      "musig2.sign() refuses a secnonce whose pk is not the signer's")
+check("and k1 and k2 are the scalars behind the public nonce it published",
+      ec.PrivateKey(bytes(secnonce[0:32])).sec() == bytes(pubnonce[0:33])
+      and ec.PrivateKey(bytes(secnonce[32:64])).sec() == bytes(pubnonce[33:66]),
+      "R1 = k1*G and R2 = k2*G, which is what makes the pair a BIP-327 nonce")
+
+check("opening it a second time is refused",
+      send(0x7F, 0x00, 0x00, sealed)[1] == (0x9C, 0x47),
+      "a copy of the sealed nonce is worth nothing, which is the whole point")
+tampered = list(sealed)
+tampered[0] ^= 0xFF
+check("and a sealed nonce that was edited is refused before it is opened",
+      send(0x7F, 0x00, 0x00, tampered)[1] == (0x9C, 0x44))
+
+# Sixteen at a time, and the seventeenth pushes the first out. That is a nonce
+# lost, never a nonce released twice, which is the direction that is safe.
+oldest = musig2_nonce()[1]
+for _ in range(simulated_card.VAULT_MAX_NB_ID):
+    musig2_nonce()
+check("the seventeenth outstanding nonce evicts the first",
+      send(0x7F, 0x00, 0x00, oldest)[1] == (0x9C, 0x47),
+      f"{simulated_card.VAULT_MAX_NB_ID} unspent nonces are tracked at a time")
 
 check("deleting a secret the card does not have says so",
       send(0xA5, 0x00, 0x00, [0xFF, 0xFF])[1] == (0x9C, 0x08))

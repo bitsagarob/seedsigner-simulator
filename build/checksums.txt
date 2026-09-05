@@ -62,7 +62,7 @@ bc40c8a15196236b2314db0856f72ca0b49980cd5413b8c852a7349f5fee0859  src/web/jsQR.j
 40a93044cc982d68efc0a587bd4eeb9d86547764ecb7c4029abb9a41393682f9  src/web/wallet-coordinator.js
 06818db62a87fc02f5dc811ab4a0064588d89a1a7e67da63995a2ff7de7b0841  src/web/wallet-track.js
 923d54d8b299c030b0c3d0920baab54dcbf58e0d8a9dd68898f070f0518dcd51  src/web/wallet-tutorial.js
-2172f7df68b17e60ed134bf2f6c70c14ddc9d7da9d78917caae77a1db45dc2fb  src/web/wallet-worker.js
+26219cddfaf748e233552e0db208c8eaf713d9b568fed49ce4e8b5a295d86e51  src/web/wallet-worker.js
 0635b27397ba51ba69b85b05c9f50419325dabb36039674536c683f099409204  src/web/wallet.html
 
 # The stand-in packages, which build/build-wallet-zip.sh copies out of the working
@@ -85,7 +85,7 @@ f5ba36b26dfdfe8a67fae80f6194cad107a71734d891d6213977af5ffc75369c  src/fakes/pyzb
 b35e337248b6467bd4da3b3ab17a87bf5c01b45363a1027302838e801ae1d6e0  src/smartcard/Exceptions.py
 c96aecaab78ee04ce687e97368638c5030124df143a420491d1baadbeccaf182  src/smartcard/System.py
 c6074f00c409fdfb352de57aba1cc9ee07288ad41bcb8cacc72227a32b8bd5db  src/smartcard/__init__.py
-99a4a391f1ecc3da5f0ae55e354cf02a1519ea2cbd2652a1a834f48b741500e3  src/smartcard/simulated_card.py
+17eb1b0a0f15ba7ad80dbced8132df1ae8675e93939ecd54b9562d0fe4531676  src/smartcard/simulated_card.py
 d90db283c8febb151f4031007ecaff3a01e4c42dab51e27ca6f7b63e5d882ec5  src/smartcard/sw/SWExceptions.py
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  src/smartcard/sw/__init__.py
 76c5c4752c0784b1491c021730145d7b3611847aaf65281c2fc8c297e9e6b00c  src/smartcard/util.py

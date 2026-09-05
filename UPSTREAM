@@ -99,6 +99,14 @@ repo   = https://github.com/Toporin/Seedkeeper-Applet.git
 commit = 2e59f0653c5dd39f6793ee5c41ee7344ffdeb48f
 tag    = v0.2-0.1
 
+# Two instructions the simulated SeedKeeper answers are not in the tag above.
+# 0x7E and 0x7F are the MuSig2 nonce vault, which is a branch off it and not a
+# release, so there is no tag to pin and this section stays on the release. A
+# card holding the vault reports the same protocol version, 0.2, because the
+# protocol for every instruction that already existed is unchanged; a client
+# finds out whether it has the vault by asking for a nonce and reading 6D00 if
+# it does not. Everything else in the simulated SeedKeeper is the tag.
+
 # The boot game. Not a firmware and not a wallet: this pins the tree the
 # browser build of the GAME is compiled from. Renamed from [doomsigner] when a
 # doomsigner WALLET pin was added below, because build-wallet-zip.sh looks up
