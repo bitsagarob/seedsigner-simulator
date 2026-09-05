@@ -683,6 +683,22 @@ tampered[0] ^= 0xFF
 check("and a sealed nonce that was edited is refused before it is opened",
       send(0x7F, 0x00, 0x00, tampered)[1] == (0x9C, 0x44))
 
+# The id is hashed into the nonce, not just stored beside it. Freeze the card's
+# randomness and make two: without the id in the hash they would come out
+# identical, which is two separately openable sealed nonces holding one secret,
+# and two partial signatures under one secret nonce give away the private key.
+# BIP-327's own reference does this with "Use a non-repeating counter for extra_in".
+import types
+real_os = simulated_card.os
+simulated_card.os = types.SimpleNamespace(urandom=lambda n: b"\x42" * n)
+try:
+    twin_a, twin_b = musig2_nonce()[0], musig2_nonce()[0]
+finally:
+    simulated_card.os = real_os
+check("two nonces made from identical randomness are still different",
+      twin_a != twin_b,
+      "a repeated RNG cannot produce a repeated nonce while the id differs")
+
 # Sixteen at a time, and the seventeenth pushes the first out. That is a nonce
 # lost, never a nonce released twice, which is the direction that is safe.
 oldest = musig2_nonce()[1]

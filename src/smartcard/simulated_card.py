@@ -1062,6 +1062,27 @@ class SimulatedSeedKeeper(SimulatedCard):
         if (msg is not None and len(msg) > 32) or len(extra) > 32:
             return ([], *SW_INVALID_PARAMETER)
 
+        if self.vault_counter == 0:
+            # Every id has been used. The applet forgets them all and takes a new
+            # MAC key, which kills every sealed nonce still held off the card.
+            # Checked before anything is computed, because the id goes into the
+            # nonce itself.
+            self.vault_ids = [0] * VAULT_MAX_NB_ID
+            self.vault_key = hashlib.sha256(self.vault_key).digest()
+            self.vault_counter = 1
+            return ([], *SW_BIP327_COUNTER_OVERFLOW)
+        nonce_id = self.vault_counter
+
+        # The id is appended to extra_in. A nonce may be generated before there is
+        # a message to sign, and a stockpile made that way has nothing else unique
+        # in it: same key, no message, and whatever extra_in the host sent for all
+        # of them. Two generations that shared a random value would then agree on
+        # k1 and k2, and they would be two separate sealed nonces with separate ids,
+        # so both would open. Two partial signatures under one nonce is the loss
+        # this vault exists to prevent. BIP-327's own reference does the same:
+        # "Use a non-repeating counter for extra_in".
+        extra += nonce_id.to_bytes(2, "big")
+
         pk = self.derived_key.sec()
         rand = bytes(a ^ b for a, b in zip(
             self.derived_key.secret,
@@ -1073,15 +1094,6 @@ class SimulatedSeedKeeper(SimulatedCard):
         k = [_tagged_hash(b"MuSig/nonce", preimage + bytes([i])) for i in (0, 1)]
         pubnonce = b"".join(ec.PrivateKey(k_i).sec() for k_i in k)
 
-        if self.vault_counter == 0:
-            # Every id has been used. The applet forgets them all and takes a new
-            # MAC key, which kills every sealed nonce still held off the card.
-            self.vault_ids = [0] * VAULT_MAX_NB_ID
-            self.vault_key = hashlib.sha256(self.vault_key).digest()
-            self.vault_counter = 1
-            return ([], *SW_BIP327_COUNTER_OVERFLOW)
-
-        nonce_id = self.vault_counter
         self.vault_ids[nonce_id & (VAULT_MAX_NB_ID - 1)] = nonce_id
         self.vault_counter = (self.vault_counter + 1) & 0xFFFF
         # Padded to 112 bytes, so a sealed nonce is the same 144 bytes here as
