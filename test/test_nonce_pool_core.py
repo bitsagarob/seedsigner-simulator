@@ -35,10 +35,10 @@ def cli(*args):
 DRESS = r"""
 const path = require("path");
 const fs = require("fs");
-const pool = require(path.join(process.argv[2], "src", "web", "nonce-pool.js"))
+const pool = require(path.join(process.argv[1], "src", "web", "nonce-pool.js"))
   .NoncePool;
 const fixtures = JSON.parse(fs.readFileSync(
-  path.join(process.argv[2], "test", "fixtures", "nonce-pool.json"), "utf8"));
+  path.join(process.argv[1], "test", "fixtures", "nonce-pool.json"), "utf8"));
 
 function unhex(text) {
   const out = new Uint8Array(text.length / 2);
