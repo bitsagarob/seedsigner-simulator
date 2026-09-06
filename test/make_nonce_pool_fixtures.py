@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+"""PSBT fixtures for test_nonce_pool.js, made by Bitcoin Core rather than by us.
+
+A pool that has only ever seen PSBTs this repository wrote proves nothing about
+the wire. These come from a real Core v31.1.0 regtest wallet holding a real
+tr(musig(...)) descriptor:
+
+  bare     a funded PSBT over that descriptor, exactly as the coordinator would
+           build it, with a MuSig2 participant list and no nonces yet
+  stocked  the same PSBT with four pooled nonce records spliced in, the way the
+           device leaves them behind on the way home
+
+The nonces in `stocked` are not real nonces. Nothing in the pool interprets
+them: it moves them, keys them and refuses to move them twice, and none of that
+touches a curve. Using recognisable bytes makes a failing assertion readable.
+
+Needs the regtest node and the mA/mB/mW wallets left by
+~/apps/_scratch/musig2/verify_core_coordinator.py.
+
+    python3 test/make_nonce_pool_fixtures.py > test/fixtures/nonce-pool.json
+"""
+
+import base64
+import json
+import subprocess
+import sys
+
+DATADIR = "/home/rob/.cache/tmp/musig-regtest"
+CONF = f"{DATADIR}/bitcoin.conf"
+
+IDENTIFIER = b"DOOMSIGNER"
+PSBT_IN_PROPRIETARY = 0xFC
+SUBTYPE_POOLED_NONCE = 0x01
+POOLED_NONCES = 4
+SIZE_PUBNONCE = 66
+SIZE_SEALED = 144
+
+
+def cli(*args, wallet=None):
+    cmd = ["bitcoin-cli", f"-datadir={DATADIR}", f"-conf={CONF}"]
+    if wallet:
+        cmd.append(f"-rpcwallet={wallet}")
+    cmd += [str(a) for a in args]
+    out = subprocess.run(cmd, capture_output=True, text=True)
+    if out.returncode != 0:
+        raise RuntimeError(" ".join(cmd[3:6]) + " -> " + out.stderr.strip())
+    try:
+        return json.loads(out.stdout.strip())
+    except json.JSONDecodeError:
+        return out.stdout.strip()
+
+
+def compact_size(n):
+    if n < 0xFD:
+        return bytes([n])
+    if n <= 0xFFFF:
+        return b"\xfd" + n.to_bytes(2, "little")
+    if n <= 0xFFFFFFFF:
+        return b"\xfe" + n.to_bytes(4, "little")
+    return b"\xff" + n.to_bytes(8, "little")
+
+
+def read_compact_size(buf, pos):
+    first = buf[pos]
+    if first < 0xFD:
+        return first, pos + 1
+    if first == 0xFD:
+        return int.from_bytes(buf[pos + 1:pos + 3], "little"), pos + 3
+    if first == 0xFE:
+        return int.from_bytes(buf[pos + 1:pos + 5], "little"), pos + 5
+    return int.from_bytes(buf[pos + 1:pos + 9], "little"), pos + 9
+
+
+def maps(psbt_b64):
+    buf = base64.b64decode(psbt_b64)
+    assert buf[:5] == b"psbt\xff"
+    pos, out = 5, []
+    while pos < len(buf):
+        m = []
+        while True:
+            klen, pos = read_compact_size(buf, pos)
+            if klen == 0:
+                break
+            key = buf[pos:pos + klen]
+            pos += klen
+            vlen, pos = read_compact_size(buf, pos)
+            m.append((key, buf[pos:pos + vlen]))
+            pos += vlen
+        out.append(m)
+    return out
+
+
+def serialise(all_maps):
+    out = b"psbt\xff"
+    for m in all_maps:
+        for key, value in m:
+            out += compact_size(len(key)) + key
+            out += compact_size(len(value)) + value
+        out += b"\x00"
+    return base64.b64encode(out).decode()
+
+
+def pooled_key(participant, index):
+    return (bytes([PSBT_IN_PROPRIETARY])
+            + compact_size(len(IDENTIFIER)) + IDENTIFIER
+            + compact_size(SUBTYPE_POOLED_NONCE)
+            + participant + index.to_bytes(2, "big"))
+
+
+def main():
+    mineto = cli("getnewaddress", wallet="miner")
+    cli("sendtoaddress", cli("getnewaddress", "", "bech32m", wallet="mW"), 1.0,
+        wallet="miner")
+    cli("generatetoaddress", 1, mineto, wallet="miner")
+
+    dest = cli("getnewaddress", wallet="miner")
+    bare = cli("walletcreatefundedpsbt", "[]", json.dumps([{dest: 0.5}]), 0,
+               json.dumps({"fee_rate": 5}), wallet="mW")["psbt"]
+
+    # The participant and aggregate keys Core itself put in the PSBT. Taking
+    # them from the transaction rather than from the descriptor is the same rule
+    # the device follows: BIP-390 sorts, so the descriptor's order is not the
+    # protocol's order, and field 0x1a is the one that is.
+    decoded = cli("decodepsbt", bare)["inputs"][0]
+    participants = decoded["musig2_participant_pubkeys"][0]
+    aggregate = participants["aggregate_pubkey"]
+    participant = participants["participant_pubkeys"][0]
+
+    # Four spare nonces, the way the device leaves them: keyed by the signer and
+    # nothing else, so they are not bound to this transaction and can serve
+    # whichever spend arrives first.
+    all_maps = maps(bare)
+    entry_for = {}
+    for index in range(POOLED_NONCES):
+        pubnonce = bytes([0xA0 + index]) * SIZE_PUBNONCE
+        sealed = bytes([0x50 + index]) * SIZE_SEALED
+        all_maps[1].append(
+            (pooled_key(bytes.fromhex(participant), index), pubnonce + sealed))
+        entry_for[pubnonce.hex()] = (pubnonce + sealed).hex()
+
+    json.dump({
+        "note": "generated by test/make_nonce_pool_fixtures.py against "
+                "Bitcoin Core v31.1.0 on regtest",
+        "participant": participant,
+        "aggregate": aggregate,
+        "pooledCount": POOLED_NONCES,
+        "bare": bare,
+        "stocked": serialise(all_maps),
+        "entryFor": entry_for,
+    }, sys.stdout, indent=2)
+    print()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
