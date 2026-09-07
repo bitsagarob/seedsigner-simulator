@@ -23,7 +23,8 @@
 (function (scope) {
   "use strict";
 
-  var C = scope.SignetCoordinator;
+  // embit where it has been ported, the hand-written JavaScript for the rest.
+  var C = scope.EmbitCoordinator || scope.SignetCoordinator;
 
   // Three published BIP39 test vectors, one per card. Three separate seeds
   // rather than three paths under one, because a quorum whose keys all came
@@ -1884,7 +1885,8 @@
           t.showFace("Building the spend", "One input, one output, and the "
                      + "script that needs two signatures.");
           return C.network.proof(state.funding).then(function (proof) {
-            var outputs = C.transactionOutputs(proof.tx);
+            return C.transactionOutputs(proof.tx);
+          }).then(function (outputs) {
             var script = C.hex(state.receive.scriptPubkey);
             var ours = outputs.filter(function (out) { return out.script === script; })[0];
             if (!ours) throw new Error("the faucet's transaction does not pay this wallet");
@@ -1918,13 +1920,15 @@
         coordinator(function (context) {
           var state = context.state;
           t.showFace("Finishing it", "Two signatures into one witness.");
-          var signatures = {};
-          state.signed.forEach(function (psbt) {
-            Object.assign(signatures, C.partialSignatures(psbt));
-          });
-          t.detail("signatures collected", String(Object.keys(signatures).length), true);
-          return C.finalise(state.input, state.receive, state.change.scriptPubkey,
-                            state.amount, signatures).then(function (final) {
+          return Promise.all(state.signed.map(function (psbt) {
+            return C.partialSignatures(psbt);
+          })).then(function (found) {
+            var signatures = {};
+            found.forEach(function (some) { Object.assign(signatures, some); });
+            t.detail("signatures collected", String(Object.keys(signatures).length), true);
+            return C.finalise(state.input, state.receive, state.change.scriptPubkey,
+                              state.amount, signatures);
+          }).then(function (final) {
             state.spend = final;
             t.detail("signed transaction", final.hex);
             t.detail("transaction id", final.txid);

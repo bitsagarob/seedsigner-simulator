@@ -24,7 +24,8 @@
 (function (scope) {
   "use strict";
 
-  var C = scope.SignetCoordinator;
+  // embit where it has been ported, the hand-written JavaScript for the rest.
+  var C = scope.EmbitCoordinator || scope.SignetCoordinator;
 
   // Bringing your own coordinator is offered on the demo flow and nowhere else.
   // The page at rest is a SeedSigner with a wallet beside it, which is the thing
