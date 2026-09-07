@@ -28,18 +28,37 @@ MNEMONICS = [
 ]
 ACCOUNT = "m/48h/1h/0h/2h"
 
+UTXO = {"txid": "8f3a1c2e5d4b6a79808182838485868788898a8b8c8d8e8f90919293949596ab",
+        "vout": 1, "value": 250000}
+DESTINATION = "0014" + "11" * 20
+AMOUNT = 240000
+SIGS = ["3044" + "22" * 34 + "01", "3044" + "33" * 34 + "01"]
+
 JS = r"""
 const C = require(process.argv[1] + "/src/web/signet-coordinator.js").SignetCoordinator;
-const keys = JSON.parse(process.argv[2]);
-C.buildWallet(keys).then(function (wallet) {
+const args = JSON.parse(process.argv[2]);
+const utxo = args.utxo, dest = C.unhex(args.destination);
+C.buildWallet(args.keys).then(function (wallet) {
   return Promise.all([0, 1, 2].map(function (i) {
     return C.deriveAddress(wallet, 0, i);
   })).then(function (addrs) {
-    process.stdout.write(JSON.stringify({
-      descriptor: wallet.descriptor,
-      addresses: addrs.map(function (a) { return a.address; }),
-      scripts: addrs.map(function (a) { return C.hex(a.witnessScript); }),
-    }));
+    const source = addrs[0];
+    const input = { txid: utxo.txid, vout: utxo.vout, value: utxo.value };
+    const psbt = C.buildPsbt(input, source, dest, args.amount);
+    const signatures = {};
+    source.cosigners.slice(0, 2).forEach(function (leaf, i) {
+      signatures[C.hex(leaf.pubkey)] = C.unhex(args.sigs[i]);
+    });
+    return C.finalise(input, source, dest, args.amount, signatures).then(function (done) {
+      process.stdout.write(JSON.stringify({
+        descriptor: wallet.descriptor,
+        addresses: addrs.map(function (a) { return a.address; }),
+        scripts: addrs.map(function (a) { return C.hex(a.witnessScript); }),
+        psbt: C.toBase64(psbt),
+        tx: done.hex,
+        txid: done.txid,
+      }));
+    });
   });
 }).catch(function (e) { process.stdout.write(JSON.stringify({ error: String(e) })); });
 """
@@ -58,7 +77,9 @@ def exported_keys():
 
 def main():
     keys = exported_keys()
-    node = subprocess.run(["node", "-e", JS, "--", str(HERE.parent), json.dumps(keys)],
+    payload = json.dumps({"keys": keys, "utxo": UTXO, "destination": DESTINATION,
+                          "amount": AMOUNT, "sigs": SIGS})
+    node = subprocess.run(["node", "-e", JS, "--", str(HERE.parent), payload],
                           capture_output=True, text=True)
     if node.returncode != 0:
         print(node.stderr.strip()[:400])
@@ -68,15 +89,25 @@ def main():
         print("the JavaScript refused:", js["error"])
         return 1
 
-    theirs = Descriptor.from_string(js["descriptor"])
+    sys.path.insert(0, str(HERE.parent / "src" / "web"))
+    import coordinator
+
+    desc = js["descriptor"]
+    first = coordinator.address(desc, 0, 0)
+    signatures = dict(zip([c["pubkey"] for c in first["cosigners"]][:2], SIGS))
+    done = coordinator.finalise(desc, 0, 0, UTXO, DESTINATION, AMOUNT, signatures)
     ours = {
-        "addresses": [theirs.derive(i, branch_index=0).address(NET) for i in range(3)],
-        "scripts": [theirs.derive(i, branch_index=0).witness_script().data.hex()
-                    for i in range(3)],
+        "addresses": [coordinator.address(desc, 0, i)["address"] for i in range(3)],
+        "scripts": [coordinator.address(desc, 0, i)["witness_script"] for i in range(3)],
+        "psbt": [coordinator.build_psbt(desc, 0, 0, UTXO, DESTINATION, AMOUNT)],
+        "tx": [done["hex"]],
+        "txid": [done["txid"]],
     }
+    for one in ("psbt", "tx", "txid"):
+        js[one] = [js[one]]
 
     failures = 0
-    for field in ("addresses", "scripts"):
+    for field in ("addresses", "scripts", "psbt", "tx", "txid"):
         for i, (a, b) in enumerate(zip(js[field], ours[field])):
             same = a == b
             failures += not same
