@@ -128,6 +128,27 @@
     return call("transaction_outputs", [rawHex]);
   }
 
+  // --------------------------------------------------------------- MuSig2
+  //
+  // The flow, not just the arithmetic: the coordinator decides what to build,
+  // what to put in and what came back, and the page renders the state it gets.
+
+  function musigWallet(exportedKeys) {
+    return call("musig_wallet", [exportedKeys]);
+  }
+
+  function musigAddress(descriptor, branch, index) {
+    return call("musig_address", [descriptor, branch, index]);
+  }
+
+  function spendStart(state) {
+    return call("spend_start", [state]);
+  }
+
+  function spendReturned(state, psbt) {
+    return call("spend_returned", [state, psbt]);
+  }
+
   // Everything else is the JavaScript's until it is ported.
   var api = Object.create(JS);
   api.buildWallet = buildWallet;
@@ -136,6 +157,10 @@
   api.finalise = finalise;
   api.partialSignatures = partialSignatures;
   api.transactionOutputs = transactionOutputs;
+  api.musigWallet = musigWallet;
+  api.musigAddress = musigAddress;
+  api.spendStart = spendStart;
+  api.spendReturned = spendReturned;
   api.ready = boot;
   api.loaded = function () { return loaded; };
 
