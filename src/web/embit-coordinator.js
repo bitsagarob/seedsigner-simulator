@@ -35,6 +35,17 @@
         if (event.data.ok) waiting.resolve(event.data.value);
         else waiting.reject(new Error(event.data.value));
       };
+      // A worker that dies answers nothing, and a page waiting on a promise
+      // that will never settle shows a visitor a spinner and no reason.
+      worker.onerror = function (event) {
+        var reason = new Error(event.message || "the coordinator stopped");
+        Object.keys(pending).forEach(function (id) {
+          pending[id].reject(reason);
+          delete pending[id];
+        });
+        worker = null;
+        booted = null;
+      };
     }
     return new Promise(function (resolve, reject) {
       var id = String(++counter);
