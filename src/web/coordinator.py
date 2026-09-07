@@ -401,6 +401,73 @@ def pool_verify(psbt_string, issued, participant, aggregate, leaf=None,
     return True
 
 
+# ------------------------------------------------------------------- the flow
+
+# The coordinator's decisions, not just its arithmetic. Each call takes the
+# whole state and returns the next one, so nothing is remembered here and the
+# same steps run in a page, in a test, or from a shell.
+#
+# state: {descriptor, branch, index, utxo, destination, amount, pool, psbt,
+#         trips, issued, done, txhex}
+# pool:  {participant_hex: [entry_hex, ...]}, spent entries removed on issue
+
+
+def spend_start(state):
+    """Build the spend and put a pooled nonce in, if the pool has one."""
+    state = dict(state, trips=0, issued=[], done=False)
+    keypath = next(a for a in musig_aggregates(state["descriptor"], state["branch"],
+                                               state["index"]) if a["leaf"] is None)
+    state["psbt"] = musig_psbt(state["descriptor"], state["branch"], state["index"],
+                               state["utxo"], state["destination"], state["amount"])
+
+    pool = dict(state.get("pool") or {})
+    dress, issued = [], []
+    for participant in keypath["participants"]:
+        spare = list(pool.get(participant) or [])
+        if not spare:
+            continue
+        # Spent when issued, never when a signed PSBT comes back: a transaction
+        # that is abandoned has still published that nonce.
+        entry = spare.pop(0)
+        pool[participant] = spare
+        dress.append({"participant": participant, "aggregate": keypath["signing"],
+                      "entry": entry})
+        issued.append({"participant": participant, "id": entry[:SIZE_PUBNONCE * 2]})
+    if dress:
+        state["psbt"] = pool_dress(state["psbt"], dress)
+    state["pool"] = pool
+    state["issued"] = issued
+    state["aggregate"] = keypath["signing"]
+    state["waiting_for"] = [p for p in keypath["participants"]
+                            if p not in [d["participant"] for d in dress]]
+    return state
+
+
+def spend_returned(state, psbt):
+    """Take a PSBT back from a device: check, harvest, and say if it is done."""
+    state = dict(state, psbt=psbt, trips=state.get("trips", 0) + 1)
+    verified = []
+    for one in state.get("issued") or []:
+        pool_verify(psbt, one["id"], one["participant"], state["aggregate"])
+        verified.append(one["participant"])
+    state["verified"] = verified
+    state["issued"] = []
+
+    pool = dict(state.get("pool") or {})
+    for found in pool_harvest(psbt):
+        held = list(pool.get(found["participant"]) or [])
+        if found["entry"] not in held:
+            held.append(found["entry"])
+        pool[found["participant"]] = held
+    state["pool"] = pool
+
+    scope = PSBT.from_string(psbt).inputs[0]
+    if scope.final_scriptwitness is not None:
+        state["done"] = True
+        state["txhex"] = PSBT.from_string(psbt).tx.serialize().hex()
+    return state
+
+
 def dispatch(name, payload):
     """One entry point for the worker: JSON in, JSON out."""
     import json
