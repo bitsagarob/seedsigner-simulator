@@ -4,12 +4,12 @@ Checked against signet-coordinator.js and against Bitcoin Core by
 test/test_coordinator_parity.py.
 """
 from embit import compact
+from embit.descriptor import Descriptor
 from embit.descriptor.musig import key_agg
 from embit.descriptor.taptree import TapLeaf
+from embit.ec import PublicKey
 from embit.hashes import hash160, tagged_hash
 from embit.misc import secp256k1
-from embit.descriptor import Descriptor
-from embit.ec import PublicKey
 from embit.networks import NETWORKS
 from embit.psbt import PSBT, DerivationPath
 from embit.script import Script
