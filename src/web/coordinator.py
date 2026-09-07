@@ -446,11 +446,17 @@ def spend_start(state):
 def spend_returned(state, psbt):
     """Take a PSBT back from a device: check, harvest, and say if it is done."""
     state = dict(state, psbt=psbt, trips=state.get("trips", 0) + 1)
-    verified = []
+    # A signer that ignored its pooled nonce still made a valid signature, so
+    # this is reported and not raised: the spend is fine, the saving was not.
+    verified, ignored = [], []
     for one in state.get("issued") or []:
-        pool_verify(psbt, one["id"], one["participant"], state["aggregate"])
-        verified.append(one["participant"])
+        try:
+            pool_verify(psbt, one["id"], one["participant"], state["aggregate"])
+            verified.append(one["participant"])
+        except ValueError as why:
+            ignored.append({"participant": one["participant"], "why": str(why)})
     state["verified"] = verified
+    state["ignored"] = ignored
     state["issued"] = []
 
     pool = dict(state.get("pool") or {})

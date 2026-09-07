@@ -66,11 +66,9 @@ def main():
                                     bytes.fromhex(second["aggregate"]))
     check("the nonce is filed under the signing key", wanted in scope.unknown)
 
-    try:
-        coordinator.spend_returned(second, empty["psbt"])
-        check("a signer that published nothing is refused", False)
-    except ValueError:
-        check("a signer that published nothing is refused", True)
+    missed = coordinator.spend_returned(second, empty["psbt"])
+    check("a signer that published nothing is reported", missed["ignored"] != [])
+    check("and the spend is not abandoned for it", missed["verified"] == [])
 
     good = coordinator.spend_returned(second, second["psbt"])
     check("a signer that published it is accepted", good["verified"] == [who])
