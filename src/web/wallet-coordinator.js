@@ -191,10 +191,15 @@
     ".wal h2{font-size:1rem;font-weight:600;color:#d7dbe0;margin:0}",
     ".wal-note{margin:.35rem 0 0;font-size:.82rem;color:#7c848f}",
     // A letter, not an icon font: one glyph costs nothing and cannot fail to load.
-    ".wal-about-open{width:1.35rem;height:1.35rem;border-radius:50%;border:1px solid #3a4048;"
-      + "background:none;color:#9aa3ad;font:italic 600 .85rem/1 serif;cursor:pointer;"
-      + "flex:0 0 auto;margin-left:auto}",
+    // The same circle as the inline i below, so a visitor learns it once. A
+    // button brings its own padding and the header aligns on the baseline,
+    // which between them made it sit low and off centre.
+    ".wal-about-open{width:1.35rem;height:1.35rem;padding:0;border-radius:50%;"
+      + "border:1px solid #3a4048;background:none;color:#9aa3ae;cursor:pointer;"
+      + "display:grid;place-items:center;font:italic 600 .85rem/1 serif;"
+      + "flex:0 0 auto;margin-left:auto;align-self:center}",
     ".wal-about-open:hover{color:#f7931a;border-color:#f7931a}",
+    ".wal-about-open[aria-expanded=\"true\"]{color:#f7931a;border-color:#f7931a}",
     ".wal-about{margin:.6rem 0 0;padding:.7rem .9rem;border:1px solid #262b31;"
       + "border-radius:8px;font-size:.8rem;color:#9aa3ad;max-height:22rem;overflow:auto}",
     ".wal-about h3{margin:.7rem 0 .25rem;font-size:.78rem;color:#f7931a}",
