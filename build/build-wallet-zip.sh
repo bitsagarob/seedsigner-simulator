@@ -375,7 +375,7 @@ read -r -d '' DEPENDENCIES <<'DEPS' || true
 pypi|base58|base58|2.1.1|https://files.pythonhosted.org/packages/4a/45/ec96b29162a402fc4c1c5512d114d7b3787b9d1c2ec241d9568b4816ee23/base58-2.1.1-py3-none-any.whl|11a36f4d3ce51dfc1043f3218591ac4eb1ceb172919cebe05b52a5bcc8d245c2|.
 pypi|certifi|certifi|2025.7.14|https://files.pythonhosted.org/packages/4f/52/34c6cf5bb9285074dc3531c437b3919e825d976fde097a7a73f79e726d03/certifi-2025.7.14-py3-none-any.whl|6b31f564a415d79ee77df69d757bb49a5bb53bd9f756cbbe24394ffd6fc1f4b2|.
 pypi|ecdsa|ecdsa|0.19.1|https://files.pythonhosted.org/packages/cb/a3/460c57f094a4a165c84a1341c373b0a4f5ec6ac244b998d5021aade89b77/ecdsa-0.19.1-py2.py3-none-any.whl|30638e27cf77b7e15c4c4cc1973720149e1033827cfd00661ca5c8cc0cdb24c3|.
-git|embit|embit-musig2|07116fa232840e9c92d01158f6efd40bb58bee54|https://github.com/bitsagarob/embit.git|07116fa232840e9c92d01158f6efd40bb58bee54|src
+git|embit|embit-musig2|a4ee5a41044a0ed3e2b1e92c89880a1ac2e9cb18|https://github.com/bitsagarob/embit.git|a4ee5a41044a0ed3e2b1e92c89880a1ac2e9cb18|src
 pypi|mnemonic|mnemonic|0.21|https://files.pythonhosted.org/packages/57/48/5abb16ce7f9d97b728e6b97c704ceaa614362e0847651f379ed0511942a0/mnemonic-0.21-py3-none-any.whl|72dc9de16ec5ef47287237b9b6943da11647a03fe7cf1f139fc3d7c4a7439288|.
 pypi|ndef|ndeflib|0.3.3|https://files.pythonhosted.org/packages/c9/80/bbc9a4818cd74807f914d225611cd724d8c0e56237b952a9a4aa6d583f5c/ndeflib-0.3.3-py2.py3-none-any.whl|c634b1af2ab454754f0fdbe1debd38247ed7bdaf94587359b857726f3ee7decb|.
 pypi|OpenSSL|pyOpenSSL|25.1.0|https://files.pythonhosted.org/packages/80/28/2659c02301b9500751f8d42f9a6632e1508aa5120de5e43042b8b30f8d5d/pyopenssl-25.1.0-py3-none-any.whl|2b11f239acc47ac2e5aca04fd7fa829800aeee22a2eb30d744572a157bd8a1ab|.
