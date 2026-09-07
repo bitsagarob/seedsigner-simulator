@@ -171,3 +171,17 @@ def build_psbt_single(descriptor, spend):
             PublicKey.parse(bytes.fromhex(change["pubkey"]))] = DerivationPath(
                 bytes.fromhex(change["fingerprint"]), change["derivation"])
     return psbt.to_string()
+
+
+def dispatch(name, payload):
+    """One entry point for the worker: JSON in, JSON out.
+
+    Keeping the conversion here rather than in JavaScript means the worker never
+    has to know the shape of anything, and a new function needs no plumbing.
+    """
+    import json
+
+    fn = globals().get(name)
+    if not callable(fn) or name.startswith("_"):
+        raise ValueError("no such coordinator function: %s" % name)
+    return json.dumps(fn(*json.loads(payload)))
