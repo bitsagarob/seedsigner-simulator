@@ -9,6 +9,10 @@ Every function here is checked against the JavaScript it replaces, byte for
 byte, by test/test_coordinator_parity.py.
 """
 from embit import compact
+from embit.descriptor.musig import key_agg
+from embit.descriptor.taptree import TapLeaf
+from embit.hashes import hash160, tagged_hash
+from embit.misc import secp256k1
 from embit.descriptor import Descriptor
 from embit.ec import PublicKey
 from embit.networks import NETWORKS
@@ -200,6 +204,125 @@ def finalise_single(psbt_string):
         key, sig = next(iter(scope.partial_sigs.items()))
         psbt.tx.vin[at].witness = Witness([sig, key.sec()])
     return psbt.tx.serialize().hex()
+
+
+# ------------------------------------------------------------------ MuSig2
+
+PSBT_IN_MUSIG2_PARTICIPANT_PUBKEYS = 0x1A
+
+
+def musig_wallet(keys):
+    """2-of-3: key path musig(A,B), with musig(A,C) and musig(B,C) as leaves.
+
+    Any two of the three can spend. A and B use the key path and pay for one
+    signature; a pair involving C falls back to a leaf.
+    """
+    a, b, c = keys
+    return ("tr(musig(%s,%s)/<0;1>/*,{pk(musig(%s,%s)/<0;1>/*),"
+            "pk(musig(%s,%s)/<0;1>/*)})" % (a, b, a, c, b, c))
+
+
+def _leaves(tree):
+    """Every TapLeaf, left to right, without hashing anything."""
+    node = tree.tree if hasattr(tree, "tree") else tree
+    if node is None:
+        return []
+    if isinstance(node, TapLeaf):
+        return [node]
+    return _leaves(node[0]) + _leaves(node[1])
+
+
+def _aggregates(descriptor, branch, index):
+    """Every musig() expression in the descriptor, with what a PSBT needs of it.
+
+    The keydata of PSBT_IN_MUSIG2_PARTICIPANT_PUBKEYS is the plain aggregate of
+    the participants *before* any derivation, because the derivation that
+    follows musig() applies to the aggregate and is carried separately. Read off
+    a Core PSBT rather than off the BIP: getting it wrong writes a field the
+    signer ignores without complaining.
+    """
+    d = Descriptor.from_string(descriptor)
+    found = []
+
+    def one(key, leaf_hash):
+        parts = sorted(k.sec() for k in key.keys)
+        plain = bytes(secp256k1.ec_pubkey_serialize(key_agg(parts)))
+        found.append({
+            "participants": parts,
+            "plain": plain,
+            "derived": key.derive(index, branch_index=branch).sec(),
+            "leaf": leaf_hash,
+        })
+
+    one(d.key, None)
+    if d.taptree:
+        # A leaf can only be hashed once its keys are derived, so the hashes come
+        # from the derived tree and the participants from the undelivered one.
+        # Same tree, same order, so position pairs them.
+        derived = d.derive(index, branch_index=branch)
+        for plain, ready in zip(_leaves(d.taptree), _leaves(derived.taptree)):
+            leaf_hash = tagged_hash("TapLeaf", ready.serialize())
+            for key in plain.keys:
+                one(key, leaf_hash)
+    return found
+
+
+def musig_address(descriptor, branch, index):
+    d = Descriptor.from_string(descriptor).derive(index, branch_index=branch)
+    return {
+        "address": d.address(NET),
+        "script_pubkey": d.script_pubkey().data.hex(),
+        "internal_key": d.key.sec().hex(),
+        "merkle_root": (d.taptree.tweak() if d.taptree else b"").hex(),
+    }
+
+
+def musig_psbt(descriptor, branch, index, utxo, destination, amount):
+    """A PSBT a MuSig2 signer can act on, carrying no nonce yet.
+
+    The device holds no descriptor, so everything it checks the aggregate
+    against has to be here: the participants of every musig() expression, the
+    derivation each aggregate took, and which of its own keys are in them.
+    """
+    derived = Descriptor.from_string(descriptor).derive(index, branch_index=branch)
+    tx = Transaction(
+        version=2,
+        vin=[TransactionInput(bytes.fromhex(utxo["txid"]), utxo["vout"],
+                              sequence=SEQUENCE)],
+        vout=[TransactionOutput(amount, Script(bytes.fromhex(destination)))],
+    )
+    psbt = PSBT(tx)
+    scope = psbt.inputs[0]
+    scope.witness_utxo = TransactionOutput(utxo["value"], derived.script_pubkey())
+    scope.taproot_internal_key = derived.key.get_public_key()
+    if derived.taptree:
+        scope.taproot_merkle_root = derived.taptree.tweak()
+
+    leaves_of = {}
+    for agg in _aggregates(descriptor, branch, index):
+        scope.unknown[bytes([PSBT_IN_MUSIG2_PARTICIPANT_PUBKEYS]) + agg["plain"]] = \
+            b"".join(agg["participants"])
+        # The aggregate's own derivation, filed under the BIP-328 fingerprint of
+        # the untweaked aggregate, which is what the device looks it up by.
+        scope.taproot_bip32_derivations[PublicKey.parse(agg["derived"])] = (
+            [agg["leaf"]] if agg["leaf"] else [],
+            DerivationPath(hash160(agg["plain"])[:4], [branch, index]),
+        )
+        for part in agg["participants"]:
+            leaves_of.setdefault(part, set())
+            if agg["leaf"]:
+                leaves_of[part].add(agg["leaf"])
+
+    origins = {}
+    for key in Descriptor.from_string(descriptor).keys:
+        for one in getattr(key, "keys", [key]):
+            origins[one.sec()] = one.origin
+    for part, leaves in leaves_of.items():
+        scope.taproot_bip32_derivations[PublicKey.parse(part)] = (
+            sorted(leaves),
+            DerivationPath(origins[part].fingerprint, origins[part].derivation),
+        )
+    return psbt.to_string()
 
 
 def dispatch(name, payload):
