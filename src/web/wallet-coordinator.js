@@ -672,6 +672,17 @@
     var open = this.aboutPanel.hidden;
     this.aboutPanel.hidden = !open;
     this.aboutButton.setAttribute("aria-expanded", open ? "true" : "false");
+    // Once the coordinator has booted it knows the hash of what it loaded, so
+    // say that rather than what was asked for. Before then the panel shows the
+    // pins, which is all anyone can honestly claim.
+    var loaded = C.loaded && C.loaded();
+    if (open && loaded && !this.aboutPanel.dataset.loaded) {
+      this.aboutPanel.dataset.loaded = "yes";
+      var running = element("p");
+      running.innerHTML = "<b>Loaded now:</b> embit <code>" + loaded.embit.slice(0, 16)
+        + "…</code>, coordinator.py <code>" + loaded.coordinator.slice(0, 16) + "…</code>";
+      this.aboutPanel.appendChild(running);
+    }
   };
 
   Wallet.prototype.toggle = function (want) {
