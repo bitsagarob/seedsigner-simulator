@@ -15,25 +15,40 @@ function reply(id, ok, value) {
   self.postMessage({ id: id, ok: ok, value: value });
 }
 
-async function boot(indexURL, zipURL) {
+function sha256Hex(bytes) {
+  return crypto.subtle.digest("SHA-256", bytes).then(function (digest) {
+    return Array.from(new Uint8Array(digest))
+      .map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+  });
+}
+
+// Two things, hashed separately because they are two different claims. The zip
+// is one upstream commit of embit and its hash can be reproduced from that
+// commit by anyone. coordinator.py is ours, served as a readable file and
+// listed in build/checksums.txt. Rolling them into one number would hide both.
+async function boot(indexURL, zipURL, codeURL) {
   importScripts(indexURL + "pyodide.js");
   pyodide = await loadPyodide({ indexURL: indexURL });
+
   const zip = await (await fetch(zipURL)).arrayBuffer();
-  // Hashed before unpacking, and handed back, so the page can say which bytes
-  // it is running rather than which bytes it asked for.
-  const digest = await crypto.subtle.digest("SHA-256", zip);
+  const embitSha = await sha256Hex(zip);
   await pyodide.unpackArchive(zip, "zip", { extractDir: "/coordinator" });
+
+  const code = await (await fetch(codeURL)).arrayBuffer();
+  const codeSha = await sha256Hex(code);
+  pyodide.FS.writeFile("/coordinator/coordinator.py", new Uint8Array(code));
+
   pyodide.runPython("import sys; sys.path.insert(0, '/coordinator')");
   coordinator = pyodide.pyimport("coordinator");
-  return Array.from(new Uint8Array(digest))
-    .map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+  return { embit: embitSha, coordinator: codeSha };
 }
 
 self.onmessage = async function (event) {
   const message = event.data;
   try {
     if (message.type === "boot") {
-      reply(message.id, true, await boot(message.indexURL, message.zipURL));
+      reply(message.id, true, await boot(message.indexURL, message.zipURL,
+                                        message.codeURL));
       return;
     }
     if (!coordinator) throw new Error("the coordinator has not booted");

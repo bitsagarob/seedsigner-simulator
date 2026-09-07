@@ -9,6 +9,11 @@
 # the same pinned commit the device uses, which is what makes the two halves
 # agree about what a PSBT is.
 #
+# Nothing of ours goes in here. This zip holds one upstream commit and its hash
+# says so, which anybody can check by fetching that commit and rebuilding. Our
+# own coordinator.py is served as a plain file, covered by build/checksums.txt
+# like every other file this page serves.
+#
 # Deterministic the same way build-wallet-zip.sh is: fixed timestamps, fixed
 # permissions, fixed order, no __pycache__. Run it twice and diff the hashes.
 #
@@ -37,10 +42,10 @@ GIT_TERMINAL_PROMPT=0 git -C "${WORK}" fetch --quiet --depth 1 origin "${COMMIT}
 GIT_TERMINAL_PROMPT=0 git -C "${WORK}" -c advice.detachedHead=false checkout --quiet FETCH_HEAD
 
 mkdir -p "$(dirname "${OUT}")"
-python3 - "${WORK}/src/embit" "${REPO_ROOT}/src/web/coordinator.py" "${OUT}" <<'PY'
+python3 - "${WORK}/src/embit" "${OUT}" <<'PY'
 import os, sys, zipfile
 
-source, extra, out = sys.argv[1], sys.argv[2], sys.argv[3]
+source, out = sys.argv[1], sys.argv[2]
 names = []
 for root, dirs, files in os.walk(source):
     dirs[:] = sorted(d for d in dirs if d != "__pycache__")
@@ -49,7 +54,6 @@ for root, dirs, files in os.walk(source):
             continue
         full = os.path.join(root, name)
         names.append((full, os.path.join("embit", os.path.relpath(full, source))))
-names.append((extra, "coordinator.py"))
 
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     for full, arc in sorted(names, key=lambda pair: pair[1]):
