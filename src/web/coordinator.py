@@ -173,6 +173,35 @@ def build_psbt_single(descriptor, spend):
     return psbt.to_string()
 
 
+def transaction_outputs(raw_hex):
+    """The outputs of a raw transaction, enough to find which one paid us."""
+    tx = Transaction.from_string(raw_hex)
+    return [{"index": i, "value": out.value, "script": out.script_pubkey.data.hex()}
+            for i, out in enumerate(tx.vout)]
+
+
+def partial_signatures(psbt_string):
+    """Whatever signatures came back on the first input, by public key."""
+    scope = PSBT.from_string(psbt_string).inputs[0]
+    return {key.sec().hex(): sig.hex()
+            for key, sig in scope.partial_sigs.items()}
+
+
+def finalise_single(psbt_string):
+    """One signature and its key per input, and the transaction is finished.
+
+    The transaction comes out of the PSBT rather than being rebuilt, because
+    what is broadcast has to be what was signed.
+    """
+    psbt = PSBT.from_string(psbt_string)
+    for at, scope in enumerate(psbt.inputs):
+        if not scope.partial_sigs:
+            raise ValueError("input %d came back without a signature" % at)
+        key, sig = next(iter(scope.partial_sigs.items()))
+        psbt.tx.vin[at].witness = Witness([sig, key.sec()])
+    return psbt.tx.serialize().hex()
+
+
 def dispatch(name, payload):
     """One entry point for the worker: JSON in, JSON out.
 

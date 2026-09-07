@@ -33,6 +33,9 @@ UTXO = {"txid": "8f3a1c2e5d4b6a79808182838485868788898a8b8c8d8e8f90919293949596a
 DESTINATION = "0014" + "11" * 20
 AMOUNT = 240000
 SIGS = ["3044" + "22" * 34 + "01", "3044" + "33" * 34 + "01"]
+# A real transaction taken off the chain rather than made up, because a
+# hand-written one is a test of my hex, not of either implementation.
+RAW_TX = "020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff0402b80100feffffff02807c814a00000000160014cee3d834a2b8cd01a3009a3fef8ebf59f3c325cd0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf901200000000000000000000000000000000000000000000000000000000000000000b7010000"
 
 JS = r"""
 const C = require(process.argv[1] + "/src/web/signet-coordinator.js").SignetCoordinator;
@@ -58,6 +61,7 @@ C.buildWallet(args.keys).then(function (wallet) {
       C.finalise(input, source, dest, args.amount, signatures),
     ]).then(function (out) {
       const spendFrom = out[0], change = out[1], done = out[2];
+      const outs = C.transactionOutputs(args.rawTx);
       const psbtSingle = C.buildPsbtSingle({
         inputs: [{ txid: utxo.txid, vout: utxo.vout, value: utxo.value, source: spendFrom }],
         outputs: [{ value: args.amount, script: dest }],
@@ -65,6 +69,7 @@ C.buildWallet(args.keys).then(function (wallet) {
         feeRate: 2,
       });
       process.stdout.write(JSON.stringify({
+        outputs: outs.map(function (o) { return o.value + ":" + o.script; }),
         singleDescriptor: single.descriptor,
         singleAddress: spendFrom.address,
         psbtSingle: psbtSingle,
@@ -107,7 +112,8 @@ def main():
     keys = exported_keys()
     account = single_account()
     payload = json.dumps({"keys": keys, "utxo": UTXO, "destination": DESTINATION,
-                          "amount": AMOUNT, "sigs": SIGS, "account": account})
+                          "amount": AMOUNT, "sigs": SIGS, "account": account,
+                          "rawTx": RAW_TX})
     node = subprocess.run(["node", "-e", JS, "--", str(HERE.parent), payload],
                           capture_output=True, text=True)
     if node.returncode != 0:
@@ -137,6 +143,8 @@ def main():
         "[%s%s]%s" % (account["fingerprint"], account["path"], account["tpub"]))
     spend_from = coordinator.address_single(single_desc, 0, 0)
     change = coordinator.address_single(single_desc, 1, 7)
+    ours["outputs"] = ["%d:%s" % (o["value"], o["script"])
+                       for o in coordinator.transaction_outputs(RAW_TX)]
     ours["singleDescriptor"] = [single_desc]
     ours["singleAddress"] = [spend_from["address"]]
     ours["psbtSingle"] = [coordinator.build_psbt_single(single_desc, {
@@ -149,7 +157,7 @@ def main():
         js[one] = [js[one]]
 
     failures = 0
-    for field in ("addresses", "scripts", "psbt", "tx", "txid",
+    for field in ("addresses", "scripts", "psbt", "tx", "txid", "outputs",
                   "singleDescriptor", "singleAddress", "psbtSingle"):
         for i, (a, b) in enumerate(zip(js[field], ours[field])):
             same = a == b
