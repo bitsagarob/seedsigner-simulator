@@ -222,6 +222,12 @@ def musig_wallet(keys):
             "pk(musig(%s,%s)/<0;1>/*)})" % (a, b, a, c, b, c))
 
 
+def _add_tweak(point, tweak):
+    point = bytearray(point)
+    out = secp256k1.ec_pubkey_add(point, tweak)
+    return out if out is not None else point
+
+
 def _leaves(tree):
     """Every TapLeaf, left to right, without hashing anything."""
     node = tree.tree if hasattr(tree, "tree") else tree
@@ -242,15 +248,29 @@ def _aggregates(descriptor, branch, index):
     signer ignores without complaining.
     """
     d = Descriptor.from_string(descriptor)
+    derived_all = d.derive(index, branch_index=branch)
+    merkle = derived_all.taptree.tweak() if derived_all.taptree else b""
     found = []
 
     def one(key, leaf_hash):
         parts = sorted(k.sec() for k in key.keys)
         plain = bytes(secp256k1.ec_pubkey_serialize(key_agg(parts)))
+        derived = key.derive(index, branch_index=branch).sec()
+        # A key-path signer signs for the output key, so its nonce is filed
+        # under the taptweaked aggregate. A leaf signer signs for its own.
+        # Parity is kept: Core writes the real prefix, not a forced 02.
+        if leaf_hash is None and merkle is not None:
+            point = secp256k1.ec_pubkey_parse(b"\x02" + derived[1:33])
+            tweak = tagged_hash("TapTweak", derived[1:33] + merkle)
+            signing = bytes(secp256k1.ec_pubkey_serialize(
+                _add_tweak(point, tweak)))
+        else:
+            signing = derived
         found.append({
             "participants": parts,
             "plain": plain,
-            "derived": key.derive(index, branch_index=branch).sec(),
+            "derived": derived,
+            "signing": signing,
             "leaf": leaf_hash,
         })
 
@@ -265,6 +285,22 @@ def _aggregates(descriptor, branch, index):
             for key in plain.keys:
                 one(key, leaf_hash)
     return found
+
+
+def musig_aggregates(descriptor, branch, index):
+    """Every musig() expression, as a coordinator needs to talk about it.
+
+    Two different keys stand for one aggregate and mixing them up is silent:
+    PSBT_IN_MUSIG2_PARTICIPANT_PUBKEYS is keyed by the plain aggregate, and
+    PSBT_IN_MUSIG2_PUB_NONCE is keyed by the aggregate after BIP-328
+    derivation. A nonce filed under the plain one is ignored without complaint.
+    """
+    return [{"participants": [p.hex() for p in agg["participants"]],
+             "plain": agg["plain"].hex(),
+             "derived": agg["derived"].hex(),
+             "signing": agg["signing"].hex(),
+             "leaf": agg["leaf"].hex() if agg["leaf"] else None}
+            for agg in _aggregates(descriptor, branch, index)]
 
 
 def musig_address(descriptor, branch, index):
