@@ -1,12 +1,7 @@
-"""The coordinator's chain half, on embit.
+"""The coordinator's chain half: descriptors, addresses, PSBTs, transactions.
 
-This replaces hand-written JavaScript with the library the device already runs.
-Nothing here is novel: it is descriptors, PSBTs and transactions, and embit
-knows what those are. What stays in JavaScript is the browser: the panel, the
-camera, QR in and out, and talking to the faucet.
-
-Every function here is checked against the JavaScript it replaces, byte for
-byte, by test/test_coordinator_parity.py.
+Checked against signet-coordinator.js and against Bitcoin Core by
+test/test_coordinator_parity.py.
 """
 from embit import compact
 from embit.descriptor.musig import key_agg
@@ -50,12 +45,7 @@ def address(descriptor, branch, index):
 
 
 def build_psbt(descriptor, branch, index, utxo, destination, amount):
-    """A PSBT spending one output of this wallet, paying one script.
-
-    Everything the device cannot know goes in: what the output being spent is
-    worth, the script it pays into, and which key of each cosigner is in that
-    script, with the path it came from.
-    """
+    """Spend one output of this wallet, paying one script."""
     derived = Descriptor.from_string(descriptor).derive(index, branch_index=branch)
     tx = Transaction(
         version=2,
@@ -121,7 +111,7 @@ def address_single(descriptor, branch, index):
 
 
 def estimate_vsize(input_count, scripts):
-    """The size of a P2WPKH spend before it exists. Every part is fixed length."""
+    """The size of a P2WPKH spend before it exists."""
     paid = sum(8 + len(compact.to_bytes(len(s))) + len(s) for s in scripts)
     base = (4 + len(compact.to_bytes(input_count)) + input_count * 41
             + len(compact.to_bytes(len(scripts))) + paid + 4)
@@ -130,11 +120,7 @@ def estimate_vsize(input_count, scripts):
 
 
 def build_psbt_single(descriptor, spend):
-    """Several inputs, several outputs, change and fee worked out from a rate.
-
-    Change worth less than it costs to spend is dropped and the fee has it,
-    which is what every wallet does and what the network prefers.
-    """
+    """Several inputs and outputs. Change below the dust limit goes to fee."""
     inputs, outputs = spend["inputs"], list(spend["outputs"])
     funded = sum(i["value"] for i in inputs)
     paying = sum(o["value"] for o in outputs)
@@ -192,11 +178,7 @@ def partial_signatures(psbt_string):
 
 
 def finalise_single(psbt_string):
-    """One signature and its key per input, and the transaction is finished.
-
-    The transaction comes out of the PSBT rather than being rebuilt, because
-    what is broadcast has to be what was signed.
-    """
+    """Finish a signed single-signature PSBT, from the PSBT's own transaction."""
     psbt = PSBT.from_string(psbt_string)
     for at, scope in enumerate(psbt.inputs):
         if not scope.partial_sigs:
@@ -212,11 +194,7 @@ PSBT_IN_MUSIG2_PARTICIPANT_PUBKEYS = 0x1A
 
 
 def musig_wallet(keys):
-    """2-of-3: key path musig(A,B), with musig(A,C) and musig(B,C) as leaves.
-
-    Any two of the three can spend. A and B use the key path and pay for one
-    signature; a pair involving C falls back to a leaf.
-    """
+    """2-of-3: key path musig(A,B), leaves musig(A,C) and musig(B,C)."""
     a, b, c = keys
     return ("tr(musig(%s,%s)/<0;1>/*,{pk(musig(%s,%s)/<0;1>/*),"
             "pk(musig(%s,%s)/<0;1>/*)})" % (a, b, a, c, b, c))
@@ -239,13 +217,11 @@ def _leaves(tree):
 
 
 def _aggregates(descriptor, branch, index):
-    """Every musig() expression in the descriptor, with what a PSBT needs of it.
+    """Every musig() expression, with the three keys that stand for it.
 
-    The keydata of PSBT_IN_MUSIG2_PARTICIPANT_PUBKEYS is the plain aggregate of
-    the participants *before* any derivation, because the derivation that
-    follows musig() applies to the aggregate and is carried separately. Read off
-    a Core PSBT rather than off the BIP: getting it wrong writes a field the
-    signer ignores without complaining.
+    plain    KeyAgg of the undelivered participants   0x1a keydata
+    derived  plus BIP-328                             taproot derivations
+    signing  plus the taptweak, for a key path        0x1b keydata
     """
     d = Descriptor.from_string(descriptor)
     derived_all = d.derive(index, branch_index=branch)
@@ -256,8 +232,7 @@ def _aggregates(descriptor, branch, index):
         parts = sorted(k.sec() for k in key.keys)
         plain = bytes(secp256k1.ec_pubkey_serialize(key_agg(parts)))
         derived = key.derive(index, branch_index=branch).sec()
-        # A key-path signer signs for the output key, so its nonce is filed
-        # under the taptweaked aggregate. A leaf signer signs for its own.
+        # A key path signs for the output key, a leaf for its own aggregate.
         # Parity is kept: Core writes the real prefix, not a forced 02.
         if leaf_hash is None and merkle is not None:
             point = secp256k1.ec_pubkey_parse(b"\x02" + derived[1:33])
@@ -276,9 +251,8 @@ def _aggregates(descriptor, branch, index):
 
     one(d.key, None)
     if d.taptree:
-        # A leaf can only be hashed once its keys are derived, so the hashes come
-        # from the derived tree and the participants from the undelivered one.
-        # Same tree, same order, so position pairs them.
+        # Hashes need derived keys, participants need undelivered ones. Same
+        # tree, same order, so position pairs them.
         derived = d.derive(index, branch_index=branch)
         for plain, ready in zip(_leaves(d.taptree), _leaves(derived.taptree)):
             leaf_hash = tagged_hash("TapLeaf", ready.serialize())
@@ -288,13 +262,7 @@ def _aggregates(descriptor, branch, index):
 
 
 def musig_aggregates(descriptor, branch, index):
-    """Every musig() expression, as a coordinator needs to talk about it.
-
-    Two different keys stand for one aggregate and mixing them up is silent:
-    PSBT_IN_MUSIG2_PARTICIPANT_PUBKEYS is keyed by the plain aggregate, and
-    PSBT_IN_MUSIG2_PUB_NONCE is keyed by the aggregate after BIP-328
-    derivation. A nonce filed under the plain one is ignored without complaint.
-    """
+    """_aggregates as hex, for callers outside this module."""
     return [{"participants": [p.hex() for p in agg["participants"]],
              "plain": agg["plain"].hex(),
              "derived": agg["derived"].hex(),
@@ -314,11 +282,9 @@ def musig_address(descriptor, branch, index):
 
 
 def musig_psbt(descriptor, branch, index, utxo, destination, amount):
-    """A PSBT a MuSig2 signer can act on, carrying no nonce yet.
+    """A MuSig2 PSBT with no nonce yet: BIP-373.
 
-    The device holds no descriptor, so everything it checks the aggregate
-    against has to be here: the participants of every musig() expression, the
-    derivation each aggregate took, and which of its own keys are in them.
+    The device holds no descriptor, so every aggregate is described here.
     """
     derived = Descriptor.from_string(descriptor).derive(index, branch_index=branch)
     tx = Transaction(
@@ -338,8 +304,7 @@ def musig_psbt(descriptor, branch, index, utxo, destination, amount):
     for agg in _aggregates(descriptor, branch, index):
         scope.unknown[bytes([PSBT_IN_MUSIG2_PARTICIPANT_PUBKEYS]) + agg["plain"]] = \
             b"".join(agg["participants"])
-        # The aggregate's own derivation, filed under the BIP-328 fingerprint of
-        # the untweaked aggregate, which is what the device looks it up by.
+        # Filed under the BIP-328 fingerprint of the untweaked aggregate.
         scope.taproot_bip32_derivations[PublicKey.parse(agg["derived"])] = (
             [agg["leaf"]] if agg["leaf"] else [],
             DerivationPath(hash160(agg["plain"])[:4], [branch, index]),
@@ -361,12 +326,83 @@ def musig_psbt(descriptor, branch, index, utxo, destination, amount):
     return psbt.to_string()
 
 
-def dispatch(name, payload):
-    """One entry point for the worker: JSON in, JSON out.
+# ------------------------------------------------------------- the nonce pool
 
-    Keeping the conversion here rather than in JavaScript means the worker never
-    has to know the shape of anything, and a new function needs no plumbing.
+# BIP-174 proprietary space. musig2_card.py writes the same key.
+POOL_IDENTIFIER = b"DOOMSIGNER"
+SUBTYPE_POOLED_NONCE = 0x01
+SIZE_PUBNONCE = 66
+SIZE_SEALED = 144
+PSBT_IN_MUSIG2_PUB_NONCE = 0x1B
+
+
+def _pooled_key(participant, index):
+    return (bytes([0xFC])
+            + compact.to_bytes(len(POOL_IDENTIFIER)) + POOL_IDENTIFIER
+            + compact.to_bytes(SUBTYPE_POOLED_NONCE)
+            + participant + index.to_bytes(2, "big"))
+
+
+def _nonce_key(participant, aggregate, leaf=None):
+    key = bytes([PSBT_IN_MUSIG2_PUB_NONCE]) + participant + aggregate
+    return key + leaf if leaf else key
+
+
+def pool_harvest(psbt_string, input_index=0):
+    """The spare nonces a device left behind, named by their public half."""
+    scope = PSBT.from_string(psbt_string).inputs[input_index]
+    prefix = _pooled_key(b"", 0)[:-2]
+    found = []
+    for key, value in scope.unknown.items():
+        key, value = bytes(key), bytes(value)
+        if not key.startswith(prefix) or len(value) != SIZE_PUBNONCE + SIZE_SEALED:
+            continue
+        found.append({"participant": key[len(prefix):len(prefix) + 33].hex(),
+                      "id": value[:SIZE_PUBNONCE].hex(),
+                      "entry": value.hex()})
+    return found
+
+
+def pool_dress(psbt_string, entries, input_index=0):
+    """Put one made-in-advance nonce per signer into a PSBT going out.
+
+    aggregate is the "signing" key from musig_aggregates; the other two are
+    ignored silently.
     """
+    psbt = PSBT.from_string(psbt_string)
+    scope = psbt.inputs[input_index]
+    for one in entries:
+        participant = bytes.fromhex(one["participant"])
+        blob = bytes.fromhex(one["entry"])
+        leaf = bytes.fromhex(one["leaf"]) if one.get("leaf") else None
+        scope.unknown[_nonce_key(participant, bytes.fromhex(one["aggregate"]), leaf)] = \
+            blob[:SIZE_PUBNONCE]
+        scope.unknown[_pooled_key(participant, 0)] = blob
+    return psbt.to_string()
+
+
+def pool_verify(psbt_string, issued, participant, aggregate, leaf=None,
+                input_index=0):
+    """Prove the signer used the nonce it was given.
+
+    A device that ignored it still produces a valid transaction. Ask this of
+    the PSBT the device handed back: finalising strips the nonce.
+    """
+    scope = PSBT.from_string(psbt_string).inputs[input_index]
+    wanted = _nonce_key(bytes.fromhex(participant), bytes.fromhex(aggregate),
+                        bytes.fromhex(leaf) if leaf else None)
+    published = scope.unknown.get(wanted)
+    if published is None:
+        raise ValueError("that signer published no nonce under %s, so there is "
+                         "nothing to compare against" % aggregate[:16])
+    if bytes(published) != bytes.fromhex(issued)[:SIZE_PUBNONCE]:
+        raise ValueError("that signer published a different nonce than the one "
+                         "it was given, so the pooled one was not used")
+    return True
+
+
+def dispatch(name, payload):
+    """One entry point for the worker: JSON in, JSON out."""
     import json
 
     fn = globals().get(name)
