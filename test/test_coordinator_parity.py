@@ -17,7 +17,7 @@ sys.path.insert(0, "/home/rob/.cache/tmp/ss-sp-spend-nno_t15g")
 sys.path.insert(0, "/home/rob/apps/_scratch/embit-musig/src")
 
 from embit import bip32, bip39
-from embit.descriptor import Descriptor
+
 from embit.networks import NETWORKS
 
 NET = NETWORKS["test"]
