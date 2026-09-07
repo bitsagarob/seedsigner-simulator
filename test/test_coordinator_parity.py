@@ -45,12 +45,29 @@ C.buildWallet(args.keys).then(function (wallet) {
     const source = addrs[0];
     const input = { txid: utxo.txid, vout: utxo.vout, value: utxo.value };
     const psbt = C.buildPsbt(input, source, dest, args.amount);
+    const single = C.singleSigWallet({ fingerprint: args.account.fingerprint,
+                                       path: args.account.path,
+                                       tpub: args.account.tpub });
     const signatures = {};
     source.cosigners.slice(0, 2).forEach(function (leaf, i) {
       signatures[C.hex(leaf.pubkey)] = C.unhex(args.sigs[i]);
     });
-    return C.finalise(input, source, dest, args.amount, signatures).then(function (done) {
+    return Promise.all([
+      C.deriveAddressSingle(single, 0, 0),
+      C.deriveAddressSingle(single, 1, 7),
+      C.finalise(input, source, dest, args.amount, signatures),
+    ]).then(function (out) {
+      const spendFrom = out[0], change = out[1], done = out[2];
+      const psbtSingle = C.buildPsbtSingle({
+        inputs: [{ txid: utxo.txid, vout: utxo.vout, value: utxo.value, source: spendFrom }],
+        outputs: [{ value: args.amount, script: dest }],
+        change: change,
+        feeRate: 2,
+      });
       process.stdout.write(JSON.stringify({
+        singleDescriptor: single.descriptor,
+        singleAddress: spendFrom.address,
+        psbtSingle: psbtSingle,
         descriptor: wallet.descriptor,
         addresses: addrs.map(function (a) { return a.address; }),
         scripts: addrs.map(function (a) { return C.hex(a.witnessScript); }),
@@ -75,10 +92,22 @@ def exported_keys():
     return out
 
 
+def single_account():
+    """One exported key, the shape the single-signature wallet is built from."""
+    root = bip32.HDKey.from_seed(bip39.mnemonic_to_seed(MNEMONICS[0]))
+    path = "m/84h/1h/0h"
+    return {
+        "fingerprint": root.my_fingerprint.hex(),
+        "path": "/" + path[2:],
+        "tpub": root.derive(path).to_public().to_string(version=NET["xpub"]),
+    }
+
+
 def main():
     keys = exported_keys()
+    account = single_account()
     payload = json.dumps({"keys": keys, "utxo": UTXO, "destination": DESTINATION,
-                          "amount": AMOUNT, "sigs": SIGS})
+                          "amount": AMOUNT, "sigs": SIGS, "account": account})
     node = subprocess.run(["node", "-e", JS, "--", str(HERE.parent), payload],
                           capture_output=True, text=True)
     if node.returncode != 0:
@@ -103,11 +132,25 @@ def main():
         "tx": [done["hex"]],
         "txid": [done["txid"]],
     }
-    for one in ("psbt", "tx", "txid"):
+    account = single_account()
+    single_desc = coordinator.single_wallet(
+        "[%s%s]%s" % (account["fingerprint"], account["path"], account["tpub"]))
+    spend_from = coordinator.address_single(single_desc, 0, 0)
+    change = coordinator.address_single(single_desc, 1, 7)
+    ours["singleDescriptor"] = [single_desc]
+    ours["singleAddress"] = [spend_from["address"]]
+    ours["psbtSingle"] = [coordinator.build_psbt_single(single_desc, {
+        "inputs": [dict(UTXO, source=spend_from)],
+        "outputs": [{"value": AMOUNT, "script": DESTINATION}],
+        "change": change,
+        "fee_rate": 2,
+    })]
+    for one in ("psbt", "tx", "txid", "singleDescriptor", "singleAddress", "psbtSingle"):
         js[one] = [js[one]]
 
     failures = 0
-    for field in ("addresses", "scripts", "psbt", "tx", "txid"):
+    for field in ("addresses", "scripts", "psbt", "tx", "txid",
+                  "singleDescriptor", "singleAddress", "psbtSingle"):
         for i, (a, b) in enumerate(zip(js[field], ours[field])):
             same = a == b
             failures += not same

@@ -8,6 +8,7 @@ camera, QR in and out, and talking to the faucet.
 Every function here is checked against the JavaScript it replaces, byte for
 byte, by test/test_coordinator_parity.py.
 """
+from embit import compact
 from embit.descriptor import Descriptor
 from embit.ec import PublicKey
 from embit.networks import NETWORKS
@@ -89,3 +90,84 @@ def finalise(descriptor, branch, index, utxo, destination, amount, signatures):
     tx.vin[0].witness = Witness(
         [b""] + [bytes.fromhex(s) for s in wanted[:2]] + [script.data])
     return {"hex": tx.serialize().hex(), "txid": txid}
+
+
+# ------------------------------------------------------- single signature
+
+# What Bitcoin Core will not relay: an output worth less than a third of what
+# spending it would cost at the dust relay fee.
+DUST = 294
+
+
+def single_wallet(account):
+    """wpkh, from one exported key."""
+    return "wpkh(%s/{0,1}/*)" % account
+
+
+def address_single(descriptor, branch, index):
+    d = Descriptor.from_string(descriptor).derive(index, branch_index=branch)
+    key = d.keys[0]
+    return {
+        "address": d.address(NET),
+        "script_pubkey": d.script_pubkey().data.hex(),
+        "pubkey": key.sec().hex(),
+        "fingerprint": key.origin.fingerprint.hex(),
+        "derivation": key.origin.derivation,
+    }
+
+
+def estimate_vsize(input_count, scripts):
+    """The size of a P2WPKH spend before it exists. Every part is fixed length."""
+    paid = sum(8 + len(compact.to_bytes(len(s))) + len(s) for s in scripts)
+    base = (4 + len(compact.to_bytes(input_count)) + input_count * 41
+            + len(compact.to_bytes(len(scripts))) + paid + 4)
+    witness = 2 + input_count * (1 + 1 + 72 + 1 + 33)
+    return -(-(base * 4 + witness) // 4)
+
+
+def build_psbt_single(descriptor, spend):
+    """Several inputs, several outputs, change and fee worked out from a rate.
+
+    Change worth less than it costs to spend is dropped and the fee has it,
+    which is what every wallet does and what the network prefers.
+    """
+    inputs, outputs = spend["inputs"], list(spend["outputs"])
+    funded = sum(i["value"] for i in inputs)
+    paying = sum(o["value"] for o in outputs)
+    if funded < paying:
+        raise ValueError("these inputs do not cover that spend")
+
+    change_at = -1
+    if spend.get("change"):
+        change = spend["change"]
+        scripts = [bytes.fromhex(o["script"]) for o in outputs]
+        scripts.append(bytes.fromhex(change["script_pubkey"]))
+        fee = -(-(estimate_vsize(len(inputs), scripts) * spend["fee_rate"]) // 1)
+        left = funded - paying - int(fee)
+        if left < 0:
+            raise ValueError("these inputs do not cover that spend and its fee")
+        if left >= DUST:
+            change_at = len(outputs)
+            outputs.append({"value": left, "script": change["script_pubkey"]})
+
+    tx = Transaction(
+        version=2,
+        vin=[TransactionInput(bytes.fromhex(i["txid"]), i["vout"], sequence=SEQUENCE)
+             for i in inputs],
+        vout=[TransactionOutput(o["value"], Script(bytes.fromhex(o["script"])))
+              for o in outputs],
+    )
+    psbt = PSBT(tx)
+    for at, one in enumerate(inputs):
+        source = one["source"]
+        scope = psbt.inputs[at]
+        scope.witness_utxo = TransactionOutput(
+            one["value"], Script(bytes.fromhex(source["script_pubkey"])))
+        scope.bip32_derivations[PublicKey.parse(bytes.fromhex(source["pubkey"]))] = \
+            DerivationPath(bytes.fromhex(source["fingerprint"]), source["derivation"])
+    if change_at >= 0:
+        change = spend["change"]
+        psbt.outputs[change_at].bip32_derivations[
+            PublicKey.parse(bytes.fromhex(change["pubkey"]))] = DerivationPath(
+                bytes.fromhex(change["fingerprint"]), change["derivation"])
+    return psbt.to_string()
