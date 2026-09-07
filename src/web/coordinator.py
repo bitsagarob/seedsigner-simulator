@@ -474,11 +474,22 @@ def spend_returned(state, psbt):
     return state
 
 
+# What the worker may call. An allowlist rather than a lookup in globals(),
+# which would also reach every imported name.
+CALLABLE = (
+    "wallet", "address", "build_psbt", "finalise",
+    "single_wallet", "address_single", "build_psbt_single", "finalise_single",
+    "transaction_outputs", "partial_signatures",
+    "musig_wallet", "musig_address", "musig_aggregates", "musig_psbt",
+    "pool_harvest", "pool_dress", "pool_verify",
+    "spend_start", "spend_returned",
+)
+
+
 def dispatch(name, payload):
     """One entry point for the worker: JSON in, JSON out."""
     import json
 
-    fn = globals().get(name)
-    if not callable(fn) or name.startswith("_"):
+    if name not in CALLABLE:
         raise ValueError("no such coordinator function: %s" % name)
-    return json.dumps(fn(*json.loads(payload)))
+    return json.dumps(globals()[name](*json.loads(payload)))
