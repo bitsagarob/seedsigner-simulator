@@ -189,6 +189,18 @@
     ".wal-head{display:flex;align-items:baseline;justify-content:space-between;gap:.9rem}",
     ".wal h2{font-size:1rem;font-weight:600;color:#d7dbe0;margin:0}",
     ".wal-note{margin:.35rem 0 0;font-size:.82rem;color:#7c848f}",
+    // A letter, not an icon font: one glyph costs nothing and cannot fail to load.
+    ".wal-about-open{width:1.35rem;height:1.35rem;border-radius:50%;border:1px solid #3a4048;"
+      + "background:none;color:#9aa3ad;font:italic 600 .85rem/1 serif;cursor:pointer;"
+      + "flex:0 0 auto;margin-left:auto}",
+    ".wal-about-open:hover{color:#f7931a;border-color:#f7931a}",
+    ".wal-about{margin:.6rem 0 0;padding:.7rem .9rem;border:1px solid #262b31;"
+      + "border-radius:8px;font-size:.8rem;color:#9aa3ad;max-height:22rem;overflow:auto}",
+    ".wal-about h3{margin:.7rem 0 .25rem;font-size:.78rem;color:#f7931a}",
+    ".wal-about h3:first-child{margin-top:0}",
+    ".wal-about ul{margin:0;padding-left:1.1rem}",
+    ".wal-about li{margin:.15rem 0}",
+    ".wal-about a{color:#9fd0a0}",
 
     ".wal button{font:inherit;font-size:.88rem;color:#8b939e;background:#1d2026;",
     "border:1px solid #2a2e35;border-radius:5px;padding:.25rem .7rem;cursor:pointer}",
@@ -409,6 +421,51 @@
     return new Uint8Array([0x00, program.length].concat(program));
   }
 
+  // What this thing is, in the panel rather than in a document nobody opens.
+  // Every line is a claim someone can check, so each names the standard or the
+  // repository it rests on.
+  var ABOUT = [
+    "<h3>What this is</h3>",
+    "<ul>",
+    "<li>A coordinator. It builds the transaction, moves bytes and keeps the nonce pool.</li>",
+    "<li>It holds no keys, signs nothing, and does no cryptography. Every curve",
+    " operation happens on the device.</li>",
+    "</ul>",
+    "<h3>Standards</h3>",
+    "<ul>",
+    "<li><a href='https://bips.dev/327/'>BIP-327</a> MuSig2</li>",
+    "<li><a href='https://bips.dev/328/'>BIP-328</a> derivation on the aggregate key</li>",
+    "<li><a href='https://bips.dev/373/'>BIP-373</a> MuSig2 fields in a PSBT</li>",
+    "<li><a href='https://bips.dev/390/'>BIP-390</a> the <code>musig()</code> descriptor</li>",
+    "<li><a href='https://bips.dev/341/'>BIP-341</a> taproot</li>",
+    "</ul>",
+    "<h3>One field is ours</h3>",
+    "<ul>",
+    "<li><code>0xFC DOOMSIGNER</code> subtype <code>0x01</code>: a nonce made in advance,",
+    " 66 bytes public and 144 bytes sealed to the card.</li>",
+    "<li>Proprietary PSBT space, so software that does not know it carries it through",
+    " untouched. Bitcoin Core does.</li>",
+    "</ul>",
+    "<h3>Why a spend costs one visit</h3>",
+    "<ul>",
+    "<li>MuSig2's first round does not depend on the transaction, so it can happen",
+    " before there is one.</li>",
+    "<li>The device leaves four spare nonces behind, held on a SeedKeeper that",
+    " releases each exactly once.</li>",
+    "<li>This page puts one into the next transaction, so no signer waits for another.</li>",
+    "<li>Not a new idea: it is FROST's preprocessing stage, and Cryptnox already ship",
+    " a card that makes MuSig2 nonces in advance.</li>",
+    "</ul>",
+    "<h3>Code</h3>",
+    "<ul>",
+    "<li>device: <a href='https://github.com/bitsagarob/seedsigner'>bitsagarob/seedsigner</a></li>",
+    "<li>descriptors: <a href='https://github.com/bitsagarob/embit'>bitsagarob/embit</a></li>",
+    "<li>this page: <a href='https://github.com/bitsagarob/seedsigner-simulator'>bitsagarob/seedsigner-simulator</a></li>",
+    "</ul>",
+    "<h3>Chain</h3>",
+    "<ul><li>Bitsaga Signet. Not real bitcoin, worth nothing.</li></ul>",
+  ].join("");
+
   function element(tag, className, text) {
     var node = document.createElement(tag);
     if (className) node.className = className;
@@ -548,16 +605,29 @@
     var title = element("h2", null, "Simulator wallet");
     title.id = "wal-title";
     head.appendChild(title);
+    this.aboutButton = element("button", "wal-about-open", "i");
+    this.aboutButton.type = "button";
+    this.aboutButton.title = "What this coordinator does";
+    this.aboutButton.setAttribute("aria-label", "What this coordinator does");
+    this.aboutButton.setAttribute("aria-expanded", "false");
+    this.aboutButton.addEventListener("click", function () { self.about(); });
+    head.appendChild(this.aboutButton);
+
     this.closeButton = element("button", null, "Close");
     this.closeButton.type = "button";
     this.closeButton.setAttribute("aria-label", "Close the simulator wallet");
     this.closeButton.addEventListener("click", function () { self.toggle(false); });
     head.appendChild(this.closeButton);
 
+    this.aboutPanel = element("div", "wal-about");
+    this.aboutPanel.hidden = true;
+    this.aboutPanel.innerHTML = ABOUT;
+
     this.body = element("div", "wal-body");
 
     this.root.appendChild(head);
     this.root.appendChild(element("p", "wal-note", NOT_A_WALLET));
+    this.root.appendChild(this.aboutPanel);
     this.root.appendChild(this.body);
     container.appendChild(this.root);
 
@@ -574,6 +644,12 @@
   };
 
   // ------------------------------------------------------------ open and shut
+
+  Wallet.prototype.about = function () {
+    var open = this.aboutPanel.hidden;
+    this.aboutPanel.hidden = !open;
+    this.aboutButton.setAttribute("aria-expanded", open ? "true" : "false");
+  };
 
   Wallet.prototype.toggle = function (want) {
     var self = this;
