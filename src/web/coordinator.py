@@ -467,10 +467,17 @@ def spend_returned(state, psbt):
         pool[found["participant"]] = held
     state["pool"] = pool
 
-    scope = PSBT.from_string(psbt).inputs[0]
-    if scope.final_scriptwitness is not None:
+    # A finalised input carries its witness beside the transaction, not in it,
+    # so what gets broadcast has to be assembled rather than serialised.
+    done = PSBT.from_string(psbt)
+    if all(scope.final_scriptwitness is not None for scope in done.inputs):
+        # Bound once: PSBT.tx hands back a fresh transaction on every access, so
+        # writing a witness through it writes into something thrown away.
+        tx = done.tx
+        for at, scope in enumerate(done.inputs):
+            tx.vin[at].witness = scope.final_scriptwitness
         state["done"] = True
-        state["txhex"] = PSBT.from_string(psbt).tx.serialize().hex()
+        state["txhex"] = tx.serialize().hex()
     return state
 
 
