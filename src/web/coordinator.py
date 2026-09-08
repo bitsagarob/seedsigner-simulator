@@ -333,6 +333,12 @@ POOL_IDENTIFIER = b"DOOMSIGNER"
 SUBTYPE_POOLED_NONCE = 0x01
 SIZE_PUBNONCE = 66
 SIZE_SEALED = 144
+
+# BIP327_MAX_NB_ID in the applet: the card remembers sixteen outstanding nonces
+# and the seventeenth evicts the oldest, which can then never be opened. Holding
+# more than that is holding entries the card will refuse, and the only symptom
+# would be the saving quietly not happening.
+POOL_LIMIT = 16
 PSBT_IN_MUSIG2_PUB_NONCE = 0x1B
 
 
@@ -460,12 +466,16 @@ def spend_returned(state, psbt):
     state["issued"] = []
 
     pool = dict(state.get("pool") or {})
+    forgotten = 0
     for found in pool_harvest(psbt):
         held = list(pool.get(found["participant"]) or [])
         if found["entry"] not in held:
             held.append(found["entry"])
-        pool[found["participant"]] = held
+        # Oldest first, because that is the one the card evicts.
+        forgotten += max(0, len(held) - POOL_LIMIT)
+        pool[found["participant"]] = held[-POOL_LIMIT:]
     state["pool"] = pool
+    state["forgotten"] = forgotten
 
     # A finalised input carries its witness beside the transaction, not in it,
     # so what gets broadcast has to be assembled rather than serialised.

@@ -85,6 +85,18 @@ def main():
     check("and its witness reaches the transaction",
           ended["txhex"].count("01" * 64) == 1)
 
+    # The card remembers sixteen. A coordinator holding more is holding entries
+    # it will refuse, and the only symptom is the saving quietly not happening.
+    stuffed = dict(base, pool={who: ["%02x" % i * (coordinator.SIZE_PUBNONCE
+                                                   + coordinator.SIZE_SEALED)
+                                    for i in range(20)]})
+    started = coordinator.spend_start(stuffed)
+    filled = coordinator.spend_returned(started, stock(started["psbt"], who, 4))
+    check("the pool never exceeds what the card remembers",
+          len(filled["pool"][who]) == coordinator.POOL_LIMIT,
+          len(filled["pool"][who]))
+    check("and says how many it dropped", filled["forgotten"] > 0)
+
     print("\n%d/%d" % (sum(checks), len(checks)))
     return 0 if all(checks) else 1
 
