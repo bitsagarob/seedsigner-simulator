@@ -98,6 +98,8 @@
   var fw = typeof location !== "undefined"
     && new URLSearchParams(location.search).get("firmware");
   var SPRECEIVE = fw === "doomsigner" || fw === "spreceive";
+  // Only this firmware can sign MuSig2, so only here is any of it offered.
+  var MUSIG = fw === "doomsigner-musig";
   var SP_SEED_URL = "sp-overlay/test-seed.json";
   var SP_SCAN_PATH = "Home → Scan, or Seeds → 24c323b5 → Scan transaction";
   var SP_SEND_SCAN_PATH = "Home → Scan (seed 73c5da0a if asked)";
@@ -207,6 +209,8 @@
     ".wal-about ul{margin:0;padding-left:1.1rem}",
     ".wal-about li{margin:.15rem 0}",
     ".wal-about a{color:#9fd0a0}",
+    // The status a BIP carries, so Draft is visible without being shouted.
+    ".wal-about em{font-style:normal;color:#6f7681;font-size:.72rem}",
 
     ".wal button{font:inherit;font-size:.88rem;color:#8b939e;background:#1d2026;",
     "border:1px solid #2a2e35;border-radius:5px;padding:.25rem .7rem;cursor:pointer}",
@@ -430,69 +434,77 @@
   // What this thing is, in the panel rather than in a document nobody opens.
   // Every line is a claim someone can check, so each names the standard or the
   // repository it rests on.
-  var ABOUT = [
-    "<h3>What this is</h3>",
-    "<ul>",
-    "<li>A coordinator. It builds the transaction, moves bytes and keeps the nonce pool.</li>",
-    "<li>It holds no keys, signs nothing, and does no cryptography. Every curve",
-    " operation happens on the device.</li>",
-    "</ul>",
-    "<h3>Standards</h3>",
-    "<ul>",
-    "<li><a href='https://bips.dev/327/'>BIP-327</a> MuSig2</li>",
-    "<li><a href='https://bips.dev/328/'>BIP-328</a> derivation on the aggregate key</li>",
-    "<li><a href='https://bips.dev/373/'>BIP-373</a> MuSig2 fields in a PSBT</li>",
-    "<li><a href='https://bips.dev/390/'>BIP-390</a> the <code>musig()</code> descriptor</li>",
-    "<li><a href='https://bips.dev/341/'>BIP-341</a> taproot</li>",
-    "</ul>",
-    "<h3>One field is ours, in a space the spec provides</h3>",
-    "<ul>",
-    "<li><a href='https://bips.dev/174/'>BIP-174</a> defines",
-    " <code>PSBT_IN_PROPRIETARY = 0xFC</code>: an identifier, a subtype, then whatever",
-    " the owner of that identifier wants. This is that, not a hole poked in the format.</li>",
-    "<li>Ours is <code>DOOMSIGNER</code> subtype <code>0x01</code>: a nonce made in",
-    " advance, 66 bytes public and 144 bytes sealed to the card.</li>",
-    "<li>BIP-174 requires a Combiner to keep every key-value pair, and Bitcoin Core",
-    " carries this one through <code>walletprocesspsbt</code>, <code>combinepsbt</code>",
-    " and <code>finalizepsbt</code>. Measured against v31.1.0, not assumed.</li>",
-    "</ul>",
-    "<h3>Why a spend costs one visit</h3>",
-    "<ul>",
-    "<li>MuSig2's first round does not depend on the transaction, so it can happen",
-    " before there is one.</li>",
-    "<li>The device leaves four spare nonces behind, held on a SeedKeeper that",
-    " releases each exactly once.</li>",
-    "<li>This page puts one into the next transaction, so no signer waits for another.</li>",
-    "<li>Not a new idea: it is FROST's preprocessing stage, and Cryptnox already ship",
-    " a card that makes MuSig2 nonces in advance.</li>",
-    "</ul>",
-    "<h3>What actually runs here</h3>",
-    "<ul>",
-    "<li>The chain half is <b>embit</b>, the library the device runs. Our fork is",
-    " <b>three files and 230 added lines</b> on top of it, all of them BIP-390.",
-    " Everything else is upstream embit, unchanged.</li>",
-    "<li>It runs under <b>Pyodide 0.26.4</b>, taken from",
-    " <a href='https://github.com/pyodide/pyodide/releases/tag/0.26.4'>the project's own",
-    " release</a> and checked at build time against sha256",
-    " <code>70dba93432f3653155998cc9001f9c200182343c2f95165a2f9e9e4673fa35e8</code>.</li>",
-    "<li>The one part embit does not cover is the MuSig2 fields in a PSBT, which are",
-    " <a href='https://bips.dev/373/'>BIP-373</a>. About sixty lines of ours write those,",
-    " and they are checked field by field against what Bitcoin Core writes for the same",
-    " wallet and the same coin.</li>",
-    "<li>The coordinator loads two things and hashes both: a zip holding embit at one",
-    " commit and nothing else, so anyone can fetch that commit, rebuild and compare,",
-    " and <code>coordinator.py</code>, which is ours, served as a readable file and",
-    " listed in <code>build/checksums.txt</code>.</li>",
-    "</ul>",
-    "<h3>Code</h3>",
-    "<ul>",
-    "<li>device: <a href='https://github.com/bitsagarob/seedsigner'>bitsagarob/seedsigner</a></li>",
-    "<li>descriptors: <a href='https://github.com/bitsagarob/embit'>bitsagarob/embit</a></li>",
-    "<li>this page: <a href='https://github.com/bitsagarob/seedsigner-simulator'>bitsagarob/seedsigner-simulator</a></li>",
-    "</ul>",
-    "<h3>Chain</h3>",
-    "<ul><li>Bitsaga Signet. Not real bitcoin, worth nothing.</li></ul>",
-  ].join("");
+  // Every spec the coordinator leans on, with the status the BIP index gives
+  // it. Which of them apply depends on the flow, so the panel lists what this
+  // one uses rather than a fixed list that would be wrong in one mode or the
+  // other.
+  var SPECS = {
+    base: [
+      ["174", "Partially Signed Bitcoin Transactions", "Deployed"],
+      ["380", "Output script descriptors", "Deployed"],
+      ["386", "tr() descriptors", "Deployed"],
+    ],
+    musig: [
+      ["327", "MuSig2", "Deployed"],
+      ["341", "Taproot", "Deployed"],
+      ["328", "Derivation on the aggregate key", "Complete"],
+      ["373", "MuSig2 fields in a PSBT", "Complete"],
+      ["390", "the musig() descriptor", "Draft"],
+    ],
+  };
+
+  function specList(musig) {
+    return SPECS.base.concat(musig ? SPECS.musig : []).map(function (one) {
+      return "<li><a href='https://bips.dev/" + one[0] + "/'>BIP-" + one[0]
+        + "</a> " + one[1] + " <em>" + one[2] + "</em></li>";
+    }).join("");
+  }
+
+  function aboutHtml(musig) {
+    var out = [
+      "<h3>What this is</h3><ul>",
+      "<li>A coordinator. It builds the transaction and moves bytes",
+      musig ? ", and keeps the nonce pool.</li>" : ".</li>",
+      "<li>It holds no keys and signs nothing. Every curve operation happens",
+      " on the device.</li></ul>",
+      "<h3>Standards it uses here</h3><ul>", specList(musig), "</ul>",
+    ];
+    if (musig) {
+      out = out.concat([
+        "<h3>One field is ours</h3><ul>",
+        "<li><a href='https://bips.dev/174/'>BIP-174</a> reserves",
+        " <code>0xFC</code> for named private use: an identifier, a subtype,",
+        " then whatever its owner likes. Ours is <code>DOOMSIGNER</code>",
+        " subtype <code>0x01</code>, a nonce made in advance.</li>",
+        "<li>It exists because BIP-373 assumes a signer keeps its secret nonce",
+        " in memory between rounds. One that powers off cannot, so the secret",
+        " travels sealed to the card, which opens it exactly once.</li></ul>",
+        "<h3>Why a spend costs one visit</h3><ul>",
+        "<li>MuSig2's first round does not depend on the transaction, so it can",
+        " happen before there is one.</li>",
+        "<li>The device tops its spares back up to four in every transaction it",
+        " hands back, so stocking costs no extra trip.</li>",
+        "<li>Not a new idea: FROST's preprocessing stage, and Cryptnox ship a",
+        " card that makes MuSig2 nonces early.</li></ul>",
+      ]);
+    }
+    return out.concat([
+      "<h3>What actually runs</h3><ul>",
+      "<li>The chain half is <b>embit</b>, the library the device runs, pinned",
+      " to the same commit on both sides. Our fork adds BIP-390 and nothing",
+      " else: three files.</li>",
+      musig ? "<li>Ours is about 90 lines: the BIP-373 fields, which no library"
+            + " writes, and the pool.</li>" : "",
+      "<li>Under <b>Pyodide 0.26.4</b>, the project's own release, checked at",
+      " build time against sha256 <code>70dba934…</code>.</li></ul>",
+      "<h3>Code</h3><ul>",
+      "<li><a href='https://github.com/bitsagarob/seedsigner'>bitsagarob/seedsigner</a>",
+      " the device</li>",
+      "<li><a href='https://github.com/bitsagarob/embit'>bitsagarob/embit</a>",
+      " descriptors</li></ul>",
+      "<h3>Chain</h3><ul><li>Bitsaga Signet. Not real bitcoin.</li></ul>",
+    ]).join("");
+  }
 
   function element(tag, className, text) {
     var node = document.createElement(tag);
@@ -649,7 +661,7 @@
 
     this.aboutPanel = element("div", "wal-about");
     this.aboutPanel.hidden = true;
-    this.aboutPanel.innerHTML = ABOUT;
+    this.aboutPanel.innerHTML = aboutHtml(MUSIG);
 
     this.body = element("div", "wal-body");
 
