@@ -783,7 +783,11 @@
   Wallet.prototype.readDevice = function () {
     if (!scope.jsQR || !this.screen) return null;
     var context = this.screen.getContext("2d");
-    var image = context.getImageData(0, 0, 240, 240);
+    // The whole canvas. This read 240 by 240, which is the SeedSigner's own
+    // screen but not this one: the simulated device is 320 wide, so a centred
+    // QR lost its right quarter and jsQR saw nothing. Small codes happened to
+    // fit inside the crop, which is why it worked at all.
+    var image = context.getImageData(0, 0, this.screen.width, this.screen.height);
     var found = scope.jsQR(image.data, image.width, image.height);
     return found && found.data ? found.data : null;
   };
