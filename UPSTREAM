@@ -70,6 +70,21 @@ tag    = bitsaga-sp-v0.4
 wallet_zip_sha256          = ed17eaf573faaa21ef088f56d6bb39e904e80fdd983dd80b7f4b3d854883d338
 wallet_zip_contents_sha256 = af1326dd41ba4a4378d6fe4d2f6dec62926bf59abfb13028d88b2bf3cfecb004
 
+
+[doomsigner-musig]
+repo   = https://github.com/bitsagarob/seedsigner.git
+commit = 7418d9662c0fb7ad77a5ead61c034569b8bdcb51
+tag    = none: dev, ahead of the last release
+
+# DoomSigner plus MuSig2: BIP-327 signing, the card-backed nonce vault, and the
+# spare nonces a coordinator pools. Pinned to dev rather than a tag because
+# there is not one yet, which is also why this firmware has no button on the
+# page and is reachable only by URL.
+#
+# No published hashes here on purpose. Those two lines say "this zip is what
+# building that commit produces", and nothing has been published to compare
+# against until the fork tags a release.
+
 # The two smartcard applets, pinned as a reference rather than as an input.
 #
 # Nothing here builds these. They are JavaCard, they run on a secure element,
