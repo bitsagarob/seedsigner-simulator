@@ -49,6 +49,14 @@
   // with room to spare under its cap of sixty, so a refresh is one request.
   var GAP = 20;
 
+  // Flat, because the whole spend is one input and one output and the
+  // chain it runs on is not busy.
+  var MUSIG_FEE = 1000;
+
+  // Where a spend goes. The faucet's own address, so the coins come back to
+  // where they came from and nobody has to invent a destination.
+  var FAUCET_RETURN = "tb1qmv9kucx4tjtyfwddc3698p2flxqvts89n8kllr";
+
   // Bitsaga Signet is not busy and nothing here is bidding for space. Two
   // sat/vB is above the relay minimum and small enough that the fee never
   // becomes the interesting number on screen.
@@ -2510,6 +2518,23 @@
     this.body.appendChild(row);
     if (state.total) {
       this.body.appendChild(element("p", "wal-balance", sats(state.total)));
+      var send = element("div", "wal-actions");
+      send.appendChild(this.button("Send it back to the faucet", true, function () {
+        self.musigSend(FAUCET_RETURN);
+      }));
+      this.body.appendChild(send);
+    }
+
+    // The whole point, on screen. The first spend of a wallet pays the trips
+    // MuSig2 costs; the next one spends what the device left behind.
+    if (state.trips) {
+      this.body.appendChild(element("p", "wal-policy",
+        "Trips to the device: " + state.trips
+        + (state.used ? ", " + state.used + " with a nonce made in advance" : "")));
+    }
+    if (state.sent) {
+      this.body.appendChild(element("p", "wal-verify-head", "Sent"));
+      this.body.appendChild(element("p", "wal-mono", state.sent));
     }
     if (state.busy) this.body.appendChild(element("p", "wal-note", state.busy));
   };
@@ -2584,6 +2609,89 @@
       self.musig.busy = "";
       self.error = "The faucet refused: " + why.message;
       self.render();
+    });
+  };
+
+  /** Spend from the MuSig2 wallet, one visit per signer.
+   *
+   * The coordinator decides: it builds, puts a pooled nonce in if it has one,
+   * checks what comes back and says when it is finished. This carries QR codes
+   * between it and the device, and counts the trips.
+   */
+  Wallet.prototype.musigSend = function (destination) {
+    var self = this;
+    var coin = (this.musig.coins || [])[0];
+    this.error = "";
+    if (!coin) {
+      this.error = "There is nothing in that wallet to spend.";
+      return this.render();
+    }
+
+    var frames = scope.WalletTutorial && scope.WalletTutorial.specterFrames;
+    if (!frames) {
+      this.error = "wallet-tutorial.js is not on this page, so there is nothing "
+                 + "here to split the transaction into codes.";
+      return this.render();
+    }
+
+    this.musig.trips = 0;
+    this.musig.busy = "Building the transaction\u2026";
+    this.render();
+
+    return C.spendStart({
+      descriptor: this.musig.descriptor, branch: 0, index: 0,
+      utxo: { txid: coin.txid, vout: coin.vout, value: coin.value },
+      destination: C.hex(addressScript(destination)),
+      amount: coin.value - MUSIG_FEE,
+      pool: this.musig.pool || {},
+    }).then(function (state) { return self.musigVisit(state, frames); })
+      .catch(function (why) {
+        self.musig.busy = "";
+        self.error = why.message;
+        self.render();
+      });
+  };
+
+  /** One visit to the device, repeated until the coordinator says it is done. */
+  Wallet.prototype.musigVisit = function (state, frames) {
+    var self = this;
+    this.musig.trips += 1;
+    this.musig.pool = state.pool;
+    this.musig.issued = state.issued;
+    this.musig.busy = "Trip " + this.musig.trips + ": show this to the device.";
+    this.render();
+
+    this.present(frames(state.psbt, 280));
+    return this.watch(function () {
+      return self.currentScreen() === "ScanScreen";
+    }, 300000, "the device to open Scan").then(function () {
+      return self.watch(function () {
+        var screen = self.currentScreen();
+        return screen && screen !== "ScanScreen";
+      }, 300000, "the device to take the transaction");
+    }).then(function () {
+      self.stopPresenting();
+      self.canvas.hidden = true;
+      self.musig.busy = "Reading the device's answer\u2026";
+      self.render();
+      return self.readPsbt(600000);
+    }).then(function (collector) {
+      return C.spendReturned(state, C.toBase64(collector.psbt()));
+    }).then(function (next) {
+      self.musig.pool = next.pool;
+      self.musig.spares = (next.pool[Object.keys(next.pool)[0]] || []).length;
+      if (next.verified && next.verified.length) {
+        self.musig.used = (self.musig.used || 0) + next.verified.length;
+      }
+      if (!next.done) return self.musigVisit(next, frames);
+      self.musig.busy = "Sending\u2026";
+      self.render();
+      return C.network.broadcast(next.txhex).then(function (sent) {
+        self.musig.busy = "";
+        self.musig.sent = sent.txid;
+        self.render();
+        return self.musigRefresh();
+      });
     });
   };
 
