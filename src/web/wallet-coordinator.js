@@ -211,6 +211,22 @@
     ".wal-about a{color:#9fd0a0}",
     // The status a BIP carries, so Draft is visible without being shouted.
     ".wal-about em{font-style:normal;color:#6f7681;font-size:.72rem}",
+    // Sparrow lists cosigners as a numbered column with the fingerprint beside
+    // each, and that is the shape people recognise.
+    ".wal-cosigners{margin:.7rem 0 0;border:1px solid #262b31;border-radius:8px;"
+      + "overflow:hidden}",
+    ".wal-cosigner{display:flex;align-items:center;gap:.6rem;padding:.5rem .7rem;"
+      + "border-top:1px solid #1c2026;font-size:.85rem}",
+    ".wal-cosigner:first-child{border-top:0}",
+    ".wal-cosigner-n{width:1.3rem;height:1.3rem;border-radius:50%;display:grid;"
+      + "place-items:center;font-size:.72rem;border:1px solid #3a4048;color:#7c848f;"
+      + "flex:0 0 auto}",
+    ".wal-cosigner[data-state=have] .wal-cosigner-n{border-color:#f7931a;color:#f7931a}",
+    ".wal-cosigner[data-state=wait]{opacity:.45}",
+    ".wal-cosigner-name{flex:1 1 auto}",
+    ".wal-cosigner-fp{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;"
+      + "font-size:.78rem;color:#7c848f}",
+    ".wal-policy{margin:.6rem 0 0;font-size:.78rem;color:#7c848f}",
 
     ".wal button{font:inherit;font-size:.88rem;color:#8b939e;background:#1d2026;",
     "border:1px solid #2a2e35;border-radius:5px;padding:.25rem .7rem;cursor:pointer}",
@@ -2395,26 +2411,47 @@
   // Two published BIP39 test vectors stand in for the other cosigners, so one
   // device is enough to look at a 2-of-3. Nothing here holds a key: these are
   // account xpubs and the seeds behind them are in the BIP39 test file.
-  var MUSIG_OTHERS = [
-    "[3f635a63/86h/1h/0h]tpubDD4uFqwcQxcgHEhBFmoFbcLtEfSXw6bmLSeKeJHaqDtiXs"
-      + "vGRD6zCJ26HUxWp6ca6GAtNj6C3jyCGBAw2M9sW1bjiK1gFw6dckb6bKn8B3m",
-    "[b8688df1/86h/1h/0h]tpubDDHnNFFb1gf8qGYVejVx4GwzQPwcphirPssHFMWFcL9iaj"
-      + "xm1wWd5ye22T7UQrVPjwwifJaCJGBAphuu8oePzYTCN7eZgm1KnyfNDmcfnsu",
-  ];
+  // Each cosigner is a seed exported from the device, so the wallet is one
+  // anybody can spend from rather than a shape with two keys nobody holds.
 
   Wallet.prototype.renderMusig = function () {
     var self = this;
-    var state = this.musig || {};
+    var state = this.musig || { keys: [] };
+    var have = state.keys.length;
 
     this.body.appendChild(element("p", "wal-step-head", "MuSig2 2 of 3"));
-    this.body.appendChild(this.info(
-      "Your seed plus two published test keys. Any two of the three can spend; "
-      + "yours and one other spend through the key path, which is one signature "
-      + "on chain."));
+
+    // Sparrow's shape, because it is the one people recognise: the cosigners
+    // listed with their fingerprints, then the policy, then the address.
+    var list = element("div", "wal-cosigners");
+    for (var i = 0; i < 3; i++) {
+      var row = element("div", "wal-cosigner");
+      row.dataset.state = i < have ? "have" : (i === have ? "next" : "wait");
+      row.appendChild(element("span", "wal-cosigner-n", String(i + 1)));
+      row.appendChild(element("span", "wal-cosigner-name",
+        i < have ? "Cosigner " + (i + 1) : "Cosigner " + (i + 1)));
+      row.appendChild(element("span", "wal-cosigner-fp",
+        i < have ? fingerprintOf(state.keys[i])
+                 : (i === have ? "waiting for the device" : "")));
+      list.appendChild(row);
+    }
+    this.body.appendChild(list);
+
+    if (have < 3) {
+      this.body.appendChild(element("p", "wal-note", have === 0
+        ? "Export the key of the seed on the device: " + EXPORT_PATH
+        : "Load the next seed on the device and export it the same way. Each "
+          + "cosigner is a different seed, and each keeps its own card."));
+      if (state.busy) this.body.appendChild(element("p", "wal-note", state.busy));
+      return;
+    }
+
+    this.body.appendChild(element("p", "wal-policy", "Policy: 2 of 3, key path "
+      + "musig(1,2) with musig(1,3) and musig(2,3) as fallback leaves"));
 
     if (!state.address) {
       var start = element("div", "wal-actions");
-      start.appendChild(this.button("Build the wallet", true, function () {
+      start.appendChild(this.button("Create the wallet", true, function () {
         self.buildMusig();
       }));
       this.body.appendChild(start);
@@ -2422,13 +2459,11 @@
       return;
     }
 
-    this.body.appendChild(element("p", "wal-verify-head", "First address"));
+    this.body.appendChild(element("p", "wal-verify-head", "Receive address"));
     this.body.appendChild(element("p", "wal-mono", state.address));
-
-    var pool = element("p", "wal-note", state.spares
+    this.body.appendChild(element("p", "wal-note", state.spares
       ? state.spares + " spare nonce" + (state.spares === 1 ? "" : "s") + " held"
-      : "No spare nonces yet. The first spend leaves four behind.");
-    this.body.appendChild(pool);
+      : "No spare nonces yet. The first spend leaves four behind."));
 
     var row = element("div", "wal-actions");
     row.appendChild(this.button("Show it to the device", true, function () {
@@ -2438,21 +2473,56 @@
     this.body.appendChild(row);
   };
 
+  /** Collect the next cosigner's key off the device's screen. */
+  Wallet.prototype.watchForCosigner = function () {
+    var self = this;
+    var collector = null;
+    this.watch(function () {
+      var text = self.readDevice();
+      if (!text) return false;
+      var trimmed = text.trim();
+      if (ACCOUNT_LINE.test(trimmed)) return trimmed;
+      var head = /^ur:([a-z0-9-]+)\//i.exec(trimmed);
+      if (!head || ACCOUNT_URS.indexOf(head[1].toLowerCase()) === -1) return false;
+      collector = collector || scope.URDecode.collector();
+      if (!feed(collector, trimmed)) return false;
+      if (!collector.done()) return false;
+      return collector.payload();
+    }, 86400000, "the next cosigner's key on the device's screen")
+      .then(function (exported) {
+        return Promise.resolve(C.parseAccount(exported)).then(function (account) {
+          var key = "[" + account.fingerprint + account.path + "]" + account.tpub;
+          // The same seed exported twice is one cosigner, not two.
+          if (self.musig.keys.indexOf(key) === -1) self.musig.keys.push(key);
+          self.render();
+          if (self.musig.keys.length < 3) self.watchForCosigner();
+        });
+      })
+      .catch(function () { /* the drawer shut, or the view moved on */ });
+  };
+
+  /** The fingerprint out of a [xxxxxxxx/path]xpub export. */
+  function fingerprintOf(key) {
+    var found = /^\[([0-9a-fA-F]{8})/.exec(key);
+    return found ? found[1] : "";
+  }
+
   /** Ask the coordinator for the wallet, and show what it says. */
   Wallet.prototype.buildMusig = function () {
     var self = this;
-    this.musig = { busy: "Starting the coordinator…" };
+    var keys = this.musig.keys;
+    this.musig.busy = "Starting the coordinator\u2026";
     this.render();
-    var mine = "[" + this.account.fingerprint + this.account.path + "]"
-             + this.account.tpub;
-    var keys = [mine].concat(MUSIG_OTHERS);
     C.musigWallet(keys).then(function (descriptor) {
       return C.musigAddress(descriptor, 0, 0).then(function (out) {
-        self.musig = { descriptor: descriptor, address: out.address, spares: 0 };
+        self.musig.descriptor = descriptor;
+        self.musig.address = out.address;
+        self.musig.spares = 0;
+        self.musig.busy = "";
         self.render();
       });
     }).catch(function (why) {
-      self.musig = null;
+      self.musig.busy = "";
       self.error = "The coordinator could not build that wallet: " + why.message;
       self.render();
     });
@@ -2514,6 +2584,12 @@
       if (MUSIG) {
         actions.appendChild(this.button("MuSig2", false, function () {
           self.view = "musig";
+          if (!self.musig) {
+            // The key already read is cosigner one; the rest come the same way.
+            var a = self.account;
+            self.musig = { keys: ["[" + a.fingerprint + a.path + "]" + a.tpub] };
+            self.watchForCosigner();
+          }
           self.render();
         }));
       }
