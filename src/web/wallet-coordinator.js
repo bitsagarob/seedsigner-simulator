@@ -2031,6 +2031,12 @@
     else if (this.view === "send") this.renderSend();
     else this.renderBalance();
 
+    // Whatever the balance view decided to draw, a MuSig2 wallet is built from
+    // keys and is offered either way.
+    if (MUSIG && this.stage === "ready" && this.view === "balance" && !this.verify) {
+      this.body.appendChild(this.musigEntry());
+    }
+
     if (this.error) {
       var bad = element("p", "wal-bad", this.error);
       this.body.appendChild(bad);
@@ -2415,6 +2421,23 @@
   // Each cosigner is a seed exported from the device, so the wallet is one
   // anybody can spend from rather than a shape with two keys nobody holds.
 
+  /** The way into the MuSig2 wallet, offered whatever the balance is. */
+  Wallet.prototype.musigEntry = function () {
+    var self = this;
+    var row = element("div", "wal-actions");
+    row.appendChild(this.button("MuSig2", false, function () {
+      self.view = "musig";
+      if (!self.musig) {
+        // The key already read is cosigner one; the rest arrive the same way.
+        var a = self.account;
+        self.musig = { keys: ["[" + a.fingerprint + a.path + "]" + a.tpub] };
+        self.watchForCosigner();
+      }
+      self.render();
+    }));
+    return row;
+  };
+
   Wallet.prototype.renderMusig = function () {
     var self = this;
     var state = this.musig || { keys: [] };
@@ -2588,20 +2611,6 @@
       // reading every time somebody wants more of them.
       var actions = element("div", "wal-actions");
       actions.appendChild(this.button("Get test bitcoin", true, function () { self.claim(); }));
-      // A MuSig2 wallet is built from keys, not from a balance, so this is
-      // offered with an empty wallet as much as a funded one.
-      if (MUSIG) {
-        actions.appendChild(this.button("MuSig2", false, function () {
-          self.view = "musig";
-          if (!self.musig) {
-            // The key already read is cosigner one; the rest come the same way.
-            var a = self.account;
-            self.musig = { keys: ["[" + a.fingerprint + a.path + "]" + a.tpub] };
-            self.watchForCosigner();
-          }
-          self.render();
-        }));
-      }
       actions.appendChild(this.info(pays + NOT_REAL));
       this.body.appendChild(actions);
       return;
