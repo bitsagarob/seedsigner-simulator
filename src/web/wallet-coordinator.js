@@ -2498,11 +2498,20 @@
       : "No spare nonces yet. The first spend leaves four behind."));
 
     var row = element("div", "wal-actions");
-    row.appendChild(this.button("Show it to the device", true, function () {
+    row.appendChild(this.button("Show it to the device", false, function () {
       self.present([state.address]);
       self.say("On the device, go to Scan.");
     }));
+    if (!state.total) {
+      row.appendChild(this.button("Get test bitcoin", true, function () {
+        self.musigClaim();
+      }));
+    }
     this.body.appendChild(row);
+    if (state.total) {
+      this.body.appendChild(element("p", "wal-balance", sats(state.total)));
+    }
+    if (state.busy) this.body.appendChild(element("p", "wal-note", state.busy));
   };
 
   /** Collect the next cosigner's key off the device's screen. */
@@ -2538,6 +2547,45 @@
     var found = /^\[([0-9a-fA-F]{8})/.exec(key);
     return found ? found[1] : "";
   }
+
+  /** What the MuSig2 address holds, asked of the chain directly.
+
+      The panel's own refresh scans its single-signature branches; this wallet
+      is one address and not on them.
+   */
+  Wallet.prototype.musigRefresh = function () {
+    var self = this;
+    if (!this.musig || !this.musig.address) return Promise.resolve();
+    return scanChain([this.musig.address]).then(function (found) {
+      var rows = (found && found.addresses && found.addresses[0]) || {};
+      var coins = rows.utxos || rows.coins || [];
+      self.musig.coins = coins;
+      self.musig.total = coins.reduce(function (n, c) { return n + (c.value || 0); }, 0);
+      self.render();
+    }).catch(function (why) {
+      self.error = "Could not ask the chain about that address: " + why.message;
+      self.render();
+    });
+  };
+
+  /** Ask the faucet to pay the MuSig2 address. */
+  Wallet.prototype.musigClaim = function () {
+    var self = this;
+    this.musig.busy = "Asking the faucet\u2026";
+    this.render();
+    return C.network.claim(this.musig.address).then(function () {
+      self.musig.busy = "Paid. Waiting for a block, about thirty seconds.";
+      self.render();
+      return self.musigRefresh();
+    }).then(function () {
+      self.musig.busy = "";
+      self.render();
+    }).catch(function (why) {
+      self.musig.busy = "";
+      self.error = "The faucet refused: " + why.message;
+      self.render();
+    });
+  };
 
   /** Ask the coordinator for the wallet, and show what it says. */
   Wallet.prototype.buildMusig = function () {
