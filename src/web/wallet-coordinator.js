@@ -2005,6 +2005,7 @@
     else if (this.stage === "sp-ready") this.renderSpReady();
     else if (this.stage === "idle") this.renderIdle();
     else if (this.stage === "connecting") this.renderConnecting();
+    else if (MUSIG && this.view === "musig") this.renderMusig();
     else if (this.view === "receive") this.renderReceive();
     else if (this.view === "send") this.renderSend();
     else this.renderBalance();
@@ -2382,6 +2383,77 @@
     });
   };
 
+  // ------------------------------------------------------------- MuSig2
+  //
+  // Only reachable on the firmware that can sign it. The coordinator decides
+  // everything; this asks it and renders the answer.
+
+  // Two published BIP39 test vectors stand in for the other cosigners, so one
+  // device is enough to look at a 2-of-3. Nothing here holds a key: these are
+  // account xpubs and the seeds behind them are in the BIP39 test file.
+  var MUSIG_OTHERS = [
+    "[3f635a63/86h/1h/0h]tpubDD4uFqwcQxcgHEhBFmoFbcLtEfSXw6bmLSeKeJHaqDtiXs"
+      + "vGRD6zCJ26HUxWp6ca6GAtNj6C3jyCGBAw2M9sW1bjiK1gFw6dckb6bKn8B3m",
+    "[b8688df1/86h/1h/0h]tpubDDHnNFFb1gf8qGYVejVx4GwzQPwcphirPssHFMWFcL9iaj"
+      + "xm1wWd5ye22T7UQrVPjwwifJaCJGBAphuu8oePzYTCN7eZgm1KnyfNDmcfnsu",
+  ];
+
+  Wallet.prototype.renderMusig = function () {
+    var self = this;
+    var state = this.musig || {};
+
+    this.body.appendChild(element("p", "wal-step-head", "MuSig2 2 of 3"));
+    this.body.appendChild(this.info(
+      "Your seed plus two published test keys. Any two of the three can spend; "
+      + "yours and one other spend through the key path, which is one signature "
+      + "on chain."));
+
+    if (!state.address) {
+      var start = element("div", "wal-actions");
+      start.appendChild(this.button("Build the wallet", true, function () {
+        self.buildMusig();
+      }));
+      this.body.appendChild(start);
+      if (state.busy) this.body.appendChild(element("p", "wal-note", state.busy));
+      return;
+    }
+
+    this.body.appendChild(element("p", "wal-verify-head", "First address"));
+    this.body.appendChild(element("p", "wal-mono", state.address));
+
+    var pool = element("p", "wal-note", state.spares
+      ? state.spares + " spare nonce" + (state.spares === 1 ? "" : "s") + " held"
+      : "No spare nonces yet. The first spend leaves four behind.");
+    this.body.appendChild(pool);
+
+    var row = element("div", "wal-actions");
+    row.appendChild(this.button("Show it to the device", true, function () {
+      self.present([state.address]);
+      self.say("On the device, go to Scan.");
+    }));
+    this.body.appendChild(row);
+  };
+
+  /** Ask the coordinator for the wallet, and show what it says. */
+  Wallet.prototype.buildMusig = function () {
+    var self = this;
+    this.musig = { busy: "Starting the coordinator…" };
+    this.render();
+    var mine = "[" + this.account.fingerprint + this.account.path + "]"
+             + this.account.tpub;
+    var keys = [mine].concat(MUSIG_OTHERS);
+    C.musigWallet(keys).then(function (descriptor) {
+      return C.musigAddress(descriptor, 0, 0).then(function (out) {
+        self.musig = { descriptor: descriptor, address: out.address, spares: 0 };
+        self.render();
+      });
+    }).catch(function (why) {
+      self.musig = null;
+      self.error = "The coordinator could not build that wallet: " + why.message;
+      self.render();
+    });
+  };
+
   Wallet.prototype.renderBalance = function () {
     var self = this;
     var balance = this.balance();
@@ -2460,6 +2532,12 @@
       self.view = "receive";
       self.render();
     }));
+    if (MUSIG) {
+      row.appendChild(this.button("MuSig2", false, function () {
+        self.view = "musig";
+        self.render();
+      }));
+    }
     row.appendChild(this.button("Send", true, function () {
       self.view = "send";
       self.step = null;
