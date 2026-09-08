@@ -457,12 +457,9 @@
   }
 
   // What this thing is, in the panel rather than in a document nobody opens.
-  // Every line is a claim someone can check, so each names the standard or the
-  // repository it rests on.
-  // Every spec the coordinator leans on, with the status the BIP index gives
-  // it. Which of them apply depends on the flow, so the panel lists what this
-  // one uses rather than a fixed list that would be wrong in one mode or the
-  // other.
+  // Every line is a claim someone can check, so each names the standard it
+  // rests on and the status the BIP index gives it. Which apply depends on the
+  // flow, so the panel lists what this one uses.
   var SPECS = {
     base: [
       ["174", "Partially Signed Bitcoin Transactions", "Deployed"],
@@ -518,8 +515,8 @@
       "<li>The chain half is <b>embit</b>, the library the device runs, pinned",
       " to the same commit on both sides. Our fork adds BIP-390 and nothing",
       " else: three files.</li>",
-      musig ? "<li>Ours is about 90 lines: the BIP-373 fields, which no library"
-            + " writes, and the pool.</li>" : "",
+      musig ? "<li>Ours is about 210 lines: the MuSig2 descriptor, the BIP-373"
+            + " fields no library writes, and the pool.</li>" : "",
       "<li>Under <b>Pyodide 0.26.4</b>, the project's own release, checked at",
       " build time against sha256 <code>70dba934…</code>.</li></ul>",
       "<h3>Code</h3><ul>",
@@ -2460,8 +2457,7 @@
       var row = element("div", "wal-cosigner");
       row.dataset.state = i < have ? "have" : (i === have ? "next" : "wait");
       row.appendChild(element("span", "wal-cosigner-n", String(i + 1)));
-      row.appendChild(element("span", "wal-cosigner-name",
-        i < have ? "Cosigner " + (i + 1) : "Cosigner " + (i + 1)));
+      row.appendChild(element("span", "wal-cosigner-name", "Cosigner " + (i + 1)));
       row.appendChild(element("span", "wal-cosigner-fp",
         i < have ? fingerprintOf(state.keys[i])
                  : (i === have ? "waiting for the device" : "")));

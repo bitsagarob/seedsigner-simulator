@@ -15,7 +15,7 @@ rather than by luck.
 | | |
 | --- | --- |
 | descriptors, keys, addresses, transactions, the PSBT container, key aggregation | embit |
-| the MuSig2 fields in a PSBT, [BIP-373](https://bips.dev/373/), and the nonce pool | `coordinator.py`, about 150 lines |
+| the MuSig2 fields in a PSBT, [BIP-373](https://bips.dev/373/), and the nonce pool | `coordinator.py`, about 210 lines |
 | the panel, the camera, QR in and out, calls to the faucet | JavaScript |
 | every signature | the device |
 | Bitcoin Core | not here. It is the oracle the tests diff against |
