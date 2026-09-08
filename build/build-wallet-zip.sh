@@ -304,10 +304,11 @@ doomsigner)
 # firmware out of this file. A mechanism that computed this list would have to
 # be understood before either could be trusted.
 #
-# The one row that differs is embit: notTanveer's BIP-352 branch (embit#145) by
-# commit, not the 0.8.0 release. That same commit is pinned by the app fork's
-# requirements.txt and by the device image's Buildroot package, and all three
-# have to agree or the simulator runs code the device does not.
+# The one row that differs is embit: our own fork of notTanveer's BIP-352 branch
+# (embit#145), which adds BIP-390 musig(), by commit rather than by release. That
+# same commit is pinned by the app fork's requirements.txt and by the device
+# image's Buildroot package, and all three have to agree or the simulator runs
+# code the device does not.
 
 # Deliberately NOT in this table, and why:
 #
@@ -375,13 +376,13 @@ read -r -d '' DEPENDENCIES <<'DEPS' || true
 pypi|base58|base58|2.1.1|https://files.pythonhosted.org/packages/4a/45/ec96b29162a402fc4c1c5512d114d7b3787b9d1c2ec241d9568b4816ee23/base58-2.1.1-py3-none-any.whl|11a36f4d3ce51dfc1043f3218591ac4eb1ceb172919cebe05b52a5bcc8d245c2|.
 pypi|certifi|certifi|2025.7.14|https://files.pythonhosted.org/packages/4f/52/34c6cf5bb9285074dc3531c437b3919e825d976fde097a7a73f79e726d03/certifi-2025.7.14-py3-none-any.whl|6b31f564a415d79ee77df69d757bb49a5bb53bd9f756cbbe24394ffd6fc1f4b2|.
 pypi|ecdsa|ecdsa|0.19.1|https://files.pythonhosted.org/packages/cb/a3/460c57f094a4a165c84a1341c373b0a4f5ec6ac244b998d5021aade89b77/ecdsa-0.19.1-py2.py3-none-any.whl|30638e27cf77b7e15c4c4cc1973720149e1033827cfd00661ca5c8cc0cdb24c3|.
-git|embit|embit-silent-payments|533cd850f5f4d4f52c21dc1abae18133d98e394e|https://github.com/notTanveer/embit.git|533cd850f5f4d4f52c21dc1abae18133d98e394e|src
+git|embit|embit-silent-payments-musig|a4ee5a41044a0ed3e2b1e92c89880a1ac2e9cb18|https://github.com/bitsagarob/embit.git|a4ee5a41044a0ed3e2b1e92c89880a1ac2e9cb18|src
 pypi|mnemonic|mnemonic|0.21|https://files.pythonhosted.org/packages/57/48/5abb16ce7f9d97b728e6b97c704ceaa614362e0847651f379ed0511942a0/mnemonic-0.21-py3-none-any.whl|72dc9de16ec5ef47287237b9b6943da11647a03fe7cf1f139fc3d7c4a7439288|.
 pypi|ndef|ndeflib|0.3.3|https://files.pythonhosted.org/packages/c9/80/bbc9a4818cd74807f914d225611cd724d8c0e56237b952a9a4aa6d583f5c/ndeflib-0.3.3-py2.py3-none-any.whl|c634b1af2ab454754f0fdbe1debd38247ed7bdaf94587359b857726f3ee7decb|.
 pypi|OpenSSL|pyOpenSSL|25.1.0|https://files.pythonhosted.org/packages/80/28/2659c02301b9500751f8d42f9a6632e1508aa5120de5e43042b8b30f8d5d/pyopenssl-25.1.0-py3-none-any.whl|2b11f239acc47ac2e5aca04fd7fa829800aeee22a2eb30d744572a157bd8a1ab|.
 pypi|pyaes|pyaes|1.6.1|https://files.pythonhosted.org/packages/44/66/2c17bae31c906613795711fc78045c285048168919ace2220daa372c7d72/pyaes-1.6.1.tar.gz|02c1b1405c38d3c370b085fb952dd8bea3fadcee6411ad99f312cc129c536d8f|pyaes-1.6.1
 pypi|pyasn1|pyasn1|0.6.2|https://files.pythonhosted.org/packages/44/b5/a96872e5184f354da9c84ae119971a0a4c221fe9b27a4d94bd43f2596727/pyasn1-0.6.2-py3-none-any.whl|1eb26d860996a18e9b6ed05e7aae0e9fc21619fcee6af91cca9bad4fbea224bf|.
-git|pydnssec_prover|pydnssec-prover|df72b67f5585c4cfae779ca833db3c5c9304f625|https://github.com/bitsagarob/pydnssec-prover.git|df72b67f5585c4cfae779ca833db3c5c9304f625|src
+git|pydnssec_prover|pydnssec-prover|4a3365e4b10fc6635f26397120a2cce1b8fd8b2c|https://github.com/bitsagarob/pydnssec-prover.git|4a3365e4b10fc6635f26397120a2cce1b8fd8b2c|src
 pypi|qrcode|qrcode|7.3.1|https://files.pythonhosted.org/packages/94/9f/31f33cdf3cf8f98e64c42582fb82f39ca718264df61957f28b0bbb09b134/qrcode-7.3.1.tar.gz|375a6ff240ca9bd41adc070428b5dfc1dcfbb0f2507f1ac848f6cded38956578|qrcode-7.3.1
 pypi|shamir_mnemonic|shamir-mnemonic|0.3.0|https://files.pythonhosted.org/packages/1d/38/2124e565afe40993949dbc89da6c654a2c9a1b24dd80039812ef7cdbaef3/shamir_mnemonic-0.3.0-py3-none-any.whl|188c6b5bd00d5e756e12e2b186c3cb7c98ff7ff44df608d4c1d2077f6b6e730f|.
 pypi|six.py|six|1.17.0|https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl|4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274|.
