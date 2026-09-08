@@ -70,3 +70,32 @@ python3 test/test_pool_conformance.py        # the pooled-nonce field, against t
 second, independent implementation, and `test_tutorial.py` still compares it
 against embit. Two implementations agreeing is worth something; one agreeing
 with itself is not.
+
+## Next: cache the ECDH share too
+
+Spec from apps-6c, 2026-09-08, verified in code before recording.
+
+A silent-payment send costs a second device trip because each signer has to
+compute its ECDH share. `musig2_psbt.write_share` is `_tweak_mul(scan_key,
+secret)`: no outpoint, no sighash, no amount, so a share is a pure function of
+(recipient scan key, participant secret) and stays valid for that counterparty
+forever, labels included. Cache it exactly like a pooled nonce, with one
+difference that matters: **do not spend it on issue.** A published nonce is
+burned; a share is deterministic and reusable.
+
+Then a repeat payment to a known recipient costs one trip per signer, the same
+as single-sig.
+
+Prerequisite the spec missed: none of the silent-payment flow is in this
+coordinator yet. `buildSpSendPsbt` and `finaliseSpSend` are still hand-written
+JavaScript, and `spend_start` builds a taproot MuSig2 spend, not a BIP-376
+PSBTv2. Port the SP flow first, or there is nothing for `share_dress` to dress.
+
+Known gap, theirs: `sp_scan_keys` reads only outputs, so shares can only be
+harvested for recipients being paid in that transaction. The first payment to a
+new counterparty still costs two trips. Pre-loading a roster needs a new PSBT
+field.
+
+Proof, since counting trips proves nothing: a cached share must be byte-identical
+to one the device makes fresh, the coordinator-derived `PSBT_OUT_SCRIPT` must
+equal what the device re-derives, and a corrupted proof must be refused.
