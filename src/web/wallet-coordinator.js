@@ -2509,6 +2509,14 @@
       // reading every time somebody wants more of them.
       var actions = element("div", "wal-actions");
       actions.appendChild(this.button("Get test bitcoin", true, function () { self.claim(); }));
+      // A MuSig2 wallet is built from keys, not from a balance, so this is
+      // offered with an empty wallet as much as a funded one.
+      if (MUSIG) {
+        actions.appendChild(this.button("MuSig2", false, function () {
+          self.view = "musig";
+          self.render();
+        }));
+      }
       actions.appendChild(this.info(pays + NOT_REAL));
       this.body.appendChild(actions);
       return;
@@ -2536,12 +2544,6 @@
       self.view = "receive";
       self.render();
     }));
-    if (MUSIG) {
-      row.appendChild(this.button("MuSig2", false, function () {
-        self.view = "musig";
-        self.render();
-      }));
-    }
     row.appendChild(this.button("Send", true, function () {
       self.view = "send";
       self.step = null;
