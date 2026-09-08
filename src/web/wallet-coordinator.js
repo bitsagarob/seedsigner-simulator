@@ -227,6 +227,7 @@
     ".wal-cosigner-fp{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;"
       + "font-size:.78rem;color:#7c848f}",
     ".wal-policy{margin:.6rem 0 0;font-size:.78rem;color:#7c848f}",
+    ".wal-actions button[disabled]{opacity:.4;cursor:not-allowed}",
 
     ".wal button{font:inherit;font-size:.88rem;color:#8b939e;background:#1d2026;",
     "border:1px solid #2a2e35;border-radius:5px;padding:.25rem .7rem;cursor:pointer}",
@@ -2442,19 +2443,27 @@
         ? "Export the key of the seed on the device: " + EXPORT_PATH
         : "Load the next seed on the device and export it the same way. Each "
           + "cosigner is a different seed, and each keeps its own card."));
-      if (state.busy) this.body.appendChild(element("p", "wal-note", state.busy));
-      return;
     }
 
     this.body.appendChild(element("p", "wal-policy", "Policy: 2 of 3, key path "
       + "musig(1,2) with musig(1,3) and musig(2,3) as fallback leaves"));
 
     if (!state.address) {
-      var start = element("div", "wal-actions");
-      start.appendChild(this.button("Create the wallet", true, function () {
-        self.buildMusig();
-      }));
-      this.body.appendChild(start);
+      // Always shown, disabled until every cosigner is in, and saying why on
+      // hover. A button that appears out of nowhere leaves a visitor unsure
+      // whether they are finished or stuck.
+      var waiting = 3 - have;
+      var actions = element("div", "wal-actions");
+      var make = this.button("Create the wallet", true, function () {
+        if (have === 3) self.buildMusig();
+      });
+      if (have < 3) {
+        make.disabled = true;
+        make.title = "Export " + waiting + " more cosigner"
+          + (waiting === 1 ? "" : "s") + " from the device first.";
+      }
+      actions.appendChild(make);
+      this.body.appendChild(actions);
       if (state.busy) this.body.appendChild(element("p", "wal-note", state.busy));
       return;
     }
