@@ -36,3 +36,7 @@ src/web/doom.wasm
 src/web/doom-run.js
 src/web/*.wad
 build/out/doom/
+
+# Anything holding a real seed. research/fund_mainnet.py reads one from
+# outside this tree.
+*.local.json
