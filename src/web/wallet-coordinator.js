@@ -52,6 +52,9 @@
   // Flat, because the whole spend is one input and one output and the
   // chain it runs on is not busy.
   var MUSIG_FEE = 1000;
+  // How many addresses of a MuSig2 wallet are watched. Its own spends land on
+  // the next one, so one is never enough.
+  var LOOK_AHEAD = 5;
 
   // Where a spend goes. The faucet's own address, so the coins come back to
   // where they came from and nobody has to invent a destination.
@@ -2602,16 +2605,32 @@
   Wallet.prototype.musigRefresh = function () {
     var self = this;
     if (!this.musig || !this.musig.address) return Promise.resolve();
-    var address = this.musig.address;
-    return scanChain([address]).then(function (held) {
-      // scanChain hands back the map the chain answered with, keyed by
-      // address. Reaching for .addresses[0] on it found nothing every time,
-      // so this wallet always looked empty however much it held.
-      var row = held[address] || {};
-      var coins = row.utxos || [];
-      self.musig.coins = coins;
-      self.musig.total = coins.reduce(function (n, c) { return n + (c.value || 0); }, 0);
-      self.render();
+    // The first few addresses, not only the one on screen. A wallet that has
+    // spent once has its money at the next index, and looking at one address
+    // reported nothing and sent the visitor back to the faucet.
+    var want = [];
+    for (var i = 0; i < LOOK_AHEAD; i++) want.push(i);
+    return Promise.all(want.map(function (index) {
+      return C.musigAddress(self.musig.descriptor, 0, index)
+        .then(function (out) { return { index: index, address: out.address }; });
+    })).then(function (spots) {
+      return scanChain(spots.map(function (s) { return s.address; }))
+        .then(function (held) {
+          // scanChain hands back the map the chain answered with, keyed by
+          // address. Reaching for .addresses[0] on it found nothing every
+          // time, so this wallet always looked empty however much it held.
+          var coins = [];
+          spots.forEach(function (spot) {
+            ((held[spot.address] || {}).utxos || []).forEach(function (coin) {
+              coin.index = spot.index;
+              coins.push(coin);
+            });
+          });
+          self.musig.coins = coins;
+          self.musig.total = coins.reduce(
+            function (n, c) { return n + (c.value || 0); }, 0);
+          self.render();
+        });
     }).catch(function (why) {
       self.error = "Could not ask the chain about that address: " + why.message;
       self.render();
@@ -2692,7 +2711,7 @@
       return C.musigAddress(self.musig.descriptor, 0, 0);
     }).then(function (out) {
       return C.spendStart({
-        descriptor: self.musig.descriptor, branch: 0, index: 0,
+        descriptor: self.musig.descriptor, branch: 0, index: coin.index || 0,
         utxo: { txid: coin.txid, vout: coin.vout, value: coin.value },
         destination: out.script_pubkey,
         amount: coin.value - MUSIG_FEE,
