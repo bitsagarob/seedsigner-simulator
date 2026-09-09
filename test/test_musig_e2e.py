@@ -338,16 +338,22 @@ def walk_to_qr(sim):
             # card can answer: the press log shows the next press landing on
             # "PSBTMusig2CardOfferView / SeedAddPassphraseScreen".
             #
-            # Tried and did not work: one KEY_DOWN, and two (a button list that
-            # opens on the back arrow spends the first moving into the list,
-            # and the handler clamps at the last button, so two should land on
-            # the second either way). Whatever moves that highlight is not
-            # arriving. Worth checking whether the keys are being sent faster
-            # than the screen's input loop reads them, since 0.22s apart is all
-            # sim.down() leaves between them.
+            # Tried and did not work: one KEY_DOWN; two together; two spaced a
+            # second apart. Reading the button list's handler says two should
+            # land on the second button whether or not the back arrow starts
+            # selected, and the timing theory is out, so the assumption to
+            # question next is that this branch is even pressing the offer.
+            # The press log shows it running twice, once on the offer and once
+            # on the keyboard already being up, so the keyboard may not be the
+            # card asking at all: that screen is also the seed's own passphrase
+            # prompt.
             if not CARDS:
-                sim.down(2)
-                time.sleep(0.6)
+                # Spaced by a second each. sim.down(2) leaves 0.22s between
+                # them, which this screen appears not to keep up with.
+                sim.down()
+                time.sleep(1.2)
+                sim.down()
+                time.sleep(1.2)
             sim.select()
             # Wait for it to land, like every other press. This branch sends two
             # keys and used to send them blind: if the screen takes only one,
