@@ -13,8 +13,10 @@ matched the nonce on chain against the one it issued.
 
     python3 test/test_musig_e2e.py
 """
+import faulthandler
 import json
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -29,6 +31,12 @@ URL = ("https://bitsaga.be/wallet.html"
 LOCAL = 8792
 SHOTS = "/home/rob/.cache/tmp/musig-e2e"
 
+# Each of the first two cosigners keeps its own SeedKeeper. Off by default: a
+# card in the reader puts the page's main thread into a spin that never ends,
+# which starves every read of the page and looks like a hang rather than a
+# failure. Chased separately; the spend is what this test is for.
+CARDS = os.environ.get("MUSIG_E2E_CARDS") == "1"
+
 # The published BIP39 test vectors, as the digits a SeedQR carries. The first
 # two get a card each and are the pair that spends through the key path; the
 # third is the fallback cosigner and never signs here.
@@ -38,15 +46,6 @@ SEEDS = [
     ("cosigner 3", "101920151790203919831533203119191019201517902040", False),
 ]
 
-CLICK = """
-(label) => {
-  const b = Array.from(document.querySelectorAll("#wallet button"))
-    .find((x) => x.textContent.trim() === label);
-  if (!b) return false;
-  b.click();
-  return true;
-}
-"""
 BUTTONS = """
 () => Array.from(document.querySelectorAll("#wallet button"))
         .map((b) => b.textContent.trim())
@@ -65,14 +64,65 @@ STATE = """
 }
 """
 
+# If a spend does not get to its first trip, ask the page to make the same call
+# the panel makes and say what happens to it. A promise that never settles
+# leaves no trace otherwise.
+STUCK = """
+async () => {
+  const w = self.WalletCoordinator.current;
+  const C = self.EmbitCoordinator;
+  const out = {haveC: !!C, haveSpendStart: !!(C && C.spendStart),
+               coins: (w.musig.coins || []).length,
+               descriptor: !!w.musig.descriptor};
+  if (!out.haveSpendStart) return out;
+  const coin = (w.musig.coins || [])[0];
+  const started = performance.now();
+  try {
+    const state = await Promise.race([
+      C.spendStart({descriptor: w.musig.descriptor, branch: 0, index: 0,
+                    utxo: {txid: coin.txid, vout: coin.vout, value: coin.value},
+                    destination: C.hex(new Uint8Array([0, 20].concat(
+                      Array.from({length: 20}, () => 0)))),
+                    amount: coin.value - 1000, pool: {}}),
+      new Promise((_, no) => setTimeout(() => no(new Error("no answer in 60s")),
+                                        60000)),
+    ]);
+    out.ms = Math.round(performance.now() - started);
+    out.waiting = state.waiting_for.length;
+  } catch (why) {
+    out.ms = Math.round(performance.now() - started);
+    out.threw = String(why && why.message);
+  }
+  return out;
+}
+"""
+
+
 shots = 0
 
 
+def step(sim, what):
+    """Say where the run is. A stall that prints nothing is undebuggable."""
+    print("  [%s] %s" % (sim.current_screen() or "?", what), flush=True)
+
+
 def shot(page, name):
+    """The whole page, device and coordinator together.
+
+    Not locator("#wallet").screenshot: that waits for the element to hold
+    still, and the panel redraws on every read of the device's screen. A
+    picture is never worth failing the run over, so a failure is reported and
+    stepped over.
+    """
     global shots
     shots += 1
-    page.locator("#wallet").screenshot(
-        path=os.path.join(SHOTS, "%02d-%s.png" % (shots, name)))
+    where = os.path.join(SHOTS, "%02d-%s.png" % (shots, name))
+    try:
+        # animations="allow": the default waits for the page to hold still, and
+        # the device paints its screen for ever.
+        page.screenshot(path=where, animations="allow", timeout=15000)
+    except Exception as why:
+        print("  (no picture of %s: %s)" % (name, why), flush=True)
 
 
 def main():
@@ -88,12 +138,20 @@ def main():
         page = sim.page
 
         for at, (name, digits, with_card) in enumerate(SEEDS):
+            step(sim, "%s: loading the seed" % name)
             load_seed(sim, digits)
-            if with_card:
+            if CARDS and with_card:
+                step(sim, "%s: card %d into the reader" % (name, at + 1))
                 pick_card(page, at)
+            to_seed_options(sim)
+            if CARDS and with_card:
+                step(sim, "%s: saving to the card" % name)
                 save_to_card(sim)
+                to_seed_options(sim)
+            step(sim, "%s: exporting the key" % name)
             export_key(sim)
-            print("%s exported%s" % (name, " (card %d)" % (at + 1) if with_card else ""))
+            print("%s exported%s"
+                  % (name, " (card %d)" % (at + 1) if CARDS and with_card else ""))
             if at == 0:
                 open_panel(page)
                 enter_musig(page)
@@ -104,14 +162,13 @@ def main():
         print("cosigners:", ", ".join(page.evaluate(COSIGNERS)))
         shot(page, "cosigners")
 
-        page.evaluate(CLICK, "Create the wallet")
+        press(page, "Create the wallet")
         wait_until(lambda: page.evaluate(STATE)["address"], "the wallet")
         state = page.evaluate(STATE)
         print("address:", state["address"])
         shot(page, "wallet")
 
-        page.evaluate(CLICK, "Get test bitcoin")
-        wait_until(lambda: page.evaluate(STATE)["total"], "the faucet", 240)
+        fund(page)
         print("funded:", page.evaluate(STATE)["total"], "sats")
         shot(page, "funded")
 
@@ -132,8 +189,10 @@ def main():
 
 def spend(sim, page, label):
     """Send it back, answering the device on every trip it takes."""
-    page.evaluate(CLICK, "Send it back to the faucet")
+    press(page, "Spend it back into the wallet")
     seen = 0
+    said = None
+    waited = 0
     for _ in range(900):
         state = page.evaluate(STATE)
         if state["error"]:
@@ -144,8 +203,16 @@ def spend(sim, page, label):
             return state
         if state["trips"] > seen:
             seen = state["trips"]
-            print("  %s spend, trip %d" % (label, seen))
+            print("  %s spend, trip %d" % (label, seen), flush=True)
             answer_device(sim)
+        if said != state["busy"]:
+            said = state["busy"]
+            print("  [%s] %s" % (sim.current_screen(), said or "(nothing)"),
+                  flush=True)
+        waited += 1
+        if waited == 45 and not state["trips"]:
+            print("  no trip yet; asking the page directly: %s"
+                  % page.evaluate(STUCK), flush=True)
         time.sleep(1)
     raise AssertionError("the %s spend never finished" % label)
 
@@ -156,18 +223,26 @@ def answer_device(sim):
     sim.back_to_home()
     sim.select()
     sim.wait_screen("ScanScreen", since=since, timeout=60)
-    # The panel is already presenting; the device's camera reads the canvas.
-    for _ in range(40):
+    # The panel is already presenting; the device's camera reads the canvas. A
+    # transaction is many frames and the camera only sees one at a time, so
+    # this is minutes rather than seconds.
+    for _ in range(300):
         if sim.current_screen() not in (None, "ScanScreen"):
             break
         time.sleep(1)
+    else:
+        raise AssertionError("the device never finished reading the transaction")
     walk_to_qr(sim)
 
 
 def walk_to_qr(sim):
     """Press through the review until the signed code is up."""
-    for _ in range(30):
+    for _ in range(60):
         screen = sim.current_screen()
+        if screen == "ScanScreen":
+            # Still reading. Pressing here does nothing but waste the budget.
+            time.sleep(1)
+            continue
         if screen == "QRDisplayScreen":
             sim.up(6)
             time.sleep(1.5)
@@ -195,6 +270,29 @@ def load_seed(sim, digits):
     time.sleep(1.5)
 
 
+def to_seed_options(sim):
+    """Reach the seed's own menu, pressing back past whatever is in front of it.
+
+    Never through the main menu: its second item is Tools, not Seeds, and one
+    press too many there opens the entropy camera and stays there.
+    """
+    for _ in range(10):
+        if sim.current_screen() == "SeedOptionsScreen":
+            return
+        since = sim.mark()
+        if sim.current_screen() == "SeedFinalizeScreen":
+            sim.select()                           # Done
+        else:
+            sim.key1()                             # back
+        try:
+            sim.wait_screen("SeedOptionsScreen", since=since, timeout=6)
+            return
+        except Exception:
+            continue
+    raise AssertionError("could not reach the seed's menu from %s"
+                         % sim.current_screen())
+
+
 def pick_card(page, index):
     """Put this cosigner's own card in the reader."""
     page.wait_for_selector(".cardtray-card", timeout=60000)
@@ -203,10 +301,7 @@ def pick_card(page, index):
 
 
 def save_to_card(sim):
-    """Seed -> backup -> to SeedKeeper, with the blank card's PIN dance."""
-    since = sim.mark()
-    sim.select()                                   # Done
-    sim.wait_screen("SeedOptionsScreen", since=since, timeout=60)
+    """From the seed's menu: backup -> to SeedKeeper, with the PIN dance."""
     since = sim.mark()
     sim.down(3); sim.select()                      # backup
     sim.wait_screen("ButtonListScreen", since=since, timeout=60)
@@ -223,8 +318,7 @@ def save_to_card(sim):
     sim.select()
     sim.wait_screen("SeedAddPassphraseScreen", since=since, timeout=120)
     sim.key3()                                     # accept the offered label
-    time.sleep(2)
-    sim.back_to_home()
+    time.sleep(2.5)
 
 
 def type_pin(sim, since):
@@ -237,12 +331,7 @@ def type_pin(sim, since):
 
 
 def export_key(sim):
-    """Seeds -> the seed -> Export Xpub -> Single sig -> Native Segwit -> Static."""
-    since = sim.mark()
-    sim.back_to_home()
-    sim.down(2); sim.select()                      # Seeds
-    sim.wait_screen("ButtonListScreen", since=since, timeout=60)
-    sim.select(); time.sleep(1.2)                  # the seed just loaded
+    """From the seed's menu: Export Xpub -> Single sig -> Native Segwit -> Static."""
     since = sim.mark()
     sim.down(); sim.select()                       # Export Xpub
     sim.wait_screen("ButtonListScreen", since=since, timeout=60)
@@ -263,24 +352,75 @@ def export_key(sim):
 
 
 def open_panel(page):
+    print("  ... waiting for the panel's open button", flush=True)
     page.wait_for_selector(".wal-openrow button", timeout=120000)
+    print("  ... clicking it", flush=True)
     page.locator(".wal-openrow button").first.click()
     page.wait_for_selector("#wallet:not([hidden])", timeout=30000)
+    print("  ... the panel is open", flush=True)
+
+
+PRESS = """
+(label) => {
+  const button = Array.from(document.querySelectorAll("#wallet button"))
+    .find((b) => b.textContent.trim() === label);
+  if (!button) return false;
+  // On a timer, so this call returns before the handler runs. A button here
+  // starts a read loop that watches the device, and neither way of pressing it
+  // from outside survives that: a real click waits for the page to go quiet,
+  // which it never does, and clicking inside the evaluate runs the handler in
+  // the middle of the call, after which nothing else comes back.
+  setTimeout(() => button.click(), 0);
+  return true;
+}
+"""
+
+
+def press(page, label):
+    """Press a button in the panel by what it says."""
+    return page.evaluate(PRESS, label)
 
 
 def enter_musig(page):
-    for _ in range(120):
+    """Into the MuSig2 view, past the verify prompt if there is one.
+
+    The prompt is not always drawn, so its Done button is dismissed when it is
+    there and never waited for.
+    """
+    names = []
+    for round_ in range(180):
         time.sleep(1)
-        names = page.evaluate(BUTTONS)
-        if "Done" in names:
-            page.evaluate(CLICK, "Done")
-            time.sleep(1)
-            names = page.evaluate(BUTTONS)
+        names = page.locator("#wallet button").all_inner_texts()
+        names = [one.strip() for one in names]
+        print("  ... panel shows %s" % names, flush=True)
         if "MuSig2" in names:
-            page.evaluate(CLICK, "MuSig2")
+            press(page, "MuSig2")
             time.sleep(1)
+            print("  ... in the MuSig2 view", flush=True)
             return
+        if "Done" in names:
+            press(page, "Done")
     raise AssertionError("the panel never offered MuSig2: %s" % names)
+
+
+def fund(page):
+    """Ask the faucet, and keep asking if the panel did not take the press.
+
+    The button is drawn by the same render that draws the address, so the first
+    press can land before it is there. What the panel is doing is printed on
+    the way out, because a bare "no money" says nothing about which half failed.
+    """
+    for attempt in range(5):
+        press(page, "Get test bitcoin")
+        for _ in range(60):
+            time.sleep(1)
+            state = page.evaluate(STATE)
+            if state["total"]:
+                return
+            if state["error"]:
+                raise AssertionError("the faucet: " + state["error"])
+        print("  ... still nothing, %s" % page.evaluate(STATE), flush=True)
+    raise AssertionError("no money arrived: %s" % page.evaluate(STATE))
 
 
 def wait_until(test, what, seconds=120):
@@ -292,4 +432,7 @@ def wait_until(test, what, seconds=120):
 
 
 if __name__ == "__main__":
+    # kill -USR1 <pid> prints where this is. A browser test that stops saying
+    # anything is otherwise only guessable at.
+    faulthandler.register(signal.SIGUSR1)
     sys.exit(main())

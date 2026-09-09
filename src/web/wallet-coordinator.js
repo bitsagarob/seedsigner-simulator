@@ -55,7 +55,6 @@
 
   // Where a spend goes. The faucet's own address, so the coins come back to
   // where they came from and nobody has to invent a destination.
-  var FAUCET_RETURN = "tb1qmv9kucx4tjtyfwddc3698p2flxqvts89n8kllr";
 
   // Bitsaga Signet is not busy and nothing here is bidding for space. Two
   // sat/vB is above the relay minimum and small enough that the fee never
@@ -2515,10 +2514,21 @@
     if (state.total) {
       this.body.appendChild(element("p", "wal-balance", sats(state.total)));
       var send = element("div", "wal-actions");
-      send.appendChild(this.button("Send it back to the faucet", true, function () {
-        self.musigSend(FAUCET_RETURN);
+      send.appendChild(this.button("Spend it back into the wallet", true, function () {
+        self.musigSend();
       }));
       this.body.appendChild(send);
+    }
+
+    // present() only paints; a view has to put the canvas on the page. This one
+    // did not, so a spend showed its transaction to a canvas that was not in
+    // the document and the device sat in Scan seeing nothing.
+    if (this.presenting) {
+      this.body.appendChild(element("p", "wal-say",
+        "Point the device at this: open Scan on it and hold it here until it "
+        + "has the whole transaction."));
+      this.body.appendChild(this.canvas);
+      this.canvas.hidden = false;
     }
 
     // The whole point, on screen. The first spend of a wallet pays the trips
@@ -2645,7 +2655,14 @@
    * checks what comes back and says when it is finished. This carries QR codes
    * between it and the device, and counts the trips.
    */
-  Wallet.prototype.musigSend = function (destination) {
+  /**
+   * Spend one of the wallet's coins back into the wallet itself.
+   *
+   * Its own next address, derived here, rather than somewhere named in a
+   * constant: an address written down is one nobody checks, and the one that
+   * used to be here was not a valid address at all.
+   */
+  Wallet.prototype.musigSend = function () {
     var self = this;
     var coin = (this.musig.coins || [])[0];
     this.error = "";
@@ -2665,12 +2682,19 @@
     this.musig.busy = "Building the transaction\u2026";
     this.render();
 
-    return C.spendStart({
-      descriptor: this.musig.descriptor, branch: 0, index: 0,
-      utxo: { txid: coin.txid, vout: coin.vout, value: coin.value },
-      destination: C.hex(addressScript(destination)),
-      amount: coin.value - MUSIG_FEE,
-      pool: this.musig.pool || {},
+    // Everything inside a promise, so a throw on the way to the first call is
+    // reported like any other failure. One that escaped left the panel saying
+    // it was building a transaction that was never built.
+    return Promise.resolve().then(function () {
+      return C.musigAddress(self.musig.descriptor, 0, 1);
+    }).then(function (out) {
+      return C.spendStart({
+        descriptor: self.musig.descriptor, branch: 0, index: 0,
+        utxo: { txid: coin.txid, vout: coin.vout, value: coin.value },
+        destination: out.script_pubkey,
+        amount: coin.value - MUSIG_FEE,
+        pool: self.musig.pool || {},
+      });
     }).then(function (state) { return self.musigVisit(state, frames); })
       .catch(function (why) {
         self.musig.busy = "";
