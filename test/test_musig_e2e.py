@@ -196,7 +196,10 @@ def spend(sim, page, label):
     for _ in range(900):
         state = page.evaluate(STATE)
         if state["error"]:
-            raise AssertionError("the panel said: " + state["error"])
+            raise AssertionError("the panel said: %s\nthe device was on %s, "
+                                 "and its last words:\n  %s"
+                                 % (state["error"], sim.current_screen(),
+                                    "\n  ".join(sim.console[-250:])))
         if state["sent"]:
             print("%s spend broadcast %s" % (label, state["sent"]))
             shot(page, label + "-sent")
