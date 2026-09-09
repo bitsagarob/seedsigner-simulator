@@ -252,11 +252,30 @@ def answer_device(sim, page=None):
     frames = page.evaluate(FRAMES) if page is not None else None
     if not frames:
         raise AssertionError("the panel is not holding a transaction up")
-    if not sim.scan_qr_frames(frames, expect_screen="PSBTOverviewScreen",
-                              timeout=300):
+    if not show_until_taken(sim, frames):
         raise AssertionError("the device never took the transaction, sat on %s"
                              % sim.current_screen())
     walk_to_qr(sim)
+
+
+def show_until_taken(sim, frames, timeout=300):
+    """Cycle the frames until the device stops scanning.
+
+    Not scan_qr_frames with a screen to wait for: which screen a device lands on
+    after taking a transaction depends on what it wants to ask, and naming one
+    of them made a run that had worked look like one that failed. Leaving Scan
+    is the thing that means it has the transaction.
+    """
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        for frame in frames:
+            sim.show_qr(frame)
+            time.sleep(0.55)
+            if sim.current_screen() not in (None, "ScanScreen"):
+                sim.clear_camera()
+                return True
+    sim.clear_camera()
+    return False
 
 
 def walk_to_qr(sim):
@@ -271,6 +290,17 @@ def walk_to_qr(sim):
             sim.up(6)
             time.sleep(1.5)
             return
+        if screen == "LargeIconStatusScreen":
+            # "Use Card" or "Keep Device On". Pressing straight through picks
+            # Use Card, and with no card in the reader the device then asks for
+            # a PIN nobody can give it. The nonce is allowed to stay in RAM;
+            # what the card buys is the once-only release that makes the pool
+            # safe, which is why it is the choice when there is one.
+            if not CARDS:
+                sim.down()
+            sim.select()
+            time.sleep(1.5)
+            continue
         if screen == "SeedAddPassphraseScreen":
             sim.select(4)
             sim.key3()
