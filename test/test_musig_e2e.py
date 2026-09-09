@@ -332,10 +332,25 @@ def walk_to_qr(sim):
             # and with none in the reader the device then asks for a PIN nobody
             # can give it. The secret nonce may stay in RAM; what the card buys
             # is the once-only release that makes a nonce made in advance safe.
+            print("    press on %s / %s" % (view, screen), flush=True)
+            # OPEN: down() does not move the highlight on this screen, so
+            # select() takes the first button, "Use Card", and with no card in
+            # the reader the device asks for a PIN. The log shows it as
+            # "PSBTMusig2CardOfferView / SeedAddPassphraseScreen": the view has
+            # not exited but the keyboard is already up. Whatever key picks the
+            # second button here is what this branch needs.
             if not CARDS:
                 sim.down()
+                time.sleep(0.6)
             sim.select()
-            time.sleep(1.5)
+            # Wait for it to land, like every other press. This branch sends two
+            # keys and used to send them blind: if the screen takes only one,
+            # the other waits in the queue and is spent dismissing whatever
+            # comes next, which here is the signed code.
+            for _ in range(120):
+                time.sleep(0.5)
+                if current_view(sim) != view:
+                    break
             continue
         if view == "PSBTSelectSeedView":
             # The seeds are the first buttons; everything below them is a way
@@ -348,13 +363,13 @@ def walk_to_qr(sim):
             sim.select()
             time.sleep(1.5)
             continue
-        # One press, then wait for it to land. Pressing again on a screen that
-        # has not changed yet is how the walk used to shoot past the signed
-        # code and end up at the main menu, leaving the panel waiting for a
-        # signature that was no longer on screen.
+        # One press, then wait a full minute for it to land. Pressing again
+        # because a slow screen has not moved yet leaves the extra key in the
+        # queue, and it is spent dismissing whatever comes next: the walk saw
+        # two presses on the overview and lost the signed code to the second.
         print("    press on %s / %s" % (view, screen), flush=True)
         sim.select()
-        for _ in range(20):
+        for _ in range(120):
             time.sleep(0.5)
             if current_view(sim) != view:
                 break
