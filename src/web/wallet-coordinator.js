@@ -2534,11 +2534,13 @@
       this.body.appendChild(element("p", "wal-balance", sats(state.total)));
       // The whole point of the card, so it sits under the balance rather than
       // in the smallest type on the panel, under a transaction id.
+      // Short enough not to wrap in this column. The first version of this
+      // line broke after "7" and left "spare left" alone underneath.
       this.body.appendChild(element("p", "wal-note", state.trips
-        ? state.trips + " trip" + (state.trips === 1 ? "" : "s") + " to the device"
-          + (state.used ? ", " + state.used + " nonce"
-             + (state.used === 1 ? "" : "s") + " ready in advance" : "")
-          + (state.spares ? " \u00b7 " + state.spares + " spare left" : "")
+        ? state.trips + " trip" + (state.trips === 1 ? "" : "s")
+          + (state.used ? ", " + state.used + " pooled nonce"
+             + (state.used === 1 ? "" : "s") + " used" : "")
+          + (state.spares ? ", " + state.spares + " spare" : "")
         : (state.spares
            ? state.spares + " spare nonce" + (state.spares === 1 ? "" : "s") + " held"
            : "No spare nonces yet. The first spend leaves four behind.")));
