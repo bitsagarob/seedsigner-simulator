@@ -188,10 +188,17 @@ def main():
 
 
 def spend(sim, page, label):
-    """Send it back, answering the device on every trip it takes."""
+    """Send it back, answering the device on every trip it takes.
+
+    The panel keeps the last transaction it sent, so a spend is finished when a
+    *different* one appears. Taking any value at all made the second spend
+    report the first one's transaction and no trips at all.
+    """
+    before = page.evaluate(STATE)["sent"]
     press(page, "Spend it back into the wallet")
     seen = 0
     said = None
+    dumped = False
     waited = 0
     for _ in range(900):
         state = page.evaluate(STATE)
@@ -200,14 +207,33 @@ def spend(sim, page, label):
                                  "and its last words:\n  %s"
                                  % (state["error"], sim.current_screen(),
                                     "\n  ".join(sim.console[-250:])))
-        if state["sent"]:
+        if state["sent"] and state["sent"] != before:
             print("%s spend broadcast %s" % (label, state["sent"]))
             shot(page, label + "-sent")
             return state
+        if state["trips"] == 5 and not dumped:
+            # Five trips means it is going round. Keep what the device handed
+            # back so the signatures in it can be counted away from the browser.
+            dumped = True
+            psbt = page.evaluate(
+                "() => self.WalletCoordinator.current.musig.psbt || ''")
+            open("/tmp/musig-stuck.psbt", "w").write(psbt)
+            print("  wrote /tmp/musig-stuck.psbt (%d chars)" % len(psbt), flush=True)
         if state["trips"] > seen:
             seen = state["trips"]
-            print("  %s spend, trip %d" % (label, seen), flush=True)
-            answer_device(sim, page)
+            round_ = ""
+            for line in reversed(sim.console):
+                if "PSBTMusig2Round:" in line:
+                    round_ = line.split("PSBTMusig2Round:", 1)[1].strip()
+                    break
+            print("  %s spend, trip %d  seed=%d  used=%s spares=%s  device: %s"
+                  % (label, seen, (seen - 1) % 2, state["used"], state["spares"],
+                     round_ or "(no round yet)"), flush=True)
+            # Alternate the two signers. A cold MuSig2 spend costs four
+            # visits -- a nonce from each, then a signature from each -- so the
+            # seeds go A, B, A, B. Sending the same one twice leaves the other
+            # participant with nothing in the round and it never closes.
+            answer_device(sim, page, seed=(seen - 1) % 2)
         if said != state["busy"]:
             said = state["busy"]
             print("  [%s] %s" % (sim.current_screen(), said or "(nothing)"),
@@ -240,7 +266,7 @@ CAMERA = """
 """
 
 
-def answer_device(sim, page=None):
+def answer_device(sim, page=None, seed=0):
     """Scan what the panel is showing, walk the review, hand the answer back."""
     since = sim.mark()
     sim.back_to_home()
@@ -258,7 +284,7 @@ def answer_device(sim, page=None):
     if not show_until_taken(sim, frames):
         raise AssertionError("the device never took the transaction, sat on %s"
                              % sim.current_screen())
-    walk_to_qr(sim)
+    walk_to_qr(sim, seed=seed)
 
 
 def show_until_taken(sim, frames, timeout=300):
@@ -297,7 +323,7 @@ def current_view(sim):
     return None
 
 
-def walk_to_qr(sim):
+def walk_to_qr(sim, seed=0):
     """Press through the review until the signed code is up.
 
     OPEN, and not this walk's doing. QRDisplayScreen returns as soon as it has
@@ -386,9 +412,14 @@ def walk_to_qr(sim):
             # of entering a key by hand. Pressing blind walks down into "Enter
             # WIF", whose keyboard is the same screen a passphrase uses, and
             # the run then goes round invalid-key warnings for ever.
-            # No scrolling: a ButtonListScreen wraps, so pressing up to "get to
-            # the top" lands somewhere unpredictable and can select its way out
-            # to the main menu. The list opens on the first seed.
+            # Which cosigner signs this trip. The seeds are the first buttons,
+            # in the order they were loaded, and a 2-of-3 needs two different
+            # ones: always taking the first left one participant signing over
+            # and over while the round never closed. No scrolling past them, a
+            # ButtonListScreen wraps and going too far lands anywhere.
+            if seed:
+                sim.down(seed)
+                time.sleep(0.8)
             sim.select()
             time.sleep(1.5)
             continue
