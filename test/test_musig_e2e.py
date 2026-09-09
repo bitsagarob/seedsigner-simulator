@@ -278,10 +278,28 @@ def show_until_taken(sim, frames, timeout=300):
     return False
 
 
+def current_view(sim):
+    """The view the device is in, from its own narration.
+
+    Screen names are shared: SeedAddPassphraseScreen is the keyboard for a
+    passphrase, a WIF and a BIP38 key alike, so pressing by screen name is
+    guessing. The view says which one it is.
+    """
+    for line in reversed(sim.console[-400:]):
+        if "View.run enter: " in line:
+            return line.split("View.run enter: ", 1)[1].strip()
+    return None
+
+
 def walk_to_qr(sim):
     """Press through the review until the signed code is up."""
     for _ in range(60):
         screen = sim.current_screen()
+        if current_view(sim) == "MainMenuView":
+            # Home means the signing flow ended without producing a code.
+            # Pressing on from here walks into Power options and restarts the
+            # device, which buries whatever actually went wrong.
+            break
         if screen == "ScanScreen":
             # Still reading. Pressing here does nothing but waste the budget.
             time.sleep(1)
@@ -290,33 +308,33 @@ def walk_to_qr(sim):
             sim.up(6)
             time.sleep(1.5)
             return
-        if screen == "LargeIconStatusScreen":
-            # "Use Card" or "Keep Device On". Pressing straight through picks
-            # Use Card, and with no card in the reader the device then asks for
-            # a PIN nobody can give it. The nonce is allowed to stay in RAM;
-            # what the card buys is the once-only release that makes the pool
-            # safe, which is why it is the choice when there is one.
+        if current_view(sim) == "PSBTMusig2CardOfferView":
+            # Where the half-finished signing should live: "Use Card" first,
+            # "Keep Device On" second. Pressing straight through picks the card,
+            # and with none in the reader the device then asks for a PIN nobody
+            # can give it. The secret nonce may stay in RAM; what the card buys
+            # is the once-only release that makes a nonce made in advance safe.
             if not CARDS:
                 sim.down()
             sim.select()
             time.sleep(1.5)
             continue
-        if screen == "SeedAddPassphraseScreen":
-            # KEY3 with nothing typed: the keyboard leaves with whatever it
-            # holds, and empty means no passphrase. Typing here would add one,
-            # which makes a different wallet that cannot sign for this one, and
-            # KEY1 does not leave the screen at all.
-            sim.key3()
-            for _ in range(20):
-                time.sleep(0.5)
-                if sim.current_screen() != "SeedAddPassphraseScreen":
-                    break
+        if current_view(sim) == "PSBTSelectSeedView":
+            # The seeds are the first buttons; everything below them is a way
+            # of entering a key by hand. Pressing blind walks down into "Enter
+            # WIF", whose keyboard is the same screen a passphrase uses, and
+            # the run then goes round invalid-key warnings for ever.
+            # No scrolling: a ButtonListScreen wraps, so pressing up to "get to
+            # the top" lands somewhere unpredictable and can select its way out
+            # to the main menu. The list opens on the first seed.
+            sim.select()
+            time.sleep(1.5)
             continue
         sim.select()
         time.sleep(1.3)
     raise AssertionError("no signed code, sat on %s\nthe device's last words:\n  %s"
                          % (sim.current_screen(),
-                            "\n  ".join(sim.console[-50:])))
+                            "\n  ".join(sim.console[-250:])))
 
 
 def load_seed(sim, digits):
