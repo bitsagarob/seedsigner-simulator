@@ -2686,7 +2686,10 @@
     // reported like any other failure. One that escaped left the panel saying
     // it was building a transaction that was never built.
     return Promise.resolve().then(function () {
-      return C.musigAddress(self.musig.descriptor, 0, 1);
+      // Back to the address this wallet watches, which is index 0. Paying
+      // index 1 put the money somewhere the panel never looks, so the balance
+      // read zero afterwards and the next spend asked the faucet instead.
+      return C.musigAddress(self.musig.descriptor, 0, 0);
     }).then(function (out) {
       return C.spendStart({
         descriptor: self.musig.descriptor, branch: 0, index: 0,

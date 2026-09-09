@@ -173,6 +173,10 @@ def main():
         shot(page, "funded")
 
         first = spend(sim, page, "first")
+        # What the device handed back, so the spare nonces in it can be counted.
+        open("/tmp/musig-after-first.psbt", "w").write(
+            page.evaluate("() => self.WalletCoordinator.current.musig.psbt || ''"))
+        card_notes(sim)
         second = spend(sim, page, "second")
 
         print("\n" + "=" * 58)
@@ -185,6 +189,20 @@ def main():
         return 0 if ok else 1
     finally:
         sim.stop()
+
+
+def card_notes(sim):
+    """What the device said about the card and its spare nonces.
+
+    The pool is the point of this demo, and only a card-backed signing restocks
+    it, so whether one was in use is worth saying out loud rather than reading
+    off a trip count.
+    """
+    wanted = ("musig2:", "Card", "card", "restock", "satochip", "Satochip")
+    seen = [l for l in sim.console if any(w in l for w in wanted)]
+    print("  device on cards: %d lines" % len(seen), flush=True)
+    for line in seen[-12:]:
+        print("   ", line.strip(), flush=True)
 
 
 def spend(sim, page, label):
@@ -267,7 +285,15 @@ CAMERA = """
 
 
 def answer_device(sim, page=None, seed=0):
-    """Scan what the panel is showing, walk the review, hand the answer back."""
+    """Show the transaction to the device and bring its answer back.
+
+    The card in the reader has to be the one holding the seed that signs this
+    trip. Leaving whichever card was last used means the device finds a card
+    that does not carry this seed, quietly signs from memory instead, and
+    leaves no spare nonces behind -- which is the whole point of the pool.
+    """
+    if CARDS and page is not None and seed < 2:
+        pick_card(page, seed)
     since = sim.mark()
     sim.back_to_home()
     sim.select()
