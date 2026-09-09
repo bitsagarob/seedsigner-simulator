@@ -106,9 +106,6 @@ def step(sim, what):
     print("  [%s] %s" % (sim.current_screen() or "?", what), flush=True)
 
 
-rounds = 0
-
-
 def shot(page, name):
     """The whole page, device and coordinator together.
 
@@ -129,11 +126,7 @@ def shot(page, name):
 
 
 def main():
-    import simdrive
     from simdrive import Sim
-    # screen_png writes into simdrive's own folder otherwise, and the pictures
-    # of the device belong beside the pictures of the page.
-    simdrive.SHOTS = SHOTS
     from signet_bridge import serve_site_at_real_origin
 
     os.makedirs(SHOTS, exist_ok=True)
@@ -467,17 +460,6 @@ def walk_to_qr(sim, seed=0):
                 if current_view(sim) != view:
                     break
             continue
-        if view == "PSBTMusig2RoundView" and screen == "LargeIconStatusScreen":
-            # The device's own account of the round, and the only screen that
-            # says whether the secret nonce is on the card or in memory. The
-            # page cannot show that, so a picture of the panel alone leaves the
-            # whole point of the card out.
-            global rounds
-            rounds += 1
-            try:
-                sim.screen_png("device-round-%d" % rounds)
-            except Exception as why:
-                print("  (no picture of the round: %s)" % why, flush=True)
         if view == "PSBTSelectSeedView":
             # The seeds are the first buttons; everything below them is a way
             # of entering a key by hand. Pressing blind walks down into "Enter
