@@ -298,7 +298,15 @@ def current_view(sim):
 
 
 def walk_to_qr(sim):
-    """Press through the review until the signed code is up."""
+    """Press through the review until the signed code is up.
+
+    OPEN: the walk presses six times and stops, never on the code itself, and
+    the device still leaves it for the main menu. PSBTSignedQRDisplayView ends
+    with run_screen(QRDisplayScreen), which blocks until a key dismisses it, so
+    a key is arriving that nothing here sent. Suspect a press delivered twice
+    rather than a wrong press; the log of every press below is what to read
+    next.
+    """
     for _ in range(60):
         screen = sim.current_screen()
         view = current_view(sim)
