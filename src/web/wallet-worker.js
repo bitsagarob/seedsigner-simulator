@@ -568,10 +568,20 @@ def _check_for_low(self, key=None, keys=None):
 HardwareButtons.get_instance = classmethod(_get_instance)
 HardwareButtons.wait_for = _wait_for
 HardwareButtons.update_last_input_time = _update_last_input_time
+# A screen showing a code is deaf for a moment after it opens. Presses aimed at
+# the screen before it are still arriving then, and one of them would dismiss a
+# transaction before a single frame of it had been read.
+import time as _clock
+
+_deaf_until = [0.0]
+
 def _poll_button():
     index = js_peek_key()
     if 1 <= index < len(BUTTON_VALUES):
         _PENDING_KEYS.append([BUTTON_VALUES[index], 0])
+    if _clock.monotonic() < _deaf_until[0]:
+        _PENDING_KEYS.clear()
+        return None
     return _PENDING_KEYS.pop(0)[0] if _PENDING_KEYS else None
 
 HardwareButtons.check_for_low = _check_for_low
@@ -624,6 +634,29 @@ def _traced_run(self):
 
 BaseScreen.display = _traced_display
 BaseScreen._run = _traced_run
+
+# A code on screen must not be dismissed by a press made before it appeared.
+#
+# browser_qr pumps this screen by drawing a frame and then polling for a key,
+# and that poll pops from the same queue check_for_low fills, where a press
+# stays claimable for several reads so the scan loop cannot miss it. A press
+# aimed at the screen before this one was therefore still sitting there, and
+# the code was gone after a single frame. An animated transaction never got to
+# animate, so the page had nothing to read back.
+#
+# Real hardware cannot do this: a button pressed before a screen exists is not
+# waiting for it. So the queue is emptied as the screen opens.
+from seedsigner.gui.screens.screen import QRDisplayScreen as _QRScreen
+_pumped_qr_run = _QRScreen._run
+
+def _qr_run_from_a_clean_queue(self):
+    _PENDING_KEYS.clear()
+    while js_peek_key():
+        pass
+    _deaf_until[0] = _clock.monotonic() + 1.5
+    return _pumped_qr_run(self)
+
+_QRScreen._run = _qr_run_from_a_clean_queue
 
 # Views can stall before they ever construct a Screen, so trace one level up.
 #
