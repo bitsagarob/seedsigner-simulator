@@ -334,27 +334,25 @@ def walk_to_qr(sim):
             raise AssertionError(
                 "the device is asking for a card PIN, so the card offer was "
                 "answered \"Use Card\". \"Keep Device On\" is the one this "
-                "run needs. KEY_DOWN does not move the highlight -- the device "
-                "records the screen exiting with button 0 however many are "
-                "sent -- but KEY_UP and the three side buttons are untried, "
-                "and so is waiting for the screen's input loop to start before "
-                "sending anything. Either find what moves that highlight, or "
-                "run with "
+                "run needs. KEY_DOWN does not move the highlight: one, two "
+                "together, two a second apart, and one sent three seconds "
+                "after the screen appears all leave it on button 0. KEY_UP and "
+                "the three side buttons are still untried. Either find what "
+                "moves that highlight, or run with "
                 "MUSIG_E2E_CARDS=1 once a card in the reader stops pegging "
                 "the page.")
         if view == "PSBTMusig2CardOfferView":
             # Where the half-finished signing should live: "Use Card" first,
             # "Keep Device On" second.
             print("    press on %s / %s" % (view, screen), flush=True)
-            # No arrow keys here. The device records this screen exiting with
-            # button 0 however many downs are sent, so they never land on it --
-            # they queue, and a queued key is spent later dismissing the signed
-            # code, which the device logs as "QRDisplayScreen -> None".
-            #
-            # So take button 0, "Use Card". With no card in the reader
-            # init_satochip finds none and the view falls through to the round
-            # anyway; the PIN prompt it puts up on the way is just another
-            # screen for the walk to press through.
+            # Let the screen's input loop start before sending anything. Keys
+            # sent while it is still rendering appear to go nowhere, which is
+            # the difference between "the highlight will not move" and "the
+            # move was never seen". The device logs which button it exits with,
+            # so this is checkable rather than a matter of opinion.
+            time.sleep(3)
+            sim.down()
+            time.sleep(1.2)
             sim.select()
             # Wait for it to land, like every other press.
             for _ in range(120):
