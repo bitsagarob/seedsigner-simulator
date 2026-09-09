@@ -2543,6 +2543,10 @@
       var text = self.readDevice();
       if (!text) return false;
       var trimmed = text.trim();
+      // The device goes on showing the key it just exported, so without this
+      // the same one is read again every tick and the panel is rebuilt each
+      // time, which leaves no room for anything else to run.
+      if (trimmed === self.lastExport) return false;
       if (ACCOUNT_LINE.test(trimmed)) return trimmed;
       var head = /^ur:([a-z0-9-]+)\//i.exec(trimmed);
       if (!head || ACCOUNT_URS.indexOf(head[1].toLowerCase()) === -1) return false;
@@ -2552,15 +2556,26 @@
       return collector.payload();
     }, 86400000, "the next cosigner's key on the device's screen")
       .then(function (exported) {
+        self.lastExport = exported;
         return Promise.resolve(C.parseAccount(exported)).then(function (account) {
           var key = "[" + account.fingerprint + account.path + "]" + account.tpub;
           // The same seed exported twice is one cosigner, not two.
-          if (self.musig.keys.indexOf(key) === -1) self.musig.keys.push(key);
-          self.render();
+          if (self.musig.keys.indexOf(key) === -1) {
+            self.musig.keys.push(key);
+            self.render();
+          }
           if (self.musig.keys.length < 3) self.watchForCosigner();
         });
       })
-      .catch(function () { /* the drawer shut, or the view moved on */ });
+      .catch(function (why) {
+        // A cancelled watch is ordinary: the drawer shut, or another read
+        // took over. Anything else is a key the panel could not make sense
+        // of, which otherwise looks exactly like a device that never showed
+        // one.
+        if (/^Stopped waiting/.test(why && why.message)) return;
+        self.error = "That export could not be read: " + (why && why.message);
+        self.render();
+      });
   };
 
   /** The fingerprint out of a [xxxxxxxx/path]xpub export. */
@@ -2577,9 +2592,13 @@
   Wallet.prototype.musigRefresh = function () {
     var self = this;
     if (!this.musig || !this.musig.address) return Promise.resolve();
-    return scanChain([this.musig.address]).then(function (found) {
-      var rows = (found && found.addresses && found.addresses[0]) || {};
-      var coins = rows.utxos || rows.coins || [];
+    var address = this.musig.address;
+    return scanChain([address]).then(function (held) {
+      // scanChain hands back the map the chain answered with, keyed by
+      // address. Reaching for .addresses[0] on it found nothing every time,
+      // so this wallet always looked empty however much it held.
+      var row = held[address] || {};
+      var coins = row.utxos || [];
       self.musig.coins = coins;
       self.musig.total = coins.reduce(function (n, c) { return n + (c.value || 0); }, 0);
       self.render();
@@ -2590,6 +2609,15 @@
   };
 
   /** Ask the faucet to pay the MuSig2 address. */
+  /** Look for the faucet's payment until it is there, or until tries run out. */
+  function waitForCoin(wallet, tries) {
+    return wallet.musigRefresh().then(function () {
+      if (wallet.musig.total || tries <= 0) return;
+      return new Promise(function (again) { setTimeout(again, 10000); })
+        .then(function () { return waitForCoin(wallet, tries - 1); });
+    });
+  }
+
   Wallet.prototype.musigClaim = function () {
     var self = this;
     this.musig.busy = "Asking the faucet\u2026";
@@ -2597,7 +2625,10 @@
     return C.network.claim(this.musig.address).then(function () {
       self.musig.busy = "Paid. Waiting for a block, about thirty seconds.";
       self.render();
-      return self.musigRefresh();
+      // Asking once is asking too early: the faucet has paid but the block
+      // holding it has not been found yet, and nothing else would ever look
+      // again.
+      return waitForCoin(self, 18);
     }).then(function () {
       self.musig.busy = "";
       self.render();
@@ -2704,6 +2735,10 @@
         self.musig.spares = 0;
         self.musig.busy = "";
         self.render();
+        // The same three keys always make the same wallet, so one built again
+        // may already hold coins. Ask, rather than show an empty wallet and
+        // offer the faucet money it does not need.
+        return self.musigRefresh();
       });
     }).catch(function (why) {
       self.musig.busy = "";
