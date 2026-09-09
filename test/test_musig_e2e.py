@@ -428,23 +428,38 @@ def pick_card(page, index):
     time.sleep(1)
 
 
+def reached(sim, screen, since, timeout=45):
+    """Did this screen come up? For a step the device only sometimes takes."""
+    try:
+        sim.wait_screen(screen, since=since, timeout=timeout)
+        return True
+    except Exception:
+        return False
+
+
 def save_to_card(sim):
-    """From the seed's menu: backup -> to SeedKeeper, with the PIN dance."""
+    """From the seed's menu: backup -> to SeedKeeper, with the PIN dance.
+
+    A blank card wants a PIN set on it: a warning, then the new PIN twice. A
+    card that has been used already just verifies the one it has, and says so
+    with "Pin Correct" and no warning at all. Which of the two happens depends
+    on the card in the reader, so this waits to see rather than assuming.
+    """
     since = sim.mark()
     sim.down(3); sim.select()                      # backup
     sim.wait_screen("ButtonListScreen", since=since, timeout=60)
     since = sim.mark()
     sim.down(); sim.select()                       # to SeedKeeper
     since = type_pin(sim, since)
-    sim.wait_screen("WarningScreen", since=since, timeout=180)
-    since = sim.mark()
-    sim.select()
-    since = type_pin(sim, since)                   # new PIN
-    since = type_pin(sim, since)                   # again
-    sim.wait_screen("LargeIconStatusScreen", since=since, timeout=120)
-    since = sim.mark()
-    sim.select()
-    sim.wait_screen("SeedAddPassphraseScreen", since=since, timeout=120)
+    if reached(sim, "WarningScreen", since):
+        since = sim.mark()
+        sim.select()
+        since = type_pin(sim, since)               # new PIN
+        since = type_pin(sim, since)               # again
+        sim.wait_screen("LargeIconStatusScreen", since=since, timeout=120)
+        since = sim.mark()
+        sim.select()
+    sim.wait_screen("SeedAddPassphraseScreen", since=since, timeout=180)
     sim.key3()                                     # accept the offered label
     time.sleep(2.5)
 
