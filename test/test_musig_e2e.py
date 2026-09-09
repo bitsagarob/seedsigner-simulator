@@ -555,6 +555,15 @@ def reached(sim, screen, since, timeout=45):
         return False
 
 
+def said(sim, pattern, since, timeout=45):
+    """Did the device print this? For a step it only sometimes takes."""
+    try:
+        sim.wait_console(pattern, since=since, timeout=timeout)
+        return True
+    except Exception:
+        return False
+
+
 def save_to_card(sim):
     """From the seed's menu: backup -> to SeedKeeper, with the PIN dance.
 
@@ -568,7 +577,13 @@ def save_to_card(sim):
     sim.wait_screen("ButtonListScreen", since=since, timeout=60)
     since = sim.mark()
     sim.down(); sim.select()                       # to SeedKeeper
-    since = type_pin(sim, since)
+    # Only when the device actually asks. With the smartcard session kept
+    # across Home it asks once and then reuses the card, and the keyboard the
+    # PIN would have been typed into is the label keyboard further down. Typing
+    # there saved the seed under the PIN and left the run waiting for a prompt
+    # that had already been answered.
+    if said(sim, r"prompting for", since):
+        since = type_pin(sim, since)
     if reached(sim, "WarningScreen", since):
         since = sim.mark()
         sim.select()
@@ -584,15 +599,8 @@ def save_to_card(sim):
 
 
 def type_pin(sim, since):
-    """Four of whichever key the keyboard opened on, then KEY3.
-
-    The device does not always ask. With Cache Smartcard Pin enabled it keeps
-    the card open across the flow, so the second and third cosigner are saved
-    without a prompt, and waiting for a keyboard that never opens stalls the
-    whole run.
-    """
-    if not reached(sim, "SeedAddPassphraseScreen", since, timeout=45):
-        return since
+    """Four of whichever key the keyboard opened on, then KEY3."""
+    sim.wait_screen("SeedAddPassphraseScreen", since=since, timeout=120)
     mark = sim.mark()
     sim.select(4)
     sim.key3()
