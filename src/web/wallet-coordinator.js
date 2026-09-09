@@ -2709,24 +2709,30 @@
     this.musig.trips += 1;
     this.musig.pool = state.pool;
     this.musig.issued = state.issued;
+    // What is being held up, so a test can read it back and so a failed trip
+    // can be looked at rather than guessed at.
+    this.musig.psbt = state.psbt;
     this.musig.busy = "Trip " + this.musig.trips + ": show this to the device.";
     this.render();
 
     this.present(frames(state.psbt, 280));
+    this.render();
     return this.watch(function () {
       return self.currentScreen() === "ScanScreen";
     }, 300000, "the device to open Scan").then(function () {
-      return self.watch(function () {
-        var screen = self.currentScreen();
-        return screen && screen !== "ScanScreen";
-      }, 300000, "the device to take the transaction");
-    }).then(function () {
-      self.stopPresenting();
-      self.canvas.hidden = true;
-      self.musig.busy = "Reading the device's answer\u2026";
+      // Hold the code up until the answer has been read, rather than taking it
+      // down the moment the device shows anything that is not Scan. It shows a
+      // loading screen while its camera opens, which used to end the
+      // presentation before it had seen a single frame, after which it sat in
+      // Scan looking at nothing. Reading the device's own screen does not need
+      // this canvas, so leaving it up costs nothing.
+      self.musig.busy = "Reading the device\u2019s answer\u2026";
       self.render();
       return self.readPsbt(600000);
     }).then(function (collector) {
+      self.stopPresenting();
+      self.canvas.hidden = true;
+      self.render();
       return C.spendReturned(state, C.toBase64(collector.psbt()));
     }).then(function (next) {
       self.musig.pool = next.pool;

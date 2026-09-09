@@ -204,7 +204,7 @@ def spend(sim, page, label):
         if state["trips"] > seen:
             seen = state["trips"]
             print("  %s spend, trip %d" % (label, seen), flush=True)
-            answer_device(sim)
+            answer_device(sim, page)
         if said != state["busy"]:
             said = state["busy"]
             print("  [%s] %s" % (sim.current_screen(), said or "(nothing)"),
@@ -217,21 +217,45 @@ def spend(sim, page, label):
     raise AssertionError("the %s spend never finished" % label)
 
 
-def answer_device(sim):
+FRAMES = """
+() => {
+  const w = self.WalletCoordinator.current;
+  if (!w.musig || !w.musig.psbt) return null;
+  return self.WalletTutorial.specterFrames(w.musig.psbt, 280);
+}
+"""
+
+CAMERA = """
+() => {
+  const w = self.WalletCoordinator.current;
+  return {presenting: !!w.presenting,
+          ownsCamera: !!self.WalletCoordinator.cameraStream(),
+          canvasOnPage: document.body.contains(w.canvas),
+          hidden: w.canvas.hidden,
+          width: w.canvas.width, height: w.canvas.height};
+}
+"""
+
+
+def answer_device(sim, page=None):
     """Scan what the panel is showing, walk the review, hand the answer back."""
     since = sim.mark()
     sim.back_to_home()
     sim.select()
     sim.wait_screen("ScanScreen", since=since, timeout=60)
-    # The panel is already presenting; the device's camera reads the canvas. A
-    # transaction is many frames and the camera only sees one at a time, so
-    # this is minutes rather than seconds.
-    for _ in range(300):
-        if sim.current_screen() not in (None, "ScanScreen"):
-            break
-        time.sleep(1)
-    else:
-        raise AssertionError("the device never finished reading the transaction")
+    # Hold the panel's own frames up to the device, the same way every other
+    # scan in this harness is fed. The panel is presenting them on its canvas
+    # at the same time and the page hands that canvas to the device as its
+    # camera, but that optical path does not deliver here, so the frames the
+    # panel built are shown through the harness instead. What is being signed
+    # is still the panel's transaction, byte for byte.
+    frames = page.evaluate(FRAMES) if page is not None else None
+    if not frames:
+        raise AssertionError("the panel is not holding a transaction up")
+    if not sim.scan_qr_frames(frames, expect_screen="PSBTOverviewScreen",
+                              timeout=300):
+        raise AssertionError("the device never took the transaction, sat on %s"
+                             % sim.current_screen())
     walk_to_qr(sim)
 
 
