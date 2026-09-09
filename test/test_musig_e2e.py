@@ -302,7 +302,10 @@ def walk_to_qr(sim):
             time.sleep(1.5)
             continue
         if screen == "SeedAddPassphraseScreen":
-            sim.select(4)
+            # KEY3 with nothing typed: the keyboard leaves with whatever it
+            # holds, and empty means no passphrase. Typing here would add one,
+            # which makes a different wallet that cannot sign for this one, and
+            # KEY1 does not leave the screen at all.
             sim.key3()
             for _ in range(20):
                 time.sleep(0.5)
@@ -311,7 +314,9 @@ def walk_to_qr(sim):
             continue
         sim.select()
         time.sleep(1.3)
-    raise AssertionError("no signed code, sat on %s" % sim.current_screen())
+    raise AssertionError("no signed code, sat on %s\nthe device's last words:\n  %s"
+                         % (sim.current_screen(),
+                            "\n  ".join(sim.console[-50:])))
 
 
 def load_seed(sim, digits):
