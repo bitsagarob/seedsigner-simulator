@@ -577,14 +577,22 @@ def save_to_card(sim):
         sim.wait_screen("LargeIconStatusScreen", since=since, timeout=120)
         since = sim.mark()
         sim.select()
+    # The label keyboard, which is always asked for, unlike the PIN.
     sim.wait_screen("SeedAddPassphraseScreen", since=since, timeout=180)
     sim.key3()                                     # accept the offered label
     time.sleep(2.5)
 
 
 def type_pin(sim, since):
-    """Four of whichever key the keyboard opened on, then KEY3."""
-    sim.wait_screen("SeedAddPassphraseScreen", since=since, timeout=120)
+    """Four of whichever key the keyboard opened on, then KEY3.
+
+    The device does not always ask. With Cache Smartcard Pin enabled it keeps
+    the card open across the flow, so the second and third cosigner are saved
+    without a prompt, and waiting for a keyboard that never opens stalls the
+    whole run.
+    """
+    if not reached(sim, "SeedAddPassphraseScreen", since, timeout=45):
+        return since
     mark = sim.mark()
     sim.select(4)
     sim.key3()
