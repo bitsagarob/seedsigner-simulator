@@ -4,11 +4,11 @@ import os
 import sys
 import time
 
-sys.path.insert(0, "/home/rob/apps/bitsaga/services/signet/test")
+sys.path.insert(0, "$SIGNET_TEST_DIR")
 
 URL = ("http://127.0.0.1:8792/wallet.html"
        "?firmware=doomsigner-musig&debug=1&network=regtest&wallet=1")
-SHOTS = "/home/rob/.cache/tmp/coordinator-shots"
+SHOTS = "$TMP/coordinator-shots"
 
 
 def main():

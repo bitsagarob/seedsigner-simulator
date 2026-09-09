@@ -7,7 +7,7 @@ import json, sys, urllib.request
 from embit import bip32, bip39, networks, script
 from embit.transaction import Transaction, TransactionInput, TransactionOutput
 
-MAINNET_SENDER = "/home/rob/apps/bitsaga/research/seedsigner-sp/MAINNET_SEND.local.json"
+MAINNET_SENDER = "$SEEDS_DIR/MAINNET_SEND.local.json"
 
 
 def mempool_get(path):

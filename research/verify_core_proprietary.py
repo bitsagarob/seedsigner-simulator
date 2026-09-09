@@ -16,7 +16,7 @@ import json
 import subprocess
 import sys
 
-DATADIR = "/home/rob/.cache/tmp/musig-regtest"
+DATADIR = "$TMP/musig-regtest"
 CONF = f"{DATADIR}/bitcoin.conf"
 
 MAGIC = b"psbt\xff"

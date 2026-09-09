@@ -16,8 +16,8 @@ on mainnet.
 """
 import argparse, base64, json, os, subprocess, sys, time, urllib.request
 
-sys.path.insert(0, "/home/rob/apps/bitsaga/services/signet/test")
-sys.path.insert(0, "/home/rob/apps/_scratch/musig2-app/src")
+sys.path.insert(0, "$SIGNET_TEST_DIR")
+sys.path.insert(0, "$MUSIG_APP/src")
 
 from embit import bip32, bip39, ec, networks, script
 from embit.psbt import PSBT
@@ -29,10 +29,10 @@ from seedsigner.helpers import musig2_psbt as mp
 from seedsigner.helpers import silent_payments as sp_keys
 from seedsigner.models.settings_definition import SettingsConstants
 
-SEEDS = "/home/rob/apps/bitsaga/research/seedsigner-sp/MUSIG2_SP.local.json"
-CACHE = "/home/rob/.cache/tmp"
+SEEDS = "$SEEDS_DIR/MUSIG2_SP.local.json"
+CACHE = "$TMP"
 SIGNET_CHALLENGE = "0014cb5c938876427c86a068fba6d6ddd09ed4fa183f"
-DNSSEC_VERIFY = "/home/rob/apps/bitsaga/services/silentpayments/dnssec-verify/target/release/dnssec-verify"
+DNSSEC_VERIFY = "$DNSSEC_VERIFY_BIN"
 PSBT_OUT_DNSSEC_PROOF = b"\x35"
 
 

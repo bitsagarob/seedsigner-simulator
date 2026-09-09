@@ -7,15 +7,15 @@ derivation and the partial signature in pure Python.
 """
 import sys, json, subprocess, hashlib, hmac, struct
 
-sys.path.insert(0, "/home/rob/.cache/tmp/ss-sp-spend-nno_t15g")
-sys.path.insert(0, "/home/rob/apps/_scratch/musig2")
+sys.path.insert(0, "$TMP/ss-sp-spend-nno_t15g")
+sys.path.insert(0, "$RESEARCH_DIR")
 
 from embit import bip32, networks
 from embit.psbt import PSBT
 from embit.transaction import SIGHASH
 import bip327_reference as m
 
-RD = "/home/rob/.cache/tmp/musig-regtest"
+RD = "$TMP/musig-regtest"
 NET = networks.NETWORKS["regtest"]
 ACCT = "m/86h/1h/0h"
 MUSIG_CC = hashlib.sha256(b"MuSig2MuSig2MuSig2").digest()   # BIP-328

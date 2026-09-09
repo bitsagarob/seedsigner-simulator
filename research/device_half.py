@@ -9,8 +9,8 @@ This is the shape the UI layer wraps, so it doubles as the spec for it.
 """
 import sys, json, subprocess, hashlib
 
-sys.path.insert(0, "/home/rob/.cache/tmp/ss-sp-spend-nno_t15g")
-sys.path.insert(0, "/home/rob/apps/_scratch/musig2-app/src")
+sys.path.insert(0, "$TMP/ss-sp-spend-nno_t15g")
+sys.path.insert(0, "$MUSIG_APP/src")
 
 from embit import bip32, bip39, networks
 from embit.psbt import PSBT
@@ -18,7 +18,7 @@ from embit.psbt import PSBT
 from seedsigner.helpers import musig2 as m
 from seedsigner.helpers import musig2_psbt as mp
 
-RD = "/home/rob/.cache/tmp/musig-regtest"
+RD = "$TMP/musig-regtest"
 NET = networks.NETWORKS["regtest"]
 ACCT = "m/86h/1h/0h"
 
@@ -162,7 +162,7 @@ if "--fixture" in sys.argv:
             "sighash": msg.hex(),
         },
     }
-    out = "/home/rob/apps/_scratch/musig2-app/tests/data/musig2_psbts.json"
+    out = "$MUSIG_APP/tests/data/musig2_psbts.json"
     with open(out, "w") as f:
         json.dump(fixture, f, indent=2)
         f.write("\n")

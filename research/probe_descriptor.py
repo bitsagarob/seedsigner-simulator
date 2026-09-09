@@ -9,13 +9,13 @@ import os
 import sys
 import time
 
-sys.path.insert(0, "/home/rob/.cache/tmp/ss-sp-spend-nno_t15g")
-sys.path.insert(0, "/home/rob/apps/seedsigner-sp/src")
-sys.path.insert(0, "/home/rob/apps/bitsaga/services/signet/test")
+sys.path.insert(0, "$TMP/ss-sp-spend-nno_t15g")
+sys.path.insert(0, "$FIRMWARE_SRC")
+sys.path.insert(0, "$SIGNET_TEST_DIR")
 
 URL = ("http://127.0.0.1:8791/wallet.html"
        "?firmware=doomsigner-musig&debug=1&network=regtest")
-SHOTS = "/home/rob/.cache/tmp/musig-probe"
+SHOTS = "$TMP/musig-probe"
 
 
 def main():

@@ -7,7 +7,7 @@ asks, with the same inputs, and compares every answer.
 import json
 import sys
 
-sys.path.insert(0, "/home/rob/apps/bitsaga/services/signet/test")
+sys.path.insert(0, "$SIGNET_TEST_DIR")
 
 URL = "http://127.0.0.1:8792/wallet.html?firmware=doomsigner-musig&debug=1&wallet=1"
 

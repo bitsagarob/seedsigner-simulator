@@ -11,7 +11,7 @@ import base64
 import json
 import subprocess
 
-DATADIR = "/home/rob/.cache/tmp/musig-regtest"
+DATADIR = "$TMP/musig-regtest"
 CONF = f"{DATADIR}/bitcoin.conf"
 
 

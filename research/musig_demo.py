@@ -12,11 +12,11 @@ Screens worth keeping are written as PNGs as they happen.
 """
 import argparse, json, os, subprocess, sys, time
 
-sys.path.insert(0, "/home/rob/.cache/tmp/ss-sp-spend-nno_t15g")
-sys.path.insert(0, "/home/rob/apps/_scratch/embit-musig/src")
-sys.path.insert(0, "/home/rob/apps/_scratch/musig2-sim/src/web")
-sys.path.insert(0, "/home/rob/apps/seedsigner-sp/src")
-sys.path.insert(0, "/home/rob/apps/bitsaga/services/signet/test")
+sys.path.insert(0, "$TMP/ss-sp-spend-nno_t15g")
+sys.path.insert(0, "$EMBIT_SRC")
+sys.path.insert(0, "$SIM/src/web")
+sys.path.insert(0, "$FIRMWARE_SRC")
+sys.path.insert(0, "$SIGNET_TEST_DIR")
 
 from embit import bip32, bip39, networks
 
@@ -25,7 +25,7 @@ import coordinator
 
 # One pool per wallet. The name is only a key in the pool's store; it never
 # reaches a PSBT or the chain.
-RD = "/home/rob/.cache/tmp/musig-regtest"
+RD = "$TMP/musig-regtest"
 NET = networks.NETWORKS["regtest"]
 ACCT = "m/86h/1h/0h"
 MNEMONICS = {
@@ -184,7 +184,7 @@ def save_seed_to_card(sim, shot):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--shots", default="/home/rob/.cache/tmp/musig-shots")
+    ap.add_argument("--shots", default="$TMP/musig-shots")
     ap.add_argument("--headless", default="1")
     args = ap.parse_args()
     os.makedirs(args.shots, exist_ok=True)

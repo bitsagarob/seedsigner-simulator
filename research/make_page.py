@@ -8,11 +8,11 @@ it looks like the rest of the site. noindex, not in the sitemap, not linked.
 """
 import json, os, re, shutil, html
 
-SITE = "/home/rob/apps/bitsaga/webapp"
+SITE = "$WEBAPP_DIR"
 SRC_PAGE = SITE + "/insights/silent-payments-on-seedsigner.html"
 OUT_PAGE = SITE + "/insights/musig2-silent-payment.html"
 IMG_DIR = SITE + "/images/insights/musig2-silent-payment"
-SHOTS = "/home/rob/.cache/tmp/musig-sp-shots-%s"
+SHOTS = "$TMP/musig-sp-shots-%s"
 SLUG = "musig2-silent-payment"
 TITLE = "A 2-of-3 MuSig2 multisig paying a silent payment address, on mainnet"
 DESC = ("Two simulated SeedSigners holding a MuSig2 2-of-3 pay a BIP-352 silent payment address on "

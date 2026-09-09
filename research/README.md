@@ -22,10 +22,12 @@ check kept somewhere else is a check nobody runs.
 
 ## What will not run as it stands
 
-Several of these hold absolute paths from the machine they were written on
-(`/home/rob/apps/_scratch/...`), and some point at trees that no longer exist.
-They are kept as a record of what was checked, not as a suite. Read them before
-running them.
+The paths these were written against are placeholders now (`$SIM`,
+`$EMBIT_SRC`, `$VENV_PYTHON` and so on), so nothing here runs until you fill
+them in. That is on purpose: the originals named directories on one person's
+machine, one of them the file a mainnet spend reads its seed from. Some also
+point at trees that no longer exist. They are a record of what was checked, not
+a suite.
 
 `fund_mainnet.py` spends real money on mainnet. It reads the seed to spend from
 a `*.local.json` file outside the repository, which is not here and never will

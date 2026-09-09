@@ -10,7 +10,7 @@ import json
 import subprocess
 import sys
 
-sys.path.insert(0, "/home/rob/apps/bitsaga/services/signet/test")
+sys.path.insert(0, "$SIGNET_TEST_DIR")
 
 URL = "http://127.0.0.1:8792/wallet.html?firmware=doomsigner-musig&debug=1&wallet=1"
 
@@ -50,7 +50,7 @@ def main():
         sim.stop()
 
     want = json.loads(subprocess.run(
-        ["/home/rob/apps/_scratch/musig2-venv/bin/python", "-c", PYTHON_SIDE],
+        ["$VENV_PYTHON", "-c", PYTHON_SIDE],
         capture_output=True, text=True, check=True).stdout)
 
     bad = 0
@@ -69,8 +69,8 @@ def main():
 
 PYTHON_SIDE = """
 import json, sys
-sys.path.insert(0, '/home/rob/apps/_scratch/embit-musig/src')
-sys.path.insert(0, '/home/rob/apps/_scratch/musig2-sim/src/web')
+sys.path.insert(0, '$EMBIT_SRC')
+sys.path.insert(0, '$SIM/src/web')
 import coordinator
 f = json.load(open('/tmp/musig-browser-fixture.json'))
 a = coordinator.musig_address(f['descriptor'], 0, 0)

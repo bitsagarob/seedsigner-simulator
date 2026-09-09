@@ -4,9 +4,9 @@ import os
 import sys
 import time
 
-sys.path.insert(0, "/home/rob/apps/bitsaga/services/signet/test")
+sys.path.insert(0, "$SIGNET_TEST_DIR")
 
-SHOTS = "/home/rob/.cache/tmp/coordinator-shots"
+SHOTS = "$TMP/coordinator-shots"
 MODES = [("smartcard", "about-stock"), ("doomsigner-musig", "about-musig")]
 
 

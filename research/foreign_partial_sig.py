@@ -8,15 +8,15 @@ signatures interoperate and the SeedSigner side is only wiring after this.
 """
 import sys, json, subprocess, hashlib
 
-sys.path.insert(0, "/home/rob/.cache/tmp/ss-sp-spend-nno_t15g")
-sys.path.insert(0, "/home/rob/apps/_scratch/musig2")
+sys.path.insert(0, "$TMP/ss-sp-spend-nno_t15g")
+sys.path.insert(0, "$RESEARCH_DIR")
 
 from embit import ec, networks
 from embit.psbt import PSBT
 from embit.transaction import SIGHASH
 import bip327_reference as m
 
-RD = "/home/rob/.cache/tmp/musig-regtest"
+RD = "$TMP/musig-regtest"
 NET = networks.NETWORKS["regtest"]
 
 

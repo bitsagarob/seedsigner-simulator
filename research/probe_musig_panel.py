@@ -11,8 +11,8 @@ import subprocess
 import sys
 import time
 
-sys.path.insert(0, "/home/rob/apps/bitsaga/services/signet/test")
-sys.path.insert(0, "/home/rob/apps/_scratch/musig2-sim/test")
+sys.path.insert(0, "$SIGNET_TEST_DIR")
+sys.path.insert(0, "$SIM/test")
 
 # Bitsaga Signet's API allows exactly one browser origin, https://bitsaga.be,
 # so the panel cannot reach it from a page served on 127.0.0.1: it connects,
@@ -21,13 +21,13 @@ sys.path.insert(0, "/home/rob/apps/_scratch/musig2-sim/test")
 URL = ("https://bitsaga.be/wallet.html"
        "?firmware=doomsigner-musig&debug=1&wallet=1")
 LOCAL = 8792
-SHOTS = "/home/rob/.cache/tmp/coordinator-shots"
+SHOTS = "$TMP/coordinator-shots"
 SEEDQR_B = "204720472047204720472047204720472047204720472037"
 
 CHECK = """
 import sys
-sys.path.insert(0, '/home/rob/apps/_scratch/embit-musig/src')
-sys.path.insert(0, '/home/rob/apps/_scratch/musig2-sim/src/web')
+sys.path.insert(0, '$EMBIT_SRC')
+sys.path.insert(0, '$SIM/src/web')
 import coordinator, json
 keys = json.load(open('/tmp/musig-panel-keys.json'))
 d = coordinator.musig_wallet(keys)
@@ -142,7 +142,7 @@ def main():
         page.locator("#wallet").screenshot(path=os.path.join(SHOTS, "musig-panel.png"))
 
         want = subprocess.run(
-            ["/home/rob/apps/_scratch/musig2-venv/bin/python", "-c", CHECK],
+            ["$VENV_PYTHON", "-c", CHECK],
             capture_output=True, text=True, check=True).stdout.strip()
         print("coordinator says   :", want)
         print("\n%s" % ("they match" if shown and shown[0] == want else "MISMATCH"))
