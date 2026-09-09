@@ -2704,7 +2704,12 @@
     // Everything inside a promise, so a throw on the way to the first call is
     // reported like any other failure. One that escaped left the panel saying
     // it was building a transaction that was never built.
-    return Promise.resolve().then(function () {
+    // Ask the chain what is still unspent before choosing a coin. Spending
+    // twice without looking rebuilt the first transaction exactly, down to the
+    // same input and output, and the network refused it as one it already had.
+    return this.musigRefresh().then(function () {
+      coin = (self.musig.coins || [])[0];
+      if (!coin) throw new Error("There is nothing in that wallet to spend.");
       // Back to the address this wallet watches, which is index 0. Paying
       // index 1 put the money somewhere the panel never looks, so the balance
       // read zero afterwards and the next spend asked the faucet instead.
