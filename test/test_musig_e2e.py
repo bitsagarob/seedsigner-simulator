@@ -430,6 +430,13 @@ def walk_to_qr(sim, seed=0):
             # move was never seen". The device logs which button it exits with,
             # so this is checkable rather than a matter of opinion.
             time.sleep(3)
+            if sim.current_screen() != screen:
+                # A press aimed at the screen before this one arrives late and
+                # answers the offer on its own. Pressing again then types into
+                # whatever opened next, and what opens next is the PIN keyboard,
+                # so the PIN came out one letter too long and the card refused
+                # it. If the offer is already answered, leave it answered.
+                continue
             if not CARDS:
                 # "Keep Device On" is the second button, and without a card in
                 # the reader it is the only one that can be answered.
