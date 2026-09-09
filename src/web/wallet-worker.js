@@ -280,7 +280,15 @@ sys.path.insert(0, "/wallet")
 # SETTING__NETWORK, TESTNET, SETTING__SILENT_PAYMENTS and OPTION__ENABLED.
 import os, json
 os.chdir("/wallet")
-_settings = {"display_config": "st7789_320x240", "network": ${net}}
+_settings = {"display_config": "st7789_320x240", "network": ${net},
+             # SETTING__CACHE_SCARD_PIN. Off on a real device, because a cached
+             # card PIN outlives the flow that asked for it. On here because a
+             # MuSig2 spend goes Home between loading the seed and scanning the
+             # transaction, and going Home drops the whole smartcard session
+             # when this is off: the card is then asked for a PIN again in the
+             # middle of signing, and the nonce the card was holding cannot be
+             # reached at all.
+             "cache_scard_pin": "E"}
 if ${JSON.stringify(firmware === "doomsigner-musig" ? "doomsigner" : firmware)} == "doomsigner":
     _settings["silent_payments"] = "E"
 with open("/wallet/settings.json", "w") as handle:
