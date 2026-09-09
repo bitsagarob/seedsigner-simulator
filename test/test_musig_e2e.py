@@ -333,12 +333,14 @@ def walk_to_qr(sim):
             # can give it. The secret nonce may stay in RAM; what the card buys
             # is the once-only release that makes a nonce made in advance safe.
             print("    press on %s / %s" % (view, screen), flush=True)
-            # OPEN: down() does not move the highlight on this screen, so
-            # select() takes the first button, "Use Card", and with no card in
-            # the reader the device asks for a PIN. The log shows it as
-            # "PSBTMusig2CardOfferView / SeedAddPassphraseScreen": the view has
-            # not exited but the keyboard is already up. Whatever key picks the
-            # second button here is what this branch needs.
+            # OPEN, and confirmed with no stray key in the queue: down() does
+            # not move the highlight here, so select() takes the first button,
+            # "Use Card", and with no card in the reader the device asks for a
+            # PIN. The press log shows it as "PSBTMusig2CardOfferView /
+            # SeedAddPassphraseScreen": the view has not exited but the
+            # keyboard is already up. LargeIconStatusScreen subclasses
+            # ButtonListScreen, so KEY_DOWN ought to work and does not; find
+            # what actually picks the second button before trusting this.
             if not CARDS:
                 sim.down()
                 time.sleep(0.6)
