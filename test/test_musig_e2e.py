@@ -201,8 +201,14 @@ def card_notes(sim):
     wanted = ("musig2:", "Card", "card", "restock", "satochip", "Satochip")
     seen = [l for l in sim.console if any(w in l for w in wanted)]
     print("  device on cards: %d lines" % len(seen), flush=True)
-    for line in seen[-12:]:
+    for line in seen:
         print("   ", line.strip(), flush=True)
+    # The whole console, not a window into it. Every wrong answer about the nonce
+    # pool so far came from reading a tail and taking it for the log.
+    dump = os.path.join(SHOTS, "device-console.log")
+    with open(dump, "w") as fh:
+        fh.write("\n".join(sim.console))
+    print("  full device console: %s (%d lines)" % (dump, len(sim.console)), flush=True)
 
 
 def spend(sim, page, label):
@@ -424,8 +430,11 @@ def walk_to_qr(sim, seed=0):
             # move was never seen". The device logs which button it exits with,
             # so this is checkable rather than a matter of opinion.
             time.sleep(3)
-            sim.down()
-            time.sleep(1.2)
+            if not CARDS:
+                # "Keep Device On" is the second button, and without a card in
+                # the reader it is the only one that can be answered.
+                sim.down()
+                time.sleep(1.2)
             sim.select()
             # Wait for it to land, like every other press.
             for _ in range(120):
