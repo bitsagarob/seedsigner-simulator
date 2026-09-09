@@ -87,7 +87,7 @@
   // Six words where there were twenty. Everything the long version said is
   // still true and still on the page, in the panel behind the i; what this
   // line has to do is stop somebody thinking these coins are theirs.
-  var NOT_A_WALLET = "Signet test coins. Nothing real, nothing kept.";
+  var NOT_A_WALLET = "Signet coins, worth nothing.";
 
   // The device path to the account key, spelled out because the whole point of
   // the landing state is that nobody has to guess it. It ends where the device's
@@ -539,6 +539,22 @@
 
   function sats(value) {
     return Number(value).toLocaleString("en-GB") + " sats";
+  }
+
+  /** A long hex string, short enough to read, with the whole of it on hover.
+   *
+   * An address and a transaction id are 64 characters each. Printed in full
+   * they wrap onto two lines, cannot be checked by eye and cannot be usefully
+   * copied, and the two of them took about a fifth of the panel.
+   */
+  function shortened(value) {
+    var text = String(value || "");
+    var node = element("p", "wal-mono",
+                       text.length > 24
+                         ? text.slice(0, 12) + "\u2026" + text.slice(-8)
+                         : text);
+    node.title = text;
+    return node;
   }
 
   // Counted if wallet-track.js is on the page, ignored if it is not, exactly as
@@ -2474,8 +2490,11 @@
           + "cosigner is a different seed, and each keeps its own card."));
     }
 
-    this.body.appendChild(element("p", "wal-policy", "Policy: 2 of 3, key path "
-      + "musig(1,2) with musig(1,3) and musig(2,3) as fallback leaves"));
+    // Short, with the long form on hover. Naming all three leaves spends 84
+    // characters on something only a reader who already knows MuSig2 can use.
+    var policy = element("p", "wal-policy", "2 of 3, one key path and two fallbacks");
+    policy.title = "key path musig(1,2), fallback leaves musig(1,3) and musig(2,3)";
+    this.body.appendChild(policy);
 
     if (!state.address) {
       // Always shown, disabled until every cosigner is in, and saying why on
@@ -2498,10 +2517,7 @@
     }
 
     this.body.appendChild(element("p", "wal-verify-head", "Receive address"));
-    this.body.appendChild(element("p", "wal-mono", state.address));
-    this.body.appendChild(element("p", "wal-note", state.spares
-      ? state.spares + " spare nonce" + (state.spares === 1 ? "" : "s") + " held"
-      : "No spare nonces yet. The first spend leaves four behind."));
+    this.body.appendChild(shortened(state.address));
 
     var row = element("div", "wal-actions");
     row.appendChild(this.button("Show it to the device", false, function () {
@@ -2516,6 +2532,16 @@
     this.body.appendChild(row);
     if (state.total) {
       this.body.appendChild(element("p", "wal-balance", sats(state.total)));
+      // The whole point of the card, so it sits under the balance rather than
+      // in the smallest type on the panel, under a transaction id.
+      this.body.appendChild(element("p", "wal-note", state.trips
+        ? state.trips + " trip" + (state.trips === 1 ? "" : "s") + " to the device"
+          + (state.used ? ", " + state.used + " nonce"
+             + (state.used === 1 ? "" : "s") + " ready in advance" : "")
+          + (state.spares ? " \u00b7 " + state.spares + " spare left" : "")
+        : (state.spares
+           ? state.spares + " spare nonce" + (state.spares === 1 ? "" : "s") + " held"
+           : "No spare nonces yet. The first spend leaves four behind.")));
       var send = element("div", "wal-actions");
       send.appendChild(this.button("Spend it back into the wallet", true, function () {
         self.musigSend();
@@ -2534,16 +2560,9 @@
       this.canvas.hidden = false;
     }
 
-    // The whole point, on screen. The first spend of a wallet pays the trips
-    // MuSig2 costs; the next one spends what the device left behind.
-    if (state.trips) {
-      this.body.appendChild(element("p", "wal-policy",
-        "Trips to the device: " + state.trips
-        + (state.used ? ", " + state.used + " with a nonce made in advance" : "")));
-    }
     if (state.sent) {
       this.body.appendChild(element("p", "wal-verify-head", "Sent"));
-      this.body.appendChild(element("p", "wal-mono", state.sent));
+      this.body.appendChild(shortened(state.sent));
     }
     if (state.busy) this.body.appendChild(element("p", "wal-note", state.busy));
   };

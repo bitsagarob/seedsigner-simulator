@@ -7,7 +7,6 @@ same three keys.
 """
 import json
 import os
-import subprocess
 import sys
 import time
 
@@ -23,16 +22,6 @@ URL = ("https://bitsaga.be/wallet.html"
 LOCAL = 8792
 SHOTS = "/home/rob/.cache/tmp/coordinator-shots"
 SEEDQR_B = "204720472047204720472047204720472047204720472037"
-
-CHECK = """
-import sys
-sys.path.insert(0, '/home/rob/apps/_scratch/embit-musig/src')
-sys.path.insert(0, '/home/rob/apps/_scratch/musig2-sim/src/web')
-import coordinator, json
-keys = json.load(open('/tmp/musig-panel-keys.json'))
-d = coordinator.musig_wallet(keys)
-print(coordinator.musig_address(d, 0, 0)['address'])
-"""
 
 PRESS = """
 async () => {
@@ -132,20 +121,23 @@ def main():
 
         page.get_by_role("button", name="MuSig2", exact=True).click()
         time.sleep(0.8)
-        page.get_by_role("button", name="Build the wallet").click()
-        for _ in range(60):
-            time.sleep(1)
-            shown = page.locator("#wallet .wal-mono").all_inner_texts()
-            if shown:
-                break
-        print("panel shows address:", shown[0] if shown else "(none)")
-        page.locator("#wallet").screenshot(path=os.path.join(SHOTS, "musig-panel.png"))
 
-        want = subprocess.run(
-            ["/home/rob/apps/_scratch/musig2-venv/bin/python", "-c", CHECK],
-            capture_output=True, text=True, check=True).stdout.strip()
-        print("coordinator says   :", want)
-        print("\n%s" % ("they match" if shown and shown[0] == want else "MISMATCH"))
+        # The wallet cannot be built out of nothing: three cosigners have to be
+        # exported off the device first, and until they are the button is
+        # disabled and says so on hover. This test used to click it and wait
+        # for an address, which stopped being possible when that rule arrived;
+        # the whole build is driven for real by test_musig_e2e.py.
+        make = page.get_by_role("button", name="Create the wallet")
+        disabled = make.is_disabled()
+        why = make.get_attribute("title") or "(nothing)"
+        print("create button      : %s" % ("disabled" if disabled else "ENABLED"))
+        print("and it says        : %s" % why)
+        page.locator("#wallet").screenshot(path=os.path.join(SHOTS, "musig-panel.png"))
+        if not disabled:
+            raise AssertionError("the wallet can be built with no cosigners")
+        if "cosigner" not in why:
+            raise AssertionError("the disabled button does not say why: %s" % why)
+        print("\nthe panel refuses to build a wallet with no cosigners")
     finally:
         sim.stop()
 
