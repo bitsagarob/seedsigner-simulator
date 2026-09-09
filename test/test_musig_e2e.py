@@ -334,9 +334,12 @@ def walk_to_qr(sim):
             raise AssertionError(
                 "the device is asking for a card PIN, so the card offer was "
                 "answered \"Use Card\". \"Keep Device On\" is the one this "
-                "run needs and no arrow key reaches that screen: the device "
-                "records it exiting with button 0 however many are sent. "
-                "Either find what moves that highlight, or run with "
+                "run needs. KEY_DOWN does not move the highlight -- the device "
+                "records the screen exiting with button 0 however many are "
+                "sent -- but KEY_UP and the three side buttons are untried, "
+                "and so is waiting for the screen's input loop to start before "
+                "sending anything. Either find what moves that highlight, or "
+                "run with "
                 "MUSIG_E2E_CARDS=1 once a card in the reader stops pegging "
                 "the page.")
         if view == "PSBTMusig2CardOfferView":
