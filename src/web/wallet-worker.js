@@ -685,6 +685,24 @@ def _keyboard_run_from_a_clean_queue(self):
 
 _KeyboardScreen._run = _keyboard_run_from_a_clean_queue
 
+# And the status screens, for the same reason. PSBTMusig2RoundView says on one
+# of these whether the secret nonce went to the card or stayed in memory, and a
+# press leaking in from the screen before it dismissed that in well under a
+# second: the screen entered and exited three log lines apart, so nobody, and
+# no camera, ever read it.
+from seedsigner.gui.screens.screen import LargeIconStatusScreen as _StatusScreen
+_status_run = _StatusScreen._run
+
+
+def _status_run_from_a_clean_queue(self):
+    _PENDING_KEYS.clear()
+    while js_peek_key():
+        pass
+    return _status_run(self)
+
+
+_StatusScreen._run = _status_run_from_a_clean_queue
+
 # Views can stall before they ever construct a Screen, so trace one level up.
 #
 # Destination.run, and not View.run, which is what this patched for a long time
