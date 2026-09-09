@@ -2539,18 +2539,21 @@
       this.body.appendChild(send);
     }
 
-    var row = element("div", "wal-actions");
+    // Held back until after the result below, because these two are utilities
+    // for handing the address out, and putting them between the spend button
+    // and what the spend did separated an action from its outcome.
+    var receiving = element("div", "wal-actions");
     if (!state.total) {
-      row.appendChild(this.button("Get test bitcoin", true, function () {
+      receiving.appendChild(this.button("Get test bitcoin", true, function () {
         self.musigClaim();
       }));
     }
-    row.appendChild(this.copier("Copy the receiving address", state.address));
-    row.appendChild(this.button("Show the address as a QR code", false, function () {
-      self.present([state.address]);
-      self.say("Open Scan on the signer and point it at this code.");
-    }));
-    this.body.appendChild(row);
+    receiving.appendChild(this.copier("Copy the receiving address", state.address));
+    receiving.appendChild(this.button("Show the address as a QR code", false,
+      function () {
+        self.present([state.address]);
+        self.say("Open Scan on the signer and point it at this code.");
+      }));
 
     // present() only paints; a view has to put the canvas on the page. This one
     // did not, so a spend showed its transaction to a canvas that was not in
@@ -2570,6 +2573,7 @@
       proof.appendChild(this.copier("Copy the transaction id", state.sent));
       this.body.appendChild(proof);
     }
+    this.body.appendChild(receiving);
     if (state.busy) this.body.appendChild(element("p", "wal-note", state.busy));
   };
 
