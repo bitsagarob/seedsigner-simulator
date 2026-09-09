@@ -73,9 +73,9 @@ wallet_zip_contents_sha256 = af1326dd41ba4a4378d6fe4d2f6dec62926bf59abfb13028d88
 
 [doomsigner-musig]
 repo   = https://github.com/bitsagarob/seedsigner.git
-commit = 4f78c8e568aa78b0e51684475a5afb4503631660
+commit = cee8223a4be4a7e2932ccc6ed3b919f487962815
 tag    = none: dev, ahead of the last release
-wallet_zip_sha256 = 8be476dc8f95bbe88a451f6cc70d6fcb6a2102868527c8429c05596caf9d420a
+wallet_zip_sha256 = 94c66d6dadc50089df13506f131893a6c366c03013885d56a7332025c7dfc072
 
 # DoomSigner plus MuSig2: BIP-327 signing, the card-backed nonce vault, and the
 # spare nonces a coordinator pools. Pinned to dev rather than a tag because
