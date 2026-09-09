@@ -334,13 +334,15 @@ def walk_to_qr(sim):
             raise AssertionError(
                 "the device is asking for a card PIN, so the card offer was "
                 "answered \"Use Card\". \"Keep Device On\" is the one this "
-                "run needs. KEY_DOWN does not move the highlight: one, two "
-                "together, two a second apart, and one sent three seconds "
-                "after the screen appears all leave it on button 0. KEY_UP and "
-                "the three side buttons are still untried. Either find what "
-                "moves that highlight, or run with "
+                "run needs, and KEY_DOWN is not the problem: the device "
+                "accepts it. The offer is answered before it arrives. Its own "
+                "log reads: LargeIconStatusScreen enters, a KEY_PRESS is "
+                "accepted, the screen exits with 0, and only then is KEY_DOWN "
+                "accepted. So a press from the screen before this one is "
+                "landing here. Stop that leaking press, or run with "
                 "MUSIG_E2E_CARDS=1 once a card in the reader stops pegging "
-                "the page.")
+                "the page.\n\nthe device's last words:\n  %s"
+                % "\n  ".join(sim.console[-120:]))
         if view == "PSBTMusig2CardOfferView":
             # Where the half-finished signing should live: "Use Card" first,
             # "Keep Device On" second.
