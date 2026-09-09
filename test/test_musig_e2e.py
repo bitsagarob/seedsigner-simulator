@@ -188,7 +188,23 @@ def main():
                         if ok else "THE POOLED NONCE WAS NOT USED"))
         return 0 if ok else 1
     finally:
+        # Written whatever happened. A run that ends in a device traceback is
+        # the one whose log is worth most, and it was the only one not keeping
+        # it.
+        dump_console(sim)
         sim.stop()
+
+
+def dump_console(sim):
+    """Every line the device printed, to a file, unsampled."""
+    try:
+        path = os.path.join(SHOTS, "device-console.log")
+        with open(path, "w") as fh:
+            fh.write("\n".join(sim.console))
+        print("  full device console: %s (%d lines)" % (path, len(sim.console)),
+              flush=True)
+    except Exception as why:
+        print("  could not save the device console: %s" % why, flush=True)
 
 
 def card_notes(sim):
@@ -203,12 +219,7 @@ def card_notes(sim):
     print("  device on cards: %d lines" % len(seen), flush=True)
     for line in seen:
         print("   ", line.strip(), flush=True)
-    # The whole console, not a window into it. Every wrong answer about the nonce
-    # pool so far came from reading a tail and taking it for the log.
-    dump = os.path.join(SHOTS, "device-console.log")
-    with open(dump, "w") as fh:
-        fh.write("\n".join(sim.console))
-    print("  full device console: %s (%d lines)" % (dump, len(sim.console)), flush=True)
+    dump_console(sim)
 
 
 def spend(sim, page, label):
