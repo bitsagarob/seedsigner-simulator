@@ -50,9 +50,13 @@ BUTTONS = """
 () => Array.from(document.querySelectorAll("#wallet button"))
         .map((b) => b.textContent.trim())
 """
+# The panel says "Ready", not a fingerprint: eight characters of hex mean
+# nothing to a reader who has not been told what a fingerprint is. It keeps the
+# fingerprint on hover, which is what this reads.
 COSIGNERS = """
 () => Array.from(document.querySelectorAll("#wallet .wal-cosigner-fp"))
-        .map((e) => e.textContent.trim()).filter((s) => /^[0-9a-f]{8}$/.test(s))
+        .map((e) => (String(e.title).match(/[0-9a-f]{8}/) || [""])[0])
+        .filter((s) => s)
 """
 STATE = """
 () => {
