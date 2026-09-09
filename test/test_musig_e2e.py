@@ -230,7 +230,7 @@ def spend(sim, page, label):
     report the first one's transaction and no trips at all.
     """
     before = page.evaluate(STATE)["sent"]
-    press(page, "Spend it back into the wallet")
+    press(page, "Spend the coins back into this wallet")
     seen = 0
     said = None
     dumped = False

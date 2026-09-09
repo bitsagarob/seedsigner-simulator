@@ -492,6 +492,10 @@
       "<li>It holds no keys and signs nothing. Every curve operation happens",
       " on the device.</li></ul>",
       "<h3>Standards it uses here</h3><ul>", specList(musig), "</ul>",
+      musig ? "<h3>The policy this builds</h3><ul><li>2 of 3. The key path is"
+              + " <code>musig(1,2)</code>; <code>musig(1,3)</code> and"
+              + " <code>musig(2,3)</code> are fallback leaves, so any two of"
+              + " the three can spend.</li></ul>" : "",
     ];
     if (musig) {
       out = out.concat([
@@ -541,21 +545,6 @@
     return Number(value).toLocaleString("en-GB") + " sats";
   }
 
-  /** A long hex string, short enough to read, with the whole of it on hover.
-   *
-   * An address and a transaction id are 64 characters each. Printed in full
-   * they wrap onto two lines, cannot be checked by eye and cannot be usefully
-   * copied, and the two of them took about a fifth of the panel.
-   */
-  function shortened(value) {
-    var text = String(value || "");
-    var node = element("p", "wal-mono",
-                       text.length > 24
-                         ? text.slice(0, 12) + "\u2026" + text.slice(-8)
-                         : text);
-    node.title = text;
-    return node;
-  }
 
   // Counted if wallet-track.js is on the page, ignored if it is not, exactly as
   // the tutorial counts itself.
@@ -2167,6 +2156,27 @@
     this.sayInto(this.body);
   };
 
+  /** A button that puts a long string on the clipboard and says it did.
+   *
+   * An address and a transaction id are 64 characters of hex. On screen they
+   * are unreadable, uncheckable and take a fifth of the panel; nobody types
+   * one in by hand either. So they are not shown at all, and this is how they
+   * leave the page.
+   */
+  Wallet.prototype.copier = function (label, value) {
+    var button = this.button(label, false, function () {
+      var said = button.textContent;
+      var done = function () {
+        button.textContent = "Copied";
+        setTimeout(function () { button.textContent = said; }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(value).then(done, function () {});
+      }
+    });
+    return button;
+  };
+
   Wallet.prototype.button = function (label, primary, handler) {
     var button = element("button", primary ? "primary" : null, label);
     button.type = "button";
@@ -2476,25 +2486,23 @@
       row.dataset.state = i < have ? "have" : (i === have ? "next" : "wait");
       row.appendChild(element("span", "wal-cosigner-n", String(i + 1)));
       row.appendChild(element("span", "wal-cosigner-name", "Cosigner " + (i + 1)));
-      row.appendChild(element("span", "wal-cosigner-fp",
-        i < have ? fingerprintOf(state.keys[i])
-                 : (i === have ? "waiting for the device" : "")));
+      // "Ready", not a fingerprint. Eight characters of hex cannot be checked
+      // by eye and mean nothing to anyone who has not been told what a
+      // fingerprint is; it is on hover for whoever wants it.
+      var mark = element("span", "wal-cosigner-fp",
+        i < have ? "Ready" : (i === have ? "Waiting for the signer" : ""));
+      if (i < have) mark.title = "key fingerprint " + fingerprintOf(state.keys[i]);
+      row.appendChild(mark);
       list.appendChild(row);
     }
     this.body.appendChild(list);
 
     if (have < 3) {
       this.body.appendChild(element("p", "wal-note", have === 0
-        ? "Export the key of the seed on the device: " + EXPORT_PATH
-        : "Load the next seed on the device and export it the same way. Each "
-          + "cosigner is a different seed, and each keeps its own card."));
+        ? "On the signer: " + EXPORT_PATH
+        : "Load the next seed on the signer and export it the same way. Every "
+          + "cosigner is a different seed on its own card."));
     }
-
-    // Short, with the long form on hover. Naming all three leaves spends 84
-    // characters on something only a reader who already knows MuSig2 can use.
-    var policy = element("p", "wal-policy", "2 of 3, one key path and two fallbacks");
-    policy.title = "key path musig(1,2), fallback leaves musig(1,3) and musig(2,3)";
-    this.body.appendChild(policy);
 
     if (!state.address) {
       // Always shown, disabled until every cosigner is in, and saying why on
@@ -2516,13 +2524,11 @@
       return;
     }
 
-    this.body.appendChild(element("p", "wal-verify-head", "Receive address"));
-    this.body.appendChild(shortened(state.address));
-
     var row = element("div", "wal-actions");
-    row.appendChild(this.button("Show it to the device", false, function () {
+    row.appendChild(this.copier("Copy the receiving address", state.address));
+    row.appendChild(this.button("Show the address as a QR code", false, function () {
       self.present([state.address]);
-      self.say("On the device, go to Scan.");
+      self.say("Open Scan on the signer and point it at this code.");
     }));
     if (!state.total) {
       row.appendChild(this.button("Get test bitcoin", true, function () {
@@ -2532,22 +2538,13 @@
     this.body.appendChild(row);
     if (state.total) {
       this.body.appendChild(element("p", "wal-balance", sats(state.total)));
-      // The whole point of the card, so it sits under the balance rather than
-      // in the smallest type on the panel, under a transaction id.
-      // Short enough not to wrap in this column. The first version of this
-      // line broke after "7" and left "spare left" alone underneath.
-      this.body.appendChild(element("p", "wal-note", state.trips
-        ? state.trips + " trip" + (state.trips === 1 ? "" : "s")
-          + (state.used ? ", " + state.used + " pooled nonce"
-             + (state.used === 1 ? "" : "s") + " used" : "")
-          + (state.spares ? ", " + state.spares + " spare" : "")
-        : (state.spares
-           ? state.spares + " spare nonce" + (state.spares === 1 ? "" : "s") + " held"
-           : "No spare nonces yet. The first spend leaves four behind.")));
+      // No counters here. How many times a signer was visited, and how many
+      // nonces are in reserve, are facts about the protocol and not about
+      // anything the person reading this has to do. Both are explained under
+      // the "i" for whoever wants them.
       var send = element("div", "wal-actions");
-      send.appendChild(this.button("Spend it back into the wallet", true, function () {
-        self.musigSend();
-      }));
+      send.appendChild(this.button("Spend the coins back into this wallet", true,
+        function () { self.musigSend(); }));
       this.body.appendChild(send);
     }
 
@@ -2556,15 +2553,17 @@
     // the document and the device sat in Scan seeing nothing.
     if (this.presenting) {
       this.body.appendChild(element("p", "wal-say",
-        "Point the device at this: open Scan on it and hold it here until it "
-        + "has the whole transaction."));
+        "Open Scan on the signer and hold it in front of this code until the "
+        + "whole transaction has been read."));
       this.body.appendChild(this.canvas);
       this.canvas.hidden = false;
     }
 
     if (state.sent) {
       this.body.appendChild(element("p", "wal-verify-head", "Sent"));
-      this.body.appendChild(shortened(state.sent));
+      var proof = element("div", "wal-actions");
+      proof.appendChild(this.copier("Copy the transaction id", state.sent));
+      this.body.appendChild(proof);
     }
     if (state.busy) this.body.appendChild(element("p", "wal-note", state.busy));
   };
