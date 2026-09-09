@@ -300,12 +300,18 @@ def current_view(sim):
 def walk_to_qr(sim):
     """Press through the review until the signed code is up.
 
-    OPEN: the walk presses six times and stops, never on the code itself, and
-    the device still leaves it for the main menu. PSBTSignedQRDisplayView ends
-    with run_screen(QRDisplayScreen), which blocks until a key dismisses it, so
-    a key is arriving that nothing here sent. Suspect a press delivered twice
-    rather than a wrong press; the log of every press below is what to read
-    next.
+    OPEN, and not this walk's doing. QRDisplayScreen returns as soon as it has
+    started its display thread -- enter, thread start, "exit -> None", with no
+    key and no "wait_for keys" line. That is normal here: the xpub export does
+    exactly the same and the panel reads it fine, because what is painted stays
+    on the screen until the next view paints over it.
+
+    The difference is how long that lasts and how much has to be read. An xpub
+    is one code and the view that follows takes its time. A signed transaction
+    is a ur: sequence the panel has to collect several frames of, and the view
+    that follows is MainMenuView, which paints at once. So the code is gone
+    before enough of it has been seen, and the panel reports that nothing
+    arrived while waiting for the signature.
     """
     for _ in range(60):
         screen = sim.current_screen()
@@ -326,6 +332,19 @@ def walk_to_qr(sim):
             # that is no longer on screen.
             time.sleep(1.5)
             return
+        if (view == "PSBTMusig2CardOfferView"
+                and screen == "SeedAddPassphraseScreen" and CARDS):
+            # The card is in the reader, so this PIN can be answered: four of
+            # whichever key the keyboard opened on, then KEY3, the same dance
+            # the card save uses.
+            print("    card PIN", flush=True)
+            sim.select(4)
+            sim.key3()
+            for _ in range(40):
+                time.sleep(0.5)
+                if current_view(sim) != view:
+                    break
+            continue
         if view == "PSBTMusig2CardOfferView" and screen == "SeedAddPassphraseScreen":
             # "Use Card" was taken and init_satochip is asking for a PIN. With
             # no card in the reader nothing can answer it, and pressing only
