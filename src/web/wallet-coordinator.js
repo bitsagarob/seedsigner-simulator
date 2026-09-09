@@ -2524,29 +2524,33 @@
       return;
     }
 
-    var row = element("div", "wal-actions");
-    row.appendChild(this.copier("Copy the receiving address", state.address));
-    row.appendChild(this.button("Show the address as a QR code", false, function () {
-      self.present([state.address]);
-      self.say("Open Scan on the signer and point it at this code.");
-    }));
-    if (!state.total) {
-      row.appendChild(this.button("Get test bitcoin", true, function () {
-        self.musigClaim();
-      }));
-    }
-    this.body.appendChild(row);
+    // What the wallet holds, before what can be done with it. The two ways of
+    // handing the address out used to sit above the balance, so the first thing
+    // read on a funded wallet was a pair of grey secondary buttons.
+    //
+    // No counters here either. How many times a signer was visited, and how
+    // many nonces are in reserve, are facts about the protocol rather than
+    // about anything the person reading this has to do. Both are under the "i".
     if (state.total) {
       this.body.appendChild(element("p", "wal-balance", sats(state.total)));
-      // No counters here. How many times a signer was visited, and how many
-      // nonces are in reserve, are facts about the protocol and not about
-      // anything the person reading this has to do. Both are explained under
-      // the "i" for whoever wants them.
       var send = element("div", "wal-actions");
       send.appendChild(this.button("Spend the coins back into this wallet", true,
         function () { self.musigSend(); }));
       this.body.appendChild(send);
     }
+
+    var row = element("div", "wal-actions");
+    if (!state.total) {
+      row.appendChild(this.button("Get test bitcoin", true, function () {
+        self.musigClaim();
+      }));
+    }
+    row.appendChild(this.copier("Copy the receiving address", state.address));
+    row.appendChild(this.button("Show the address as a QR code", false, function () {
+      self.present([state.address]);
+      self.say("Open Scan on the signer and point it at this code.");
+    }));
+    this.body.appendChild(row);
 
     // present() only paints; a view has to put the canvas on the page. This one
     // did not, so a spend showed its transaction to a canvas that was not in
@@ -2560,7 +2564,8 @@
     }
 
     if (state.sent) {
-      this.body.appendChild(element("p", "wal-verify-head", "Sent"));
+      this.body.appendChild(element("p", "wal-verify-head",
+        state.sentAmount ? "Sent " + sats(state.sentAmount) : "Sent"));
       var proof = element("div", "wal-actions");
       proof.appendChild(this.copier("Copy the transaction id", state.sent));
       this.body.appendChild(proof);
@@ -2739,6 +2744,8 @@
       // Remembered here and kept once the network takes the transaction, so
       // the next refresh stops offering a coin this tab has already spent.
       self.musig.spending = coin.txid + ":" + coin.vout;
+      // Kept so the result can say what was sent, not just that something was.
+      self.musig.sending = coin.value - MUSIG_FEE;
       // Back to the address this wallet watches, which is index 0. Paying
       // index 1 put the money somewhere the panel never looks, so the balance
       // read zero afterwards and the next spend asked the faucet instead.
@@ -2802,6 +2809,7 @@
       return C.network.broadcast(next.txhex).then(function (sent) {
         self.musig.busy = "";
         self.musig.sent = sent.txid;
+        self.musig.sentAmount = self.musig.sending || 0;
         if (self.musig.spending) {
           self.musig.spent = self.musig.spent || {};
           self.musig.spent[self.musig.spending] = true;
