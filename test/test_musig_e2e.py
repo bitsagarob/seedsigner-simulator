@@ -344,6 +344,7 @@ def walk_to_qr(sim):
         # has not changed yet is how the walk used to shoot past the signed
         # code and end up at the main menu, leaving the panel waiting for a
         # signature that was no longer on screen.
+        print("    press on %s / %s" % (view, screen), flush=True)
         sim.select()
         for _ in range(20):
             time.sleep(0.5)
