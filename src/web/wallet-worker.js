@@ -658,6 +658,25 @@ def _qr_run_from_a_clean_queue(self):
 
 _QRScreen._run = _qr_run_from_a_clean_queue
 
+# The keyboard screens have the same problem and it is worse, because a leaked
+# press does not close them, it types a character. The card PIN prompt opens
+# straight after a button press on the screen before it, that press is still
+# claimable, and the PIN came out one letter too long: "aaaaa" for a card whose
+# PIN is "aaaa". The card then refused it, signing fell back to memory and no
+# nonces were ever pooled.
+from seedsigner.gui.screens.seed_screens import SeedAddPassphraseScreen as _KeyboardScreen
+_keyboard_run = _KeyboardScreen._run
+
+
+def _keyboard_run_from_a_clean_queue(self):
+    _PENDING_KEYS.clear()
+    while js_peek_key():
+        pass
+    return _keyboard_run(self)
+
+
+_KeyboardScreen._run = _keyboard_run_from_a_clean_queue
+
 # Views can stall before they ever construct a Screen, so trace one level up.
 #
 # Destination.run, and not View.run, which is what this patched for a long time
