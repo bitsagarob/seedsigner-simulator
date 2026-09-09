@@ -497,11 +497,37 @@ def to_seed_options(sim):
                          % sim.current_screen())
 
 
+READER = """
+() => {
+  const live = document.querySelector(".cardtray--live");
+  const on = document.querySelector(".cardtray-card[aria-pressed=true]");
+  const all = Array.from(document.querySelectorAll(".cardtray-card"));
+  return {reader: !!live, holding: on ? all.indexOf(on) : -1, cards: all.length};
+}
+"""
+
+
 def pick_card(page, index):
-    """Put this cosigner's own card in the reader."""
+    """Put this cosigner's own card in the reader, and check that it went in.
+
+    Clicking the tray and walking on was enough during setup and not during a
+    spend, where the click landed on nothing and the device then found no card,
+    signed from memory and left no spare nonces. So this says what the reader
+    is holding rather than assuming the click worked.
+    """
     page.wait_for_selector(".cardtray-card", timeout=60000)
-    page.locator(".cardtray-card").nth(index).click()
-    time.sleep(1)
+    for _ in range(5):
+        state = page.evaluate(READER)
+        # Selected is not inserted: the reader has to be live too, or the
+        # device looks for a card, finds none, and signs from memory.
+        if state["holding"] == index and state["reader"]:
+            return
+        page.evaluate(
+            """(i) => document.querySelectorAll(".cardtray-card")[i].click()""",
+            index)
+        time.sleep(1.5)
+    raise AssertionError("card %d would not go into the reader: %s"
+                         % (index, page.evaluate(READER)))
 
 
 def reached(sim, screen, since, timeout=45):
