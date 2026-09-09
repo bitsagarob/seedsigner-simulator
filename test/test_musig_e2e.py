@@ -288,7 +288,10 @@ def current_view(sim):
     passphrase, a WIF and a BIP38 key alike, so pressing by screen name is
     guessing. The view says which one it is.
     """
-    for line in reversed(sim.console[-400:]):
+    # The whole narration, not a window of it: rendering a code logs hundreds
+    # of lines, so a fixed lookback loses the "entered this view" line and the
+    # walk goes blind exactly when it matters.
+    for line in reversed(sim.console):
         if "View.run enter: " in line:
             return line.split("View.run enter: ", 1)[1].strip()
     return None
@@ -298,7 +301,8 @@ def walk_to_qr(sim):
     """Press through the review until the signed code is up."""
     for _ in range(60):
         screen = sim.current_screen()
-        if current_view(sim) == "MainMenuView":
+        view = current_view(sim)
+        if view == "MainMenuView":
             # Home means the signing flow ended without producing a code.
             # Pressing on from here walks into Power options and restarts the
             # device, which buries whatever actually went wrong.
@@ -307,11 +311,14 @@ def walk_to_qr(sim):
             # Still reading. Pressing here does nothing but waste the budget.
             time.sleep(1)
             continue
-        if screen == "QRDisplayScreen":
-            sim.up(6)
+        if screen == "QRDisplayScreen" or view == "PSBTSignedQRDisplayView":
+            # The device is holding its answer up: touch nothing. up() brightens
+            # the xpub screen, but on the signed transaction it walks off the
+            # code and home, and the panel is then left waiting for a signature
+            # that is no longer on screen.
             time.sleep(1.5)
             return
-        if current_view(sim) == "PSBTMusig2CardOfferView":
+        if view == "PSBTMusig2CardOfferView":
             # Where the half-finished signing should live: "Use Card" first,
             # "Keep Device On" second. Pressing straight through picks the card,
             # and with none in the reader the device then asks for a PIN nobody
@@ -322,7 +329,7 @@ def walk_to_qr(sim):
             sim.select()
             time.sleep(1.5)
             continue
-        if current_view(sim) == "PSBTSelectSeedView":
+        if view == "PSBTSelectSeedView":
             # The seeds are the first buttons; everything below them is a way
             # of entering a key by hand. Pressing blind walks down into "Enter
             # WIF", whose keyboard is the same screen a passphrase uses, and
@@ -333,8 +340,15 @@ def walk_to_qr(sim):
             sim.select()
             time.sleep(1.5)
             continue
+        # One press, then wait for it to land. Pressing again on a screen that
+        # has not changed yet is how the walk used to shoot past the signed
+        # code and end up at the main menu, leaving the panel waiting for a
+        # signature that was no longer on screen.
         sim.select()
-        time.sleep(1.3)
+        for _ in range(20):
+            time.sleep(0.5)
+            if current_view(sim) != view:
+                break
     raise AssertionError("no signed code, sat on %s\nthe device's last words:\n  %s"
                          % (sim.current_screen(),
                             "\n  ".join(sim.console[-250:])))
