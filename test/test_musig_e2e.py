@@ -326,39 +326,34 @@ def walk_to_qr(sim):
             # that is no longer on screen.
             time.sleep(1.5)
             return
+        if view == "PSBTMusig2CardOfferView" and screen == "SeedAddPassphraseScreen":
+            # "Use Card" was taken and init_satochip is asking for a PIN. With
+            # no card in the reader nothing can answer it, and pressing only
+            # types into the keyboard, so this is a dead end rather than a slow
+            # step. Said once, plainly, instead of spinning here.
+            raise AssertionError(
+                "the device is asking for a card PIN, so the card offer was "
+                "answered \"Use Card\". \"Keep Device On\" is the one this "
+                "run needs and no arrow key reaches that screen: the device "
+                "records it exiting with button 0 however many are sent. "
+                "Either find what moves that highlight, or run with "
+                "MUSIG_E2E_CARDS=1 once a card in the reader stops pegging "
+                "the page.")
         if view == "PSBTMusig2CardOfferView":
             # Where the half-finished signing should live: "Use Card" first,
-            # "Keep Device On" second. Pressing straight through picks the card,
-            # and with none in the reader the device then asks for a PIN nobody
-            # can give it. The secret nonce may stay in RAM; what the card buys
-            # is the once-only release that makes a nonce made in advance safe.
+            # "Keep Device On" second.
             print("    press on %s / %s" % (view, screen), flush=True)
-            # STILL OPEN. The offer is [Use Card, Keep Device On] and this
-            # keeps taking the first, after which the device asks for a PIN no
-            # card can answer: the press log shows the next press landing on
-            # "PSBTMusig2CardOfferView / SeedAddPassphraseScreen".
+            # No arrow keys here. The device records this screen exiting with
+            # button 0 however many downs are sent, so they never land on it --
+            # they queue, and a queued key is spent later dismissing the signed
+            # code, which the device logs as "QRDisplayScreen -> None".
             #
-            # Tried and did not work: one KEY_DOWN; two together; two spaced a
-            # second apart. Reading the button list's handler says two should
-            # land on the second button whether or not the back arrow starts
-            # selected, and the timing theory is out, so the assumption to
-            # question next is that this branch is even pressing the offer.
-            # The press log shows it running twice, once on the offer and once
-            # on the keyboard already being up, so the keyboard may not be the
-            # card asking at all: that screen is also the seed's own passphrase
-            # prompt.
-            if not CARDS:
-                # Spaced by a second each. sim.down(2) leaves 0.22s between
-                # them, which this screen appears not to keep up with.
-                sim.down()
-                time.sleep(1.2)
-                sim.down()
-                time.sleep(1.2)
+            # So take button 0, "Use Card". With no card in the reader
+            # init_satochip finds none and the view falls through to the round
+            # anyway; the PIN prompt it puts up on the way is just another
+            # screen for the walk to press through.
             sim.select()
-            # Wait for it to land, like every other press. This branch sends two
-            # keys and used to send them blind: if the screen takes only one,
-            # the other waits in the queue and is spent dismissing whatever
-            # comes next, which here is the signed code.
+            # Wait for it to land, like every other press.
             for _ in range(120):
                 time.sleep(0.5)
                 if current_view(sim) != view:
