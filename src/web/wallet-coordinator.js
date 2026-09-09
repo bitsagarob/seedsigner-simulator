@@ -2620,8 +2620,14 @@
           // address. Reaching for .addresses[0] on it found nothing every
           // time, so this wallet always looked empty however much it held.
           var coins = [];
+          var gone = self.musig.spent || {};
           spots.forEach(function (spot) {
             ((held[spot.address] || {}).utxos || []).forEach(function (coin) {
+              // A coin this tab has already spent. The chain index keeps
+              // listing it for a while after the block, and building on it
+              // again produced the first transaction a second time, which the
+              // network refused as "outputs already in utxo set".
+              if (gone[coin.txid + ":" + coin.vout]) return;
               coin.index = spot.index;
               coins.push(coin);
             });
@@ -2710,6 +2716,9 @@
     return this.musigRefresh().then(function () {
       coin = (self.musig.coins || [])[0];
       if (!coin) throw new Error("There is nothing in that wallet to spend.");
+      // Remembered here and kept once the network takes the transaction, so
+      // the next refresh stops offering a coin this tab has already spent.
+      self.musig.spending = coin.txid + ":" + coin.vout;
       // Back to the address this wallet watches, which is index 0. Paying
       // index 1 put the money somewhere the panel never looks, so the balance
       // read zero afterwards and the next spend asked the faucet instead.
@@ -2773,6 +2782,11 @@
       return C.network.broadcast(next.txhex).then(function (sent) {
         self.musig.busy = "";
         self.musig.sent = sent.txid;
+        if (self.musig.spending) {
+          self.musig.spent = self.musig.spent || {};
+          self.musig.spent[self.musig.spending] = true;
+          self.musig.spending = null;
+        }
         self.render();
         return self.musigRefresh();
       });
