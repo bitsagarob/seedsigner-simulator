@@ -266,6 +266,10 @@
     ".wal-verify{margin:1.2rem 0 0;padding:.8rem .9rem;border:1px solid #f7931a;",
     "border-radius:8px;background:#16181c}",
     ".wal-verify-head{margin:0;font-weight:600;color:#f7931a}",
+    // The result of a spend, not a heading for what follows it. Without the
+    // gap it sat flush against "Receiving address" and the two orange lines
+    // read as one block.
+    ".wal-sent{margin:.35rem 0 1.1rem;font-weight:600;color:#f7931a}",
     ".wal-verify-say{margin:.45rem 0 0;font-size:.85rem;color:#9aa3ae}",
     ".wal-verify .wal-actions{margin:.7rem 0 0}",
     ".wal-balance{margin:1.4rem 0 0;font-size:2rem;line-height:1.15;font-weight:600;",
@@ -2571,7 +2575,7 @@
       // The amount, and nothing else. A transaction id is 64 characters that
       // nobody here has anywhere to paste: there is no explorer to open it in,
       // and the balance above already says the spend happened.
-      var done = element("p", "wal-verify-head",
+      var done = element("p", "wal-sent",
         state.sentAmount ? "Sent " + sats(state.sentAmount) : "Sent");
       done.title = "transaction " + state.sent;
       this.body.appendChild(done);
