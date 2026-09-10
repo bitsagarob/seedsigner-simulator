@@ -64,27 +64,17 @@ wallet_zip_contents_sha256 = d2527f58d122a7155343b215b596dc94991dad5e893b9f5ec30
 # what we said we did, not that upstream did.
 [doomsigner]
 repo   = https://github.com/bitsagarob/seedsigner.git
-commit = a78a4dda264f29d5dfb82d43f7b1592b27359ff0
-tag    = bitsaga-sp-v0.4
-
-wallet_zip_sha256          = ed17eaf573faaa21ef088f56d6bb39e904e80fdd983dd80b7f4b3d854883d338
-wallet_zip_contents_sha256 = af1326dd41ba4a4378d6fe4d2f6dec62926bf59abfb13028d88b2bf3cfecb004
-
-
-[doomsigner-musig]
-repo   = https://github.com/bitsagarob/seedsigner.git
 commit = cee8223a4be4a7e2932ccc6ed3b919f487962815
 tag    = none: dev, ahead of the last release
-wallet_zip_sha256 = 94c66d6dadc50089df13506f131893a6c366c03013885d56a7332025c7dfc072
 
-# DoomSigner plus MuSig2: BIP-327 signing, the card-backed nonce vault, and the
-# spare nonces a coordinator pools. Pinned to dev rather than a tag because
-# there is not one yet, which is also why this firmware has no button on the
-# page and is reachable only by URL.
-#
-# No published hashes here on purpose. Those two lines say "this zip is what
-# building that commit produces", and nothing has been published to compare
-# against until the fork tags a release.
+# DoomSigner is the fork with MuSig2: BIP-327 signing, the card-backed nonce
+# vault, and the spare nonces a coordinator pools, on top of silent payments and
+# the boot game. Pinned to dev rather than a tag because the fork has not tagged
+# a release with the MuSig2 work yet. Re-pinned below once built.
+wallet_zip_sha256          = 94c66d6dadc50089df13506f131893a6c366c03013885d56a7332025c7dfc072
+wallet_zip_contents_sha256 = 4359d3b83789cb34dd5ba0bed25e70d572d1a5aabee6a9ce81c5cf218b4be486
+
+
 
 # The two smartcard applets, pinned as a reference rather than as an input.
 #

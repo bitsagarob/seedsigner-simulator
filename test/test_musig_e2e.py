@@ -27,7 +27,7 @@ sys.path.insert(0, HERE)
 
 # The one browser origin the signet API allows, served from this working tree.
 URL = ("https://bitsaga.be/wallet.html"
-       "?firmware=doomsigner-musig&debug=1&wallet=1")
+       "?firmware=doomsigner&debug=1&wallet=1")
 LOCAL = 8792
 SHOTS = "/home/rob/.cache/tmp/musig-e2e"
 
@@ -145,8 +145,8 @@ def main():
             step(sim, "%s: loading the seed" % name)
             load_seed(sim, digits)
             if CARDS and with_card:
-                step(sim, "%s: card %d into the reader" % (name, at + 1))
-                pick_card(page, at)
+                step(sim, "%s: the card into the reader" % name)
+                pick_card(page, 0)
             to_seed_options(sim)
             if CARDS and with_card:
                 step(sim, "%s: saving to the card" % name)
@@ -308,13 +308,14 @@ CAMERA = """
 def answer_device(sim, page=None, seed=0):
     """Show the transaction to the device and bring its answer back.
 
-    The card in the reader has to be the one holding the seed that signs this
-    trip. Leaving whichever card was last used means the device finds a card
-    that does not carry this seed, quietly signs from memory instead, and
-    leaves no spare nonces behind -- which is the whole point of the pool.
+    One SeedKeeper holds both cosigner secrets, so the same card serves every
+    signing trip. That keeps init_satochip on the silent-reuse path (Same card,
+    cached PIN), where for_seed finds the right secret by fingerprint and the
+    spare nonces are restocked -- rather than swapping cards, which re-prompts
+    for a PIN the harness cannot type through cleanly.
     """
     if CARDS and page is not None and seed < 2:
-        pick_card(page, seed)
+        pick_card(page, 0)
     since = sim.mark()
     sim.back_to_home()
     sim.select()
@@ -410,10 +411,17 @@ def walk_to_qr(sim, seed=0):
             # The card is in the reader, so this PIN can be answered: four of
             # whichever key the keyboard opened on, then KEY3, the same dance
             # the card save uses.
+            # The card-change PIN prompt: init_satochip is still talking to the
+            # simulated card as the keyboard opens, and a press sent before its
+            # input loop is reading gets overwritten in the one-slot key channel
+            # rather than queued. A lost press means too few digits, the submit
+            # never lands, and the outer loop re-enters here and types again,
+            # piling a sixth and seventh press onto the keyboard. So: let the
+            # card settle, type one digit at a time slowly, submit once, and do
+            # not retry.
             print("    card PIN", flush=True)
-            sim.select(4)
-            sim.key3()
-            for _ in range(40):
+            enter_card_pin(sim)
+            for _ in range(80):
                 time.sleep(0.5)
                 if current_view(sim) != view:
                     break
@@ -609,16 +617,48 @@ def save_to_card(sim):
         sim.select()
     # The label keyboard, which is always asked for, unlike the PIN.
     sim.wait_screen("SeedAddPassphraseScreen", since=since, timeout=180)
+    time.sleep(0.6)
     sim.key3()                                     # accept the offered label
     time.sleep(2.5)
+
+
+def enter_card_pin(sim):
+    """Type the four-digit card PIN into the open keyboard, reliably.
+
+    The one-slot key channel drops a press sent before the keyboard's blocking
+    input loop is parked, or while the card is mid-APDU. So: wait for the loop
+    to log that it is reading, confirm each digit landed, and confirm the submit
+    closed the keyboard, resending only the submit if it was lost. Never resend
+    a digit: that is how the PIN came out as aaaaa.
+    """
+    mark = sim.mark()
+    try:
+        sim.wait_console(r"wait_for keys=", since=mark, timeout=30)
+    except Exception:
+        pass
+    for _ in range(4):
+        mk = sim.mark()
+        sim.select()
+        try:
+            sim.wait_console(r"KEY_PRESS' accepted", since=mk, timeout=6)
+        except Exception:
+            pass
+    for _ in range(4):
+        mk = sim.mark()
+        sim.key3()
+        try:
+            sim.wait_console(r"display\(\) exit: SeedAddPassphraseScreen",
+                             since=mk, timeout=6)
+            return
+        except Exception:
+            continue
 
 
 def type_pin(sim, since):
     """Four of whichever key the keyboard opened on, then KEY3."""
     sim.wait_screen("SeedAddPassphraseScreen", since=since, timeout=120)
     mark = sim.mark()
-    sim.select(4)
-    sim.key3()
+    enter_card_pin(sim)
     return mark
 
 

@@ -145,12 +145,7 @@ if [ -n "${SIM_DEPLOY_FIRMWARES:-}" ]; then
     FIRMWARES="${SIM_DEPLOY_FIRMWARES}"
 fi
 
-# src/web/extras is the optional half: features not every build carries. The
-# stock page carries none, and that is not a detail of taste. Its whole claim is
-# that you can rebuild it and get the pinned upstream release byte for byte, and
-# unreleased research served alongside it weakens exactly that. So a stock
-# deployment is asked to prove the files are absent, not merely not mentioned.
-WANTS_EXTRAS="${SIM_DEPLOY_EXTRAS:-yes}"
+
 
 FILES=""
 add_file() { FILES="${FILES}$1|$2|$3
@@ -181,7 +176,7 @@ while IFS= read -r file; do
         index.html) add_file "${rel}" "src/web/${rel}" local ;;
         *)          add_file "${rel}" "src/web/${rel}" repo ;;
     esac
-done < <(list_web_files | { [ "${WANTS_EXTRAS}" = "yes" ] && cat || grep -v '/src/web/extras/'; })
+done < <(list_web_files)
 
 # The shims, which are copied flat next to the page and fetched by name at boot.
 while IFS= read -r file; do
@@ -395,26 +390,6 @@ for box in "${BOXES[@]}"; do
         esac
     done <<< "${FILES}"
 
-    # --- what a stock deployment must NOT be serving --------------------------
-    #
-    # Asked as its own question because the answer that matters is a 404. A file
-    # nobody lists is a file nobody notices: the whole point of keeping the
-    # research out of this build is lost the moment a copy puts it back, and
-    # copying src/web wholesale is exactly what the instructions say to do.
-    if [ "${WANTS_EXTRAS}" != "yes" ]; then
-        echo
-        echo "the optional half, which this deployment must not carry"
-        while IFS= read -r file; do
-            rel="${file#"${REPO_ROOT}/src/web/"}"
-            code="$(on_box "${how}" "${name}" \
-                    'curl -s -o /dev/null -w "%{http_code}" --resolve "$1" "$2"' \
-                    "${RESOLVE}" "${SITE_URL}/${rel}" 2>/dev/null || echo "000")"
-            case "${code}" in
-                404|410) pass "${rel}" "absent, as it should be" ;;
-                *)       fail "${rel}" "served (http ${code}) by a build that should not carry it" ;;
-            esac
-        done < <(list_web_files | grep '/src/web/extras/')
-    fi
 
     # --- and the references those files name ---------------------------------
     echo

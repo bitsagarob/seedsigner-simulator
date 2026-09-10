@@ -28,7 +28,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 PORT = 8795
 URL = ("http://127.0.0.1:%d/wallet.html"
-       "?firmware=doomsigner-musig&debug=1&wallet=1" % PORT)
+       "?firmware=doomsigner&debug=1&wallet=1" % PORT)
 SHOTS = "/home/rob/.cache/tmp/musig-e2e"
 
 # Screen text is drawn, never logged, so the check is on the line the browser
