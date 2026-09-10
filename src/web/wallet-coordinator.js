@@ -2534,7 +2534,9 @@
     if (state.total) {
       this.body.appendChild(element("p", "wal-balance", sats(state.total)));
       var send = element("div", "wal-actions");
-      send.appendChild(this.button("Spend the coins back into this wallet", true,
+      // Short. The long form ran the width of a phone screen, and a primary
+      // button that wraps stops looking like a button.
+      send.appendChild(this.button("Spend the balance", true,
         function () { self.musigSend(); }));
       this.body.appendChild(send);
     }
@@ -2548,12 +2550,11 @@
         self.musigClaim();
       }));
     }
-    receiving.appendChild(this.copier("Copy the receiving address", state.address));
-    receiving.appendChild(this.button("Show the address as a QR code", false,
-      function () {
-        self.present([state.address]);
-        self.say("Open Scan on the signer and point it at this code.");
-      }));
+    receiving.appendChild(this.copier("Copy address", state.address));
+    receiving.appendChild(this.button("Show as QR code", false, function () {
+      self.present([state.address]);
+      self.say("Open Scan on the signer and point it at this code.");
+    }));
 
     // present() only paints; a view has to put the canvas on the page. This one
     // did not, so a spend showed its transaction to a canvas that was not in
@@ -2567,12 +2568,21 @@
     }
 
     if (state.sent) {
-      this.body.appendChild(element("p", "wal-verify-head",
-        state.sentAmount ? "Sent " + sats(state.sentAmount) : "Sent"));
-      var proof = element("div", "wal-actions");
-      proof.appendChild(this.copier("Copy the transaction id", state.sent));
-      this.body.appendChild(proof);
+      // The amount, and nothing else. A transaction id is 64 characters that
+      // nobody here has anywhere to paste: there is no explorer to open it in,
+      // and the balance above already says the spend happened.
+      var done = element("p", "wal-verify-head",
+        state.sentAmount ? "Sent " + sats(state.sentAmount) : "Sent");
+      done.title = "transaction " + state.sent;
+      this.body.appendChild(done);
     }
+    // Both ends of the address, which is how one is checked against a screen:
+    // nobody reads the middle. The whole of it is on hover and on the button.
+    var addr = element("p", "wal-mono",
+      state.address.slice(0, 10) + "\u2026" + state.address.slice(-8));
+    addr.title = state.address;
+    this.body.appendChild(element("p", "wal-verify-head", "Receiving address"));
+    this.body.appendChild(addr);
     this.body.appendChild(receiving);
     if (state.busy) this.body.appendChild(element("p", "wal-note", state.busy));
   };
