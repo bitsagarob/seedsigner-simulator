@@ -58,7 +58,7 @@ COSIGNERS = """
 CHECK = """
 import json, sys
 sys.path.insert(0, '/home/rob/apps/_scratch/embit-musig/src')
-sys.path.insert(0, '%s/../src/web')
+sys.path.insert(0, '%s/../src/web/extras')
 import coordinator
 keys = json.load(open('/tmp/musig-wallet-keys.json'))
 print(coordinator.musig_address(coordinator.musig_wallet(keys), 0, 0)['address'])

@@ -124,7 +124,7 @@ def main():
         print("the JavaScript refused:", js["error"])
         return 1
 
-    sys.path.insert(0, str(HERE.parent / "src" / "web"))
+    sys.path.insert(0, str(HERE.parent / "src" / "web" / "extras"))
     import coordinator
 
     desc = js["descriptor"]

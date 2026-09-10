@@ -1125,9 +1125,34 @@
 <script src="qr-encode.js"></script>
 <script src="ur-decode.js"></script>
 <script src="signet-coordinator.js?doom4"></script>
-<script src="embit-coordinator.js"></script>
 <script src="wallet-tutorial.js"></script>
+<!-- Optional features, one file each, carried only by a build that wants them.
+     A page that does not carry extras/ never asks for one, so a build without
+     the files is a build without the feature and not a build with 404s. This is
+     what keeps the MuSig2 research off the page whose whole claim is that it
+     reproduces a pinned upstream release.
+
+     Split by when a file has to arrive: the Pyodide coordinator has to be in
+     place before wallet-coordinator.js reads scope.EmbitCoordinator, and a view
+     has to come after, because it registers itself with the shell. -->
+<script>
+var EXTRAS = {
+  "doomsigner-musig": {
+    before: ["extras/embit-coordinator.js"],
+    after: ["extras/musig.js"],
+  },
+};
+function loadExtras(when) {
+  var firmware = new URLSearchParams(location.search).get("firmware") || "";
+  var wanted = (EXTRAS[firmware] || {})[when] || [];
+  for (var i = 0; i < wanted.length; i++) {
+    document.write('<script src="' + wanted[i] + '"><\/script>');
+  }
+}
+loadExtras("before");
+</script>
 <script src="wallet-coordinator.js?doom4"></script>
+<script>loadExtras("after");</script>
 <script src="wallet-track.js"></script>
 <!-- What the device boots into, and the wallet behind it. doom-run.js is DOOM
      and is a placeholder until it is built; doom-boot.js is the boot itself and

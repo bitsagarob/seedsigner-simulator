@@ -70,7 +70,7 @@ def main():
 PYTHON_SIDE = """
 import json, sys
 sys.path.insert(0, '/home/rob/apps/_scratch/embit-musig/src')
-sys.path.insert(0, '/home/rob/apps/_scratch/musig2-sim/src/web')
+sys.path.insert(0, '/home/rob/apps/_scratch/musig2-sim/src/web/extras')
 import coordinator
 f = json.load(open('/tmp/musig-browser-fixture.json'))
 a = coordinator.musig_address(f['descriptor'], 0, 0)

@@ -43,7 +43,11 @@ for name in ${ARTEFACTS}; do
     }
 done
 
-echo "==> src/web"
+# extras/ is the optional half: features not every build carries. This page
+# carries all of them. The stock page carries none, which is what keeps the
+# MuSig2 research off the build whose claim is that it reproduces a pinned
+# upstream release.
+echo "==> src/web (including extras/)"
 # --delete so a file removed from the tree stops being served. The excludes are
 # the things that do not come from src/web: the runtime symlink, the build
 # output copied below, and the screenshots this page keeps for its own README.

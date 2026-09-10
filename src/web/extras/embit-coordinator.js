@@ -12,10 +12,13 @@
   var JS = scope.SignetCoordinator;
   if (!JS) return;
 
-  var WORKER = "coordinator-worker.js";
+  // Relative to the document, not to this script: new Worker() and fetch()
+  // both resolve against the page. Moving this file into extras/ moved the two
+  // files it loads with it, so they are named from the page's point of view.
+  var WORKER = "extras/coordinator-worker.js";
   var PYODIDE = "pyodide-e24b45d3/";
   var ZIP = "wallet-embit.zip";
-  var CODE = "coordinator.py";
+  var CODE = "extras/coordinator.py";
 
   var worker = null;
   var pending = {};
@@ -57,7 +60,15 @@
 
   function boot() {
     if (!booted) {
-      booted = ask({ type: "boot", indexURL: PYODIDE, zipURL: ZIP, codeURL: CODE })
+      // Absolute, because the worker resolves a relative URL against its own
+      // location and it lives in extras/ now, one directory below the page.
+      // Left relative, importScripts would ask for extras/pyodide-.../ and miss.
+      booted = ask({
+        type: "boot",
+        indexURL: new URL(PYODIDE, location.href).href,
+        zipURL: new URL(ZIP, location.href).href,
+        codeURL: new URL(CODE, location.href).href,
+      })
         .then(function (hashes) { loaded = hashes; return hashes; });
     }
     return booted;

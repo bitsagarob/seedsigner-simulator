@@ -19,7 +19,7 @@ HERE = Path(__file__).resolve().parent
 ZIP = HERE.parent / "build" / "out" / "wallet-doomsigner.zip"
 
 sys.path.insert(0, "/home/rob/apps/_scratch/embit-musig/src")
-sys.path.insert(0, str(HERE.parent / "src" / "web"))
+sys.path.insert(0, str(HERE.parent / "src" / "web" / "extras"))
 
 import coordinator
 

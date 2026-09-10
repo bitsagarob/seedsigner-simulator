@@ -12,7 +12,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, "/home/rob/apps/_scratch/embit-musig/src")
-sys.path.insert(0, str(HERE.parent / "src" / "web"))
+sys.path.insert(0, str(HERE.parent / "src" / "web" / "extras"))
 
 import coordinator
 from embit.psbt import PSBT
