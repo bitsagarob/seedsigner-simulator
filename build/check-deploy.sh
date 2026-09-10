@@ -449,6 +449,30 @@ for box in "${BOXES[@]}"; do
             fail "${page}" "$(echo "${broken}" | tr '\n' ' ')"
         fi
     done
+
+    # --- the camera header, on the page that scans ---------------------------
+    #
+    # wallet.html reads QR codes with getUserMedia, and a page's own
+    # Permissions-Policy overrides any browser or OS grant. The box-wide header
+    # is camera=(), which forbids the camera on the page itself, so for months
+    # no real browser could scan: every test grants a fake camera and serves
+    # without nginx, so nothing here saw the header a visitor gets. Read it now.
+    echo
+    echo "the camera header on the scanning page"
+    pol="$(on_box "${how}" "${name}" \
+        'curl -sS -I --resolve "$1" "$2" | tr -d "\r" \
+         | awk -F": " "tolower(\$1)==\"permissions-policy\"{print \$2}"' \
+        "${RESOLVE}" "${SITE_URL}/wallet.html" 2>/dev/null || echo "")"
+    case "${pol}" in
+        *"camera=(self)"*|*"camera=*"*)
+            pass "wallet.html" "camera allowed: ${pol}" ;;
+        *"camera=()"*)
+            fail "wallet.html" "camera forbidden by Permissions-Policy, getUserMedia will fail in every browser: ${pol}" ;;
+        "")
+            fail "wallet.html" "no Permissions-Policy header, or the page did not answer" ;;
+        *)
+            fail "wallet.html" "Permissions-Policy does not allow the camera: ${pol}" ;;
+    esac
 done
 
 # ---------------------------------------------------------------------------
