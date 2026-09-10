@@ -46,11 +46,12 @@ a7b7fa32b1d3da4ac565bc691ebcae2c7bf47c3d239df6e2709ad079527bf565  src/shims/brow
 09f9ae5c73128719261d757ff5184e79912158ceb21dc650e11243da093644f3  src/shims/browser_display.py
 2e1b0500e002f33684e9187a9c3d2752f526ce6e78f0e02feea238e92c0dee5b  src/shims/browser_qr.py
 0243ccf633097906b763839cd4b2d9f92fccd042bac1fd11ee7be60f31e78687  src/web/apple-touch-icon.png
-8ea2bc0cb6106d781a6a583cc14a69e95a8c6d85ec653944804fce76dc448d12  src/web/extras/coordinator-worker.js
-13ae1a953ae6cb9be5be3be95f7c69ab3fe6d0cdc15bdbcaf95b41361461f6c2  src/web/extras/coordinator.md
-168950a2ab9d21385dd5f2fdba1ce968219c41670226c122683e6144eebfe53c  src/web/extras/coordinator.py
 a2fe5dbd46129068156f77b8b0860b8a5bdc7a29e1d5a02356c47b573b11e1c3  src/web/doom-boot.js
-ffe6921bf232587aa1de7eb2d59f43d5cdad837abc3f41c35654fd03575609a2  src/web/extras/embit-coordinator.js
+8ea2bc0cb6106d781a6a583cc14a69e95a8c6d85ec653944804fce76dc448d12  src/web/extras/coordinator-worker.js
+d12742f278086b71faa917b343d7c7a8aa6769c47f87a2e78f22b87ab54d3087  src/web/extras/coordinator.md
+168950a2ab9d21385dd5f2fdba1ce968219c41670226c122683e6144eebfe53c  src/web/extras/coordinator.py
+c773b50a984edc5e62e882904b7830bc30fb7ef6fccf6aae727254483af36bd9  src/web/extras/embit-coordinator.js
+d6ee6234fd9b592e1407a6636220564714f57af48c27c41d381c81a30b1b1786  src/web/extras/musig.js
 1ebb8267bb112587c9739a7f30fd9197c3e0137a0fcd4677f6a8677b6fa307f5  src/web/icon-192.png
 2c740b578143c67bbca1f950c33fe62d2a06fd22d5c0a7adf58348dc648e09bf  src/web/icon-512.png
 e68eb9707ac2bf6b8898824e7f5b63d2045b678c07d88c0c635427e2e3ad008b  src/web/index.html
@@ -63,11 +64,11 @@ bc40c8a15196236b2314db0856f72ca0b49980cd5413b8c852a7349f5fee0859  src/web/jsQR.j
 7b4b618d5bf889defaf7fcbdf962c43b9ad3b34ce7c5537d4a1200269ce62127  src/web/ur-decode.js
 3f2a69ae2dc6de613c620263be72559afc988dea1088fa92394b972d2f9614a2  src/web/wallet-camera.js
 1929b1cfc42dec2c9b13a5775631797530bb8765234e5f7e6e4658530f62a011  src/web/wallet-cards.js
-07d5c49786e64b4d3bdfbbeb91f970b52bd0c6a40c6c42464deea77e48136ce0  src/web/wallet-coordinator.js
+2ad633665dc05e20ae351e77f2451d894bf5b77d46805c2f3498215f77ac2590  src/web/wallet-coordinator.js
 06818db62a87fc02f5dc811ab4a0064588d89a1a7e67da63995a2ff7de7b0841  src/web/wallet-track.js
 382c9924a4c9067ab835a0081aa0d62339c058f1e9994fc644e7ed9ba135a3d0  src/web/wallet-tutorial.js
-26219cddfaf748e233552e0db208c8eaf713d9b568fed49ce4e8b5a295d86e51  src/web/wallet-worker.js
-66bb344470a406c5fa2df89171bde32c51b30715057579564a56ff384892110a  src/web/wallet.html
+d0e07e0beb40f5c7e2c7c05e12e51344b1937ea59acb27b05cc6256f83f61de0  src/web/wallet-worker.js
+7b96104421f0a5e47b56a4bc16b6d5a8c9d57071c76a981eb64fc0469bb550e8  src/web/wallet.html
 
 # The stand-in packages, which build/build-wallet-zip.sh copies out of the working
 # tree and into a wallet zip whole. Every other input to that zip is pinned by a

@@ -78,10 +78,7 @@ async function boot(width, height) {
   //
   // numpy is never reachable: decode_qr imports it inside a try that starts with
   // "import cv2", and opencv is not in this list, so np is None either way.
-  // doomsigner-musig is Doomsigner plus MuSig2 and is still the smartcard fork,
-  // so it needs the stand-in card packages. Only the zip name differs, which is
-  // the one thing below that keeps using `firmware` itself.
-  const base = firmware === "doomsigner-musig" ? "doomsigner" : firmware;
+  const base = firmware;
   const smartcard = base === "smartcard" || base === "doomsigner";
   await pyodide.loadPackage(smartcard
     ? ["Pillow", "pycryptodome", "cryptography"]
@@ -187,38 +184,6 @@ from seedsigner.controller import Controller
 js_log("controller imported")
 try:
     controller = Controller.get_instance()
-    # Simulator-only convenience: typing twelve words on the device keyboard is
-    # not the thing being proved, so Doomsigner starts with seeds already loaded.
-    # These are earthdiver's first published test seed from SeedSigner #769 and
-    # the published abandon sender. Neither holds coins.
-    #
-    # Gated on the firmware, not on a file. It used to test for the runtime
-    # silent-payments overlay, which was a fair proxy while that overlay was the
-    # only thing that made this firmware different; the code is in the zip now,
-    # so there is no such file and the test silently stopped loading anything.
-    if ${JSON.stringify(firmware)} == "doomsigner":
-        from seedsigner.models.seed import Seed
-        import json as _json
-        from seedsigner.models.settings import SettingsConstants, Settings
-
-        # A mainnet branch used to sit here, loading real seeds that the overlay
-        # had fetched into the Pyodide filesystem from two gitignored .local.json
-        # files. The overlay is gone, so nothing writes those files and the branch
-        # could only ever take the else path. Removed rather than left to rot --
-        # and it must not come back in this form now that this file is public:
-        # whatever loads a mainnet seed must not name a private file here.
-        # Receiver FIRST. It is the seed this firmware is about -- the page
-        # says "fingerprint 24c323b5" and every receive walkthrough starts on
-        # it -- so it must be Seeds > the first entry. The sender only exists
-        # so the send demo has something to spend, and having it first made
-        # the whole flow silently operate on the wrong seed.
-        receiver = ("initial tilt corn easily leave weather strategy return "
-                    "topple gesture sad day").split()
-        controller.storage.seeds.append(Seed(mnemonic=receiver))
-        sender = ("abandon abandon abandon abandon abandon abandon abandon "
-                  "abandon abandon abandon abandon about").split()
-        controller.storage.seeds.append(Seed(mnemonic=sender))
-        js_log("loaded published silent-payments test seeds (receiver + sender)")
     controller.start()
     js_log("controller.start() returned")
 except BaseException:
@@ -289,7 +254,7 @@ _settings = {"display_config": "st7789_320x240", "network": ${net},
              # middle of signing, and the nonce the card was holding cannot be
              # reached at all.
              "cache_scard_pin": "E"}
-if ${JSON.stringify(firmware === "doomsigner-musig" ? "doomsigner" : firmware)} == "doomsigner":
+if ${JSON.stringify(firmware)} == "doomsigner":
     _settings["silent_payments"] = "E"
 with open("/wallet/settings.json", "w") as handle:
     json.dump(_settings, handle)

@@ -100,16 +100,14 @@ mkdir -p /srv/seedsigner-simulator
 ./build/deploy.sh /srv/seedsigner-simulator
 ```
 
-Use the script rather than copying by hand. `src/web/extras/` holds features that
-are in no upstream release, and this page's claim is that you can rebuild it and
-get the pinned release byte for byte, so it must not carry them. A copy of the
-whole of `src/web` does. `build/deploy.sh` leaves them out, and:
+Use the script rather than copying by hand: it is what keeps a deployment from
+going half-copied. `build/check-deploy.sh` then reads the served site back and
+reports what does not match this repository.
 
-```sh
-SIM_DEPLOY_EXTRAS=no ./build/check-deploy.sh
-```
-
-asks the served page to prove they are absent rather than taking anyone's word.
+`src/web/extras/` holds optional features (the MuSig2 coordinator and view),
+loaded per firmware by `wallet.html`: a visitor on stock or smartcard fetches
+none of them. The stock firmware zip is still verified byte-for-byte against
+`UPSTREAM`, so its reproducibility does not depend on what JS ships beside it.
 
 What ends up there, and why each piece has to be exactly where it is (the page,
 the worker and the shims all fetch each other by relative path):

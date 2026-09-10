@@ -22,7 +22,7 @@ sys.path.insert(0, HERE)
 # this working tree. Anywhere else and the panel connects and then fails asking
 # the chain what it holds.
 URL = ("https://bitsaga.be/wallet.html"
-       "?firmware=doomsigner-musig&debug=1&wallet=1")
+       "?firmware=doomsigner&debug=1&wallet=1")
 LOCAL = 8792
 SHOTS = "/home/rob/.cache/tmp/musig-wallet-shots"
 

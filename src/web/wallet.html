@@ -1126,18 +1126,17 @@
 <script src="ur-decode.js"></script>
 <script src="signet-coordinator.js?doom4"></script>
 <script src="wallet-tutorial.js"></script>
-<!-- Optional features, one file each, carried only by a build that wants them.
-     A page that does not carry extras/ never asks for one, so a build without
-     the files is a build without the feature and not a build with 404s. This is
-     what keeps the MuSig2 research off the page whose whole claim is that it
-     reproduces a pinned upstream release.
+<!-- Optional features, one file each, loaded only for the firmware that has
+     them. Doomsigner is that firmware: MuSig2 is its point. Stock and smartcard
+     name no extras, so a visitor on those fetches none, and the stock firmware
+     zip stays byte-for-byte reproducible whatever JS sits beside it.
 
      Split by when a file has to arrive: the Pyodide coordinator has to be in
      place before wallet-coordinator.js reads scope.EmbitCoordinator, and a view
      has to come after, because it registers itself with the shell. -->
 <script>
 var EXTRAS = {
-  "doomsigner-musig": {
+  "doomsigner": {
     before: ["extras/embit-coordinator.js"],
     after: ["extras/musig.js"],
   },
@@ -1199,12 +1198,10 @@ const E2E = new URLSearchParams(location.search).has("e2e");
 // thing the link was for.
 //
 // Checked against the list rather than interpolated, so the URL cannot name a
-// file to fetch.
-// doomsigner-musig is reachable by URL and is deliberately absent from CHOICES
-// below, so it has no button and nobody arrives at it by accident. It is a
-// MuSig2 work-in-progress: a spend it signs is not a spend the other three can
-// finish, and putting it in the row would offer that to every visitor.
-const FIRMWARES = ["stock", "smartcard", "doomsigner", "doomsigner-musig"];
+// file to fetch. Doomsigner carries MuSig2; there is no separate musig
+// firmware any more, it was folded into Doomsigner because MuSig2 is the point
+// of Doomsigner.
+const FIRMWARES = ["stock", "smartcard", "doomsigner"];
 const search = new URLSearchParams(location.search);
 // Regtest joins mainnet and testnet because a MuSig2 spend has to be driven
 // against a node that will actually relay it, and the only such node here is a
@@ -1219,12 +1216,8 @@ const asked = askedRaw === "spreceive" ? "doomsigner" : askedRaw;
 const FORK_ASKED_FOR = search.has("doom") || search.get("tutorial") !== null;
 const FIRMWARE = FIRMWARES.includes(asked) ? asked
                : (FORK_ASKED_FOR ? "smartcard" : FIRMWARES[0]);
-// doomsigner-musig is Doomsigner plus MuSig2, so every question except "which
-// zip" wants Doomsigner's answer. Asking about FIRMWARE directly is what made
-// the first attempt boot into a wallet with no simulated card at all, which
-// fails during import and leaves a blank screen with nothing on the console
-// that names the cause.
-const BASE_FIRMWARE = FIRMWARE === "doomsigner-musig" ? "doomsigner" : FIRMWARE;
+// A name for what the rest of the file asks about, kept for readability.
+const BASE_FIRMWARE = FIRMWARE;
 // Which firmware actually loaded, readable from outside. A driver that asks the
 // URL is asking what it requested, not what it got, and FIRMWARES silently
 // substitutes the default for a name it does not know -- so a test can pass

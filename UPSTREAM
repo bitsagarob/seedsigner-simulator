@@ -49,7 +49,7 @@ commit = 662d9dba2327eb77d6924ae9bd62d4902bf24634
 tag    = SeSi-0.8.7+ShSi-B11
 
 wallet_zip_sha256          = 8f08a300043bbc6ce79b70b5676ec3cf069cccb6772e271522abbb63de437dca
-wallet_zip_contents_sha256 = d2527f58d122a7155343b215b596dc94991dad5e893b9f5ec30da6ffe1463684
+wallet_zip_contents_sha256 = 231a83cc8757098816386f5146bd6f20caccd7ff09aa2f286bf14547c5e65b93
 
 # Our own fork of the fork above, adding BIP-352 silent payments: the receive
 # flow behind a setting that is off by default, and BIP-375/376 send and spend
@@ -64,27 +64,17 @@ wallet_zip_contents_sha256 = d2527f58d122a7155343b215b596dc94991dad5e893b9f5ec30
 # what we said we did, not that upstream did.
 [doomsigner]
 repo   = https://github.com/bitsagarob/seedsigner.git
-commit = d39315738c9a7faedd3fe6522de4f7c024af5146
-tag    = bitsaga-sp-v0.13
-
-wallet_zip_sha256          = 903e880524d55598dfd6d4c6fceda97a69295ddeea059744546c455ced95ca49
-wallet_zip_contents_sha256 = 9264629f03f686cb2224f022c6a16afe15c6362207e6cd3dd7c0d2918b01aa9d
-
-
-[doomsigner-musig]
-repo   = https://github.com/bitsagarob/seedsigner.git
 commit = cee8223a4be4a7e2932ccc6ed3b919f487962815
 tag    = none: dev, ahead of the last release
-wallet_zip_sha256 = ef1ac71231b976445a43ed627584d3df6fa5d3bc416e3b05b42f41de59693f80
 
-# DoomSigner plus MuSig2: BIP-327 signing, the card-backed nonce vault, and the
-# spare nonces a coordinator pools. Pinned to dev rather than a tag because
-# there is not one yet, which is also why this firmware has no button on the
-# page and is reachable only by URL.
-#
-# No published hashes here on purpose. Those two lines say "this zip is what
-# building that commit produces", and nothing has been published to compare
-# against until the fork tags a release.
+# DoomSigner is the fork with MuSig2: BIP-327 signing, the card-backed nonce
+# vault, and the spare nonces a coordinator pools, on top of silent payments and
+# the boot game. Pinned to dev rather than a tag because the fork has not tagged
+# a release with the MuSig2 work yet. Re-pinned below once built.
+wallet_zip_sha256          = 94c66d6dadc50089df13506f131893a6c366c03013885d56a7332025c7dfc072
+wallet_zip_contents_sha256 = 4359d3b83789cb34dd5ba0bed25e70d572d1a5aabee6a9ce81c5cf218b4be486
+
+
 
 # The two smartcard applets, pinned as a reference rather than as an input.
 #

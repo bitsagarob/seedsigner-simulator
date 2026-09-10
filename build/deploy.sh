@@ -1,19 +1,23 @@
 #!/usr/bin/env bash
 #
-# Deploy the ordinary simulator page.
+# Deploy the simulator.
 #
 #   ./build/deploy.sh [SITE_DIR]
 #
-# This page's claim is that you can rebuild it yourself and get the pinned
-# upstream release byte for byte, so what it must NOT carry matters as much as
-# what it must. src/web/extras holds features that are not in any upstream
-# release: research, served on a page of its own. Copying src/web wholesale, as
-# docs/SELF-HOSTING.md used to say, would put them here too.
+# One page, one deploy. It used to be two: a stock page here and a MuSig2 page
+# under musig/, kept apart by a hand-picked file list that is how the MuSig2
+# page came to run firmware months older than the page around it. There is no
+# split now. DoomSigner carries MuSig2, and the whole tree ships, extras/ and
+# all.
 #
-# So the exclusion lives in a script rather than in a sentence somebody has to
-# read, and build/check-deploy.sh asks the served page to prove they are absent:
+# The optional features in extras/ are loaded per firmware by wallet.html: a
+# visitor on stock or smartcard fetches none of them. The stock firmware zip is
+# still verified byte-for-byte against UPSTREAM by build/check-deploy.sh, so its
+# reproducibility does not depend on what JS sits beside it.
 #
-#   SIM_DEPLOY_EXTRAS=no ./build/check-deploy.sh
+# The big fetched assets (Pyodide, the DOOM build, the fonts) are placed by
+# build/fetch-assets.sh and the game build, not by this script, and are left
+# untouched: no --delete, so they survive a code deploy.
 #
 # Requires: bash, rsync.
 
@@ -25,33 +29,29 @@ SITE_DIR="${1:-/home/rob/apps/bitsaga/webapp/seedsigner-simulator}"
 
 [ -d "${SITE_DIR}" ] || { echo "no such directory: ${SITE_DIR}" >&2; exit 2; }
 
-echo "==> src/web (without extras/)"
+echo "==> src/web (including extras/)"
 rsync --archive \
-      --exclude 'extras' \
       --exclude '__pycache__' \
-      --exclude 'pyodide' \
+      --exclude 'pyodide*' \
       "${REPO_ROOT}/src/web/" "${SITE_DIR}/"
 
 echo "==> src/shims"
 rsync --archive "${REPO_ROOT}/src/shims/" "${SITE_DIR}/"
 
-echo "==> build/out"
+echo "==> build/out (every firmware this page can run)"
 shopt -s nullglob
 for artefact in "${REPO_ROOT}"/build/out/wallet-*.zip \
                 "${REPO_ROOT}"/build/out/wallet-*.build-info.json; do
     name="$(basename -- "${artefact}")"
-    case "${name}" in
-        # The MuSig2 firmware belongs to the page that carries the feature.
-        *doomsigner-musig*|wallet-embit.zip) continue ;;
-    esac
     cp -- "${artefact}" "${SITE_DIR}/${name}"
     echo "  ${name}"
 done
 
-# Nothing from extras/ may survive here from an earlier copy.
-if [ -d "${SITE_DIR}/extras" ]; then
-    echo "==> removing an extras/ left by an earlier deploy"
-    rm -rf -- "${SITE_DIR}/extras"
+# The separate MuSig2 page is retired. Remove it if an earlier deploy left it,
+# so the only thing under musig/ is whatever the nginx redirect serves.
+if [ -d "${SITE_DIR}/musig" ]; then
+    echo "==> removing the retired musig/ page"
+    rm -rf -- "${SITE_DIR}/musig"
 fi
 
 echo "==> ${SITE_DIR}"

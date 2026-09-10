@@ -12,7 +12,7 @@ import sys
 
 sys.path.insert(0, "/home/rob/apps/bitsaga/services/signet/test")
 
-URL = "http://127.0.0.1:8792/wallet.html?firmware=doomsigner-musig&debug=1&wallet=1"
+URL = "http://127.0.0.1:8792/wallet.html?firmware=doomsigner&debug=1&wallet=1"
 
 DRIVE = """
 async ([descriptor, utxo, destination, amount]) => {

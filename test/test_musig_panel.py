@@ -18,7 +18,7 @@ sys.path.insert(0, "/home/rob/apps/_scratch/musig2-sim/test")
 # then fails asking the chain what it holds. signet_bridge answers that origin
 # from this working tree, which is what the live test does.
 URL = ("https://bitsaga.be/wallet.html"
-       "?firmware=doomsigner-musig&debug=1&wallet=1")
+       "?firmware=doomsigner&debug=1&wallet=1")
 LOCAL = 8792
 SHOTS = "/home/rob/.cache/tmp/coordinator-shots"
 SEEDQR_B = "204720472047204720472047204720472047204720472037"

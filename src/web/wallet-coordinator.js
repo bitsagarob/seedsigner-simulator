@@ -107,9 +107,7 @@
   // still carry that name in the URL even though the page remaps them.
   var fw = typeof location !== "undefined"
     && new URLSearchParams(location.search).get("firmware");
-  var SPRECEIVE = fw === "doomsigner" || fw === "spreceive";
   // Only this firmware can sign MuSig2, so only here is any of it offered.
-  var SP_SEED_URL = "sp-overlay/test-seed.json";
   var SP_SCAN_PATH = "Home → Scan, or Seeds → 24c323b5 → Scan transaction";
   var SP_SEND_SCAN_PATH = "Home → Scan (seed 73c5da0a if asked)";
   var SP_SEND_AMOUNT = 40000;
@@ -792,8 +790,7 @@
     // Only the demo half is waiting for an export. In byo mode the device's
     // screen is read when somebody asks for it and not before.
     if (this.mode !== "byo" && this.stage === "idle") {
-      if (SPRECEIVE) this.watchForSpConnect();
-      else this.watchForAccount();
+      this.watchForAccount();
     }
     if (this.stage === "ready") this.refreshSoon();
     // The first question this page ever asks Bitsaga Signet, and it is not
@@ -1303,58 +1300,7 @@
    * Sparrow: fingerprint, derivation m/352'/coin'/0', and the tsp1 receive
    * address must match the published test seed. Then run the spend demo.
    */
-  Wallet.prototype.watchForSpConnect = function () {
-    var self = this;
-    this.error = "";
-    this.watch(function () {
-      if (self.spImported || self.step) return false;
-      var text = self.readDevice();
-      if (!text) return false;
-      var trimmed = text.trim();
-      if (!SP_CONNECT_LINE.test(trimmed)) return false;
-      return trimmed;
-    }, 86400000, "the Connect to Sparrow QR on the device's screen")
-      .then(function (exported) { return self.importSpConnect(exported); })
-      .catch(function () { /* drawer shut or superseded */ });
-  };
 
-  Wallet.prototype.importSpConnect = function (exported) {
-    var self = this;
-    if (this.spImported || this.step) return Promise.resolve();
-    this.stage = "connecting";
-    this.error = "";
-    this.say("Acting as Sparrow: reading the Connect QR off the device.");
-    track("sparrow", "import-started");
-    return this.loadSpSeed().then(function (seed) {
-      self.spSeed = seed;
-      if (exported.trim() !== seed.connect_descriptor) {
-        throw new Error("Connect QR does not match the published test seed.");
-      }
-      self.spImported = true;
-      self.stage = "sp-ready";
-      track("sparrow", "imported");
-      self.say("Sparrow would show Receive as " + seed.sp_address.slice(0, 20) + "…");
-      self.render();
-      return self.sleep(E2E ? 100 : 1200);
-    }).then(function () {
-      if (self.step) return;
-      self.view = "spspend";
-      self.step = null;
-      self.sending = null;
-      self.render();
-      // Connect leaves the device on the watch-key QR. Scan needs Home → Scan.
-      return self.backToMainMenu();
-    }).then(function () {
-      if (self.step) return;
-      return self.spendSilent();
-    }).catch(function (error) {
-      self.stage = "idle";
-      self.error = error.message;
-      self.say("");
-      self.render();
-      if (self.open && self.mode !== "byo" && !self.spImported) self.watchForSpConnect();
-    });
-  };
 
   /** Connect to whatever the export turned out to be: the line, or the CBOR. */
   Wallet.prototype.connect = function (exported) {
@@ -1700,15 +1646,6 @@
     });
   };
 
-  Wallet.prototype.loadSpSeed = function () {
-    if (this.spSeed) return Promise.resolve(this.spSeed);
-    return fetch(SP_SEED_URL, { cache: "no-store" }).then(function (response) {
-      if (!response.ok) throw new Error("Could not load the published silent-payment test seed.");
-      return response.json();
-    }).then(function (seed) {
-      return seed;
-    });
-  };
 
   /**
    * Fund the published BIP-352 output, hand a PSBT to the device, read the
@@ -1719,263 +1656,12 @@
    * the same tweak spends it. A fresh BIP-352 send is what device_spend.py
    * does; this path is the device's own screens.
    */
-  Wallet.prototype.spendSilent = function () {
-    var self = this;
-    if (this._spSpendRunning) return Promise.resolve();
-    this._spSpendRunning = true;
-    this.stopReading();
-    this.error = "";
-    this.sending = { silent: true };
-    track("spspend", "start");
-
-    this.at("build");
-    return this.loadSpSeed().then(function (seed) {
-      self.spSeed = seed;
-      var taproot = seed.example_output.taproot;
-      self.sending.taproot = taproot;
-      self.sending.dest = seed.example_output.dest;
-      self.say("Looking for a silent-payment coin at the published output.");
-      return scanChain([taproot]).then(function (held) {
-        var row = held[taproot] || { utxos: [] };
-        if (row.utxos && row.utxos.length) return row;
-        self.say("No coin there yet. Asking the faucet to pay that taproot.");
-        return C.network.claim(taproot).then(function (paid) {
-          self.sending.faucet = paid.txid;
-          return self.waitForSpCoin(taproot);
-        });
-      });
-    }).then(function (row) {
-      var utxo = row.utxos.slice().sort(function (a, b) { return b.value - a.value; })[0];
-      if (!utxo) throw new Error("The silent-payment output still has no coin.");
-      var fee = 200;
-      if (utxo.value < fee + 546) {
-        throw new Error("That coin is too small to spend after a fee.");
-      }
-      var seed = self.spSeed;
-      var destValue = utxo.value - fee;
-      var script = concatBytes([new Uint8Array([0x51, 0x20]),
-                                C.unhex(seed.example_output.xonly)]);
-      self.sending.inputs = [{ txid: utxo.txid, vout: utxo.vout, value: utxo.value }];
-      self.sending.amount = destValue;
-      if (!C.buildSpSpendPsbt || !C.finaliseTaproot) {
-        throw new Error("signet-coordinator.js cannot build a silent-payment spend yet.");
-      }
-      return C.buildSpSpendPsbt({
-        txid: utxo.txid,
-        vout: utxo.vout,
-        value: utxo.value,
-        scriptPubkey: script,
-        tweak: C.unhex(seed.example_output.tweak),
-        // The 33-byte compressed key, not the x-only one: BIP-376 keys
-        // PSBT_IN_SP_SPEND_BIP32_DERIVATION by the full spend pubkey, and a
-        // 32-byte key there is a malformed field rather than a shorter one.
-        spendPubkey: C.unhex(seed.spend_pubkey_hex),
-        fingerprint: seed.fingerprint,
-        path: seed.spend_path,
-        destScript: addressScript(seed.example_output.dest),
-        destValue: destValue,
-      });
-    }).then(function (psbt) {
-      self.sending.psbt = psbt;
-      return self.offerPsbtToDevice("spspend");
-    }).then(function () {
-      return self.reviewSignedPsbt();
-    }).then(function (collector) {
-      self.at("finish");
-      track("spspend", "signature");
-      var signed = C.toBase64(collector.psbt());
-      self.sending.signed = signed;
-      return C.finaliseTaproot(signed);
-    }).then(function (raw) {
-      return C.network.broadcast(raw);
-    }).then(function (sent) {
-      track("spspend", "broadcast");
-      self.sending.txid = sent.txid;
-      self.at("confirm");
-      self.say(WAITING);
-      return self.waitForBlock(sent.txid);
-    }).then(function () {
-      track("spspend", "confirmed");
-      self.at("done");
-      self.say("");
-      self.render();
-    }).catch(function (error) {
-      self.stopPresenting();
-      if (self.canvas) self.canvas.hidden = true;
-      self.error = error.message;
-      self.say("");
-      self.render();
-    }).finally(function () {
-      self._spSpendRunning = false;
-    });
-  };
 
   /**
    * Fund the published sender address, build a PSBTv2 send, sign on the device
    * with the abandon test seed, finalise the BIP-375 hand-off, broadcast.
    */
-  Wallet.prototype.sendToSilentPayment = function () {
-    var self = this;
-    if (this._spSendRunning) return Promise.resolve();
-    this._spSendRunning = true;
-    this.stopReading();
-    this.error = "";
-    this.sending = { silent: true, send: true };
-    track("spsend", "start");
 
-    this.at("build");
-    return this.loadSpSeed().then(function (seed) {
-      self.spSeed = seed;
-      var sender = seed.sender_address;
-      var changeAddr = seed.sender_change_address || sender;
-      self.sending.sender = sender;
-      self.sending.dest = seed.sp_address;
-      self.say("Looking for coins at the published sender address.");
-      return scanChain([sender, changeAddr]).then(function (held) {
-        var fee = 200;
-        var minInput = SP_SEND_AMOUNT + fee + 546;
-        var rows = [held[sender] || { utxos: [] }, held[changeAddr] || { utxos: [] }];
-        var best = null;
-        var fromAddr = sender;
-        rows.forEach(function (row, index) {
-          var addr = index ? changeAddr : sender;
-          (row.utxos || []).forEach(function (utxo) {
-            if (!best || utxo.value > best.value) {
-              best = utxo;
-              fromAddr = addr;
-            }
-          });
-        });
-        if (best && best.value >= minInput) {
-          self.sending.spendFrom = fromAddr;
-          return { utxos: [best] };
-        }
-        self.say("No coin there yet. Asking the faucet to pay the sender.");
-        return C.network.claim(sender).then(function (paid) {
-          self.sending.faucet = paid.txid;
-          return self.waitForSpCoin(sender);
-        });
-      }).then(function (row) {
-        var fee = 200;
-        var minInput = SP_SEND_AMOUNT + fee + 546;
-        var utxo = row.utxos.slice().sort(function (a, b) { return b.value - a.value; })[0];
-        if (!utxo || utxo.value < minInput) {
-          self.say("Asking the faucet for a larger coin at the sender.");
-          return C.network.claim(sender).then(function () {
-            return self.waitForSpCoin(sender);
-          }).then(function (funded) {
-            utxo = funded.utxos.slice().sort(function (a, b) { return b.value - a.value; })[0];
-            if (!utxo || utxo.value < minInput) {
-              throw new Error("The sender address still has no coin large enough to send.");
-            }
-            self.sending.spendFrom = sender;
-            return utxo;
-          });
-        }
-        return utxo;
-      });
-    }).then(function (utxo) {
-      var fee = 200;
-      var change = utxo.value - SP_SEND_AMOUNT - fee;
-      if (change < 546) {
-        throw new Error("That coin is too small to send that much after fee and change.");
-      }
-      var seed = self.spSeed;
-      var fromChange = self.sending.spendFrom === seed.sender_change_address;
-      self.sending.inputs = [{ txid: utxo.txid, vout: utxo.vout, value: utxo.value }];
-      self.sending.amount = SP_SEND_AMOUNT;
-      self.sending.change = change;
-      self.sending.source = fromChange ? {
-        pubkey: seed.sender_change_pubkey_hex,
-        fingerprint: seed.sender_fingerprint,
-        path: seed.sender_change_path,
-        scriptPubkey: seed.sender_change_script_pubkey_hex,
-      } : {
-        pubkey: seed.sender_pubkey_hex,
-        fingerprint: seed.sender_fingerprint,
-        path: seed.sender_path,
-        scriptPubkey: seed.sender_script_pubkey_hex,
-      };
-      if (!C.buildSpSendPsbt || !C.finaliseSpSend) {
-        throw new Error("signet-coordinator.js cannot build a silent-payment send yet.");
-      }
-      var src = self.sending.source;
-      return C.buildSpSendPsbt({
-        input: { txid: utxo.txid, vout: utxo.vout, value: utxo.value },
-        source: {
-          pubkey: C.unhex(src.pubkey),
-          fingerprint: src.fingerprint,
-          path: src.path,
-          scriptPubkey: C.unhex(src.scriptPubkey),
-        },
-        scanPubkey: C.unhex(seed.scan_pubkey_hex),
-        spendPubkey: C.unhex(seed.spend_pubkey_hex),
-        spAmount: SP_SEND_AMOUNT,
-        change: {
-          value: change,
-          scriptPubkey: C.unhex(seed.sender_change_script_pubkey_hex),
-          pubkey: C.unhex(seed.sender_change_pubkey_hex),
-          fingerprint: seed.sender_fingerprint,
-          path: seed.sender_change_path,
-        },
-      });
-    }).then(function (psbt) {
-      self.sending.psbt = psbt;
-      return self.offerPsbtToDevice("spsend");
-    }).then(function () {
-      return self.reviewSignedPsbt("send");
-    }).then(function (collector) {
-      self.at("finish");
-      track("spsend", "signature");
-      var signed = C.toBase64(collector.psbt());
-      self.sending.signed = signed;
-      var src = self.sending.source;
-      return C.finaliseSpSend(signed, {
-        pubkey: C.unhex(src.pubkey),
-        fingerprint: src.fingerprint,
-        path: src.path,
-      });
-    }).then(function (raw) {
-      return C.network.broadcast(raw);
-    }).then(function (sent) {
-      track("spsend", "broadcast");
-      self.sending.txid = sent.txid;
-      self.at("confirm");
-      self.say(WAITING);
-      return self.waitForBlock(sent.txid);
-    }).then(function () {
-      track("spsend", "confirmed");
-      self.at("done");
-      self.say("");
-      self.render();
-    }).catch(function (error) {
-      self.stopPresenting();
-      if (self.canvas) self.canvas.hidden = true;
-      self.error = error.message;
-      self.say("");
-      self.render();
-    }).finally(function () {
-      self._spSendRunning = false;
-    });
-  };
-
-  Wallet.prototype.waitForSpCoin = function (address) {
-    var self = this;
-    var deadline = Date.now() + 180000;
-    return new Promise(function (resolve, reject) {
-      (function tick() {
-        if (Date.now() > deadline) {
-          return reject(new Error("The faucet payment did not land at the silent-payment output."));
-        }
-        scanChain([address]).then(function (held) {
-          var row = held[address] || { utxos: [] };
-          if (row.utxos && row.utxos.length) return resolve(row);
-          self.say("Waiting for the faucet payment to appear.");
-          setTimeout(tick, 8000);
-        }, reject);
-      })();
-    });
-  };
 
   function concatBytes(parts) {
     var length = parts.reduce(function (n, p) { return n + p.length; }, 0);
@@ -2033,9 +1719,6 @@
     if (BYO_OFFERED) this.body.appendChild(this.modes());
 
     if (this.mode === "byo") this.renderByo();
-    else if (this.view === "spspend") this.renderSpSpend();
-    else if (this.view === "spsend") this.renderSpSend();
-    else if (this.stage === "sp-ready") this.renderSpReady();
     else if (this.stage === "idle") this.renderIdle();
     else if (this.stage === "connecting") this.renderConnecting();
     else if (featureFor(this.view)) featureFor(this.view).render(this);
@@ -2066,8 +1749,7 @@
         // mode there is no connection to make, so retry is the two buttons
         // already on screen.
         if (self.mode !== "byo" && self.stage === "idle") {
-          if (SPRECEIVE) self.watchForSpConnect();
-          else self.watchForAccount();
+          self.watchForAccount();
         }
       });
       var row = element("div", "wal-actions");
@@ -2096,36 +1778,6 @@
   // nothing before it, and as an instruction once it is step three of three.
   Wallet.prototype.renderIdle = function () {
     var self = this;
-    if (SPRECEIVE) {
-      var steps = element("ol", "wal-howto");
-      steps.appendChild(step("On the device: Silent payments → Connect to Sparrow → Scan in Sparrow", null));
-      steps.appendChild(step("Leave the Connect QR up. This panel reads it as Sparrow would.", null));
-      steps.appendChild(step("Faucet, PSBT, sign on the device, broadcast — the rest runs here.", null));
-      this.body.appendChild(steps);
-      this.body.appendChild(element("p", "wal-say",
-        "With the simulator wallet open, show the Connect QR and wait a moment. "
-        + "Or run the spend path directly:"));
-      var row = element("div", "wal-actions");
-      row.appendChild(this.button("Spend a silent payment", true, function () {
-        self.view = "spspend";
-        self.step = null;
-        self.sending = null;
-        self.error = "";
-        self.render();
-        self.spendSilent();
-      }));
-      row.appendChild(this.button("Send to silent payment", false, function () {
-        self.view = "spsend";
-        self.step = null;
-        self.sending = null;
-        self.error = "";
-        self.render();
-        self.sendToSilentPayment();
-      }));
-      this.body.appendChild(row);
-      this.sayInto(this.body);
-      return;
-    }
     var steps = element("ol", "wal-howto");
     steps.appendChild(step("Make a seed", SEED_PATH));
     steps.appendChild(step("Export its key", EXPORT_PATH));
@@ -2134,17 +1786,6 @@
     this.sayInto(this.body);
   };
 
-  Wallet.prototype.renderSpReady = function () {
-    var seed = this.spSeed;
-    this.body.appendChild(element("p", "wal-say",
-      "Imported like Sparrow. Receive matches the published test seed."));
-    if (seed && seed.sp_address) {
-      this.body.appendChild(element("p", "wal-mono", seed.sp_address));
-    }
-    this.body.appendChild(element("p", "wal-say",
-      "Asking the faucet and building the spend…"));
-    this.sayInto(this.body);
-  };
 
   function step(text, path) {
     var item = element("li");
@@ -2236,8 +1877,7 @@
     // The demo half waits for an export to appear; the byo half waits for
     // nobody, because there is nothing for it to connect to.
     if (mode === "demo" && this.stage === "idle") {
-      if (SPRECEIVE) this.watchForSpConnect();
-      else this.watchForAccount();
+      this.watchForAccount();
     }
   };
 
@@ -2531,24 +2171,6 @@
       self.render();
     }));
     row.appendChild(this.button("Get test bitcoin", false, function () { self.claim(); }));
-    if (SPRECEIVE) {
-      row.appendChild(this.button("Spend a silent payment", false, function () {
-        self.view = "spspend";
-        self.step = null;
-        self.sending = null;
-        self.error = "";
-        self.render();
-        self.spendSilent();
-      }));
-      row.appendChild(this.button("Send to silent payment", false, function () {
-        self.view = "spsend";
-        self.step = null;
-        self.sending = null;
-        self.error = "";
-        self.render();
-        self.sendToSilentPayment();
-      }));
-    }
     this.body.appendChild(row);
   };
 
@@ -2679,49 +2301,7 @@
     return this.fresh(0).address;
   };
 
-  Wallet.prototype.renderSpSpend = function () {
-    var self = this;
-    if (this.step) return this.renderSending();
-    this.body.appendChild(element("p", "wal-say",
-      "A coin at the published silent-payment output, signed on the device with "
-      + "the tweaked spend key. The panel opens Scan and walks the review."));
-    this.body.appendChild(element("p", "wal-path", SP_SCAN_PATH));
-    this.sayInto(this.body);
-    var row = element("div", "wal-actions");
-    row.appendChild(this.button("Back", false, function () {
-      self.stopPresenting();
-      self.stopReading();
-      self.view = "balance";
-      self.step = null;
-      self.sending = null;
-      self.error = "";
-      if (self.canvas) self.canvas.hidden = true;
-      self.render();
-    }));
-    this.body.appendChild(row);
-  };
 
-  Wallet.prototype.renderSpSend = function () {
-    var self = this;
-    if (this.step) return this.renderSending();
-    this.body.appendChild(element("p", "wal-say",
-      "The abandon test seed pays the published tsp1 address. The device ECDH-derives "
-      + "the taproot output and returns an unfinalized PSBT for the panel to finish."));
-    this.body.appendChild(element("p", "wal-path", SP_SEND_SCAN_PATH));
-    this.sayInto(this.body);
-    var row = element("div", "wal-actions");
-    row.appendChild(this.button("Back", false, function () {
-      self.stopPresenting();
-      self.stopReading();
-      self.view = "balance";
-      self.step = null;
-      self.sending = null;
-      self.error = "";
-      if (self.canvas) self.canvas.hidden = true;
-      self.render();
-    }));
-    this.body.appendChild(row);
-  };
 
   Wallet.prototype.renderSending = function () {
     var self = this;
@@ -2796,7 +2376,6 @@
       step: wallet.step,
       error: wallet.error || "",
       progress: wallet.progress || "",
-      spImported: !!wallet.spImported,
       view: wallet.view,
       txid: sending && sending.txid || null,
       faucet: sending && sending.faucet || null,
