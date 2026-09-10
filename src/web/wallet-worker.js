@@ -685,6 +685,40 @@ def _keyboard_run_from_a_clean_queue(self):
 
 _KeyboardScreen._run = _keyboard_run_from_a_clean_queue
 
+# A browser has no ribbon cable.
+#
+# When getUserMedia is refused, the firmware shows the screen it shows a real
+# device with a loose camera connector: "Hardware Error", "Disconnect power and
+# check for a loose camera connection." Nothing is loose and there is no power
+# to disconnect; a permission prompt was answered with no. That screen is the
+# first thing a visitor who declines the prompt sees, and it sends them looking
+# for a fault that does not exist.
+#
+# The page already says the true thing in red under the device. This makes the
+# device agree with it.
+from seedsigner.views import view as _view
+from seedsigner.gui.screens.screen import ErrorScreen as _ErrorScreen
+from seedsigner.gui.screens.screen import ButtonOption as _ButtonOption
+
+
+def _camera_was_refused(self):
+    # Said out loud so a test can tell which of the two screens ran. Screen text
+    # is drawn, never logged, so without this there is nothing to check and the
+    # wrong message could come back unnoticed.
+    print("camera: the browser refused it, saying so instead of blaming a cable")
+    self.run_screen(
+        _ErrorScreen,
+        title="Camera",
+        status_headline="The browser said no",
+        text="Allow the camera in the address bar, then open Scan again.",
+        button_data=[_ButtonOption("Back to Main Menu")],
+        show_back_button=False,
+    )
+    return _view.Destination(_view.MainMenuView, clear_history=True)
+
+
+_view.CameraConnectionErrorView.run = _camera_was_refused
+
 # Views can stall before they ever construct a Screen, so trace one level up.
 #
 # Destination.run, and not View.run, which is what this patched for a long time

@@ -33,6 +33,7 @@ signet-coordinator.js
 sw.js
 wallet-coordinator.js
 wallet-tutorial.js
+wallet-worker.js
 wallet.html
 "
 
@@ -48,5 +49,18 @@ done
 
 cp -- "${REPO_ROOT}/build/out/wallet-embit.zip" "${SITE_DIR}/wallet-embit.zip"
 echo "  wallet-embit.zip"
+
+# The firmware the MuSig2 page actually runs. It was not on this list, so the
+# only copies that ever reached the site were put there by hand, and the live
+# page ran firmware months older than the page around it. That is the whole
+# reason a deploy exists: nobody should have to remember a file.
+[ -f "${REPO_ROOT}/build/out/wallet-doomsigner-musig.zip" ] || {
+    echo "build/out/wallet-doomsigner-musig.zip is missing;" \
+         "run build/build-wallet-zip.sh doomsigner-musig" >&2
+    exit 2
+}
+cp -- "${REPO_ROOT}/build/out/wallet-doomsigner-musig.zip" \
+      "${SITE_DIR}/wallet-doomsigner-musig.zip"
+echo "  wallet-doomsigner-musig.zip"
 
 echo "==> ${SITE_DIR}"
