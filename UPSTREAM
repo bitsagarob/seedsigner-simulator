@@ -48,7 +48,7 @@ repo   = https://github.com/3rdIteration/seedsigner.git
 commit = 662d9dba2327eb77d6924ae9bd62d4902bf24634
 tag    = SeSi-0.8.7+ShSi-B11
 
-wallet_zip_sha256          = 22e6034509b547242db58ea7303d3f605007c60e637444b173e505eabbb834ca
+wallet_zip_sha256          = 8f08a300043bbc6ce79b70b5676ec3cf069cccb6772e271522abbb63de437dca
 wallet_zip_contents_sha256 = d2527f58d122a7155343b215b596dc94991dad5e893b9f5ec30da6ffe1463684
 
 # Our own fork of the fork above, adding BIP-352 silent payments: the receive
@@ -67,7 +67,7 @@ repo   = https://github.com/bitsagarob/seedsigner.git
 commit = d39315738c9a7faedd3fe6522de4f7c024af5146
 tag    = bitsaga-sp-v0.13
 
-wallet_zip_sha256          = a4134474435753ef74c250be7d9ff8aee598dc947b4c9a587173be7b4d4921a3
+wallet_zip_sha256          = 903e880524d55598dfd6d4c6fceda97a69295ddeea059744546c455ced95ca49
 wallet_zip_contents_sha256 = 9264629f03f686cb2224f022c6a16afe15c6362207e6cd3dd7c0d2918b01aa9d
 
 
@@ -75,7 +75,7 @@ wallet_zip_contents_sha256 = 9264629f03f686cb2224f022c6a16afe15c6362207e6cd3dd7c
 repo   = https://github.com/bitsagarob/seedsigner.git
 commit = cee8223a4be4a7e2932ccc6ed3b919f487962815
 tag    = none: dev, ahead of the last release
-wallet_zip_sha256 = 94c66d6dadc50089df13506f131893a6c366c03013885d56a7332025c7dfc072
+wallet_zip_sha256 = ef1ac71231b976445a43ed627584d3df6fa5d3bc416e3b05b42f41de59693f80
 
 # DoomSigner plus MuSig2: BIP-327 signing, the card-backed nonce vault, and the
 # spare nonces a coordinator pools. Pinned to dev rather than a tag because
