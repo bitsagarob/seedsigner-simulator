@@ -138,9 +138,32 @@ FIRMWARES="$(awk -F= '
 ' "${UPSTREAM_FILE}" | tr '\n' ' ')"
 [ -n "${FIRMWARES}" ] || { echo "no firmware sections in ${UPSTREAM_FILE}" >&2; exit 2; }
 
+# Narrowed when a deployment serves only some of them. The site has two pages
+# and each carries its own firmware, so asking the MuSig2 page for the stock
+# zip reports a difference that means nothing and hides the ones that do.
+if [ -n "${SIM_DEPLOY_FIRMWARES:-}" ]; then
+    FIRMWARES="${SIM_DEPLOY_FIRMWARES}"
+fi
+
 FILES=""
 add_file() { FILES="${FILES}$1|$2|$3
 "; }
+
+# The files under src/web this repository actually ships. Tracked ones only:
+# running anything in that directory leaves a __pycache__ behind, and asking a
+# deployment for a .pyc is asking for junk to be served.
+list_web_files() {
+    if git -C "${REPO_ROOT}" rev-parse --git-dir >/dev/null 2>&1; then
+        git -C "${REPO_ROOT}" ls-files -z -- src/web \
+        | tr '\0' '\n' \
+        | grep -v '^src/web/pyodide' \
+        | sed "s|^|${REPO_ROOT}/|" \
+        | LC_ALL=C sort
+    else
+        find "${REPO_ROOT}/src/web" -path "${REPO_ROOT}/src/web/pyodide" -prune -o \
+             -type f -print | LC_ALL=C sort
+    fi
+}
 
 # Everything under src/web, at whatever depth, minus the Pyodide runtime. The
 # served path is the path below src/web, because that is what `cp -r src/web/.`
@@ -151,8 +174,7 @@ while IFS= read -r file; do
         index.html) add_file "${rel}" "src/web/${rel}" local ;;
         *)          add_file "${rel}" "src/web/${rel}" repo ;;
     esac
-done < <(find "${REPO_ROOT}/src/web" -path "${REPO_ROOT}/src/web/pyodide" -prune -o \
-              -type f -print | LC_ALL=C sort)
+done < <(list_web_files)
 
 # The shims, which are copied flat next to the page and fetched by name at boot.
 while IFS= read -r file; do
@@ -271,13 +293,18 @@ QUOTES="\"'\`"
 
 references_in() {
     local file="$1" ref
-    grep -ohE "[${QUOTES}][^${QUOTES}]*\.(html|js|json|py|zip|png|wasm|woff2|css)[${QUOTES}]" "${file}" \
+    grep -ohE "[^+[:space:]][[:space:]]*[${QUOTES}][^${QUOTES}]*\.(html|js|json|py|zip|png|wasm|woff2|css)[${QUOTES}]|^[${QUOTES}][^${QUOTES}]*\.(html|js|json|py|zip|png|wasm|woff2|css)[${QUOTES}]" "${file}" \
+    | sed -E "s/^[^${QUOTES}]*//" \
     | sed "s/^.//; s/.$//; s|^\./||" \
     | grep -vE '^(/|[a-zA-Z][a-zA-Z0-9+.-]*:)' \
     | while read -r ref; do
         case "${ref}" in
             *'${'*) for fw in ${FIRMWARES}; do
-                        echo "${ref}" | sed -E "s/\\\$\{[A-Za-z_]+\}/${fw}/g"
+                        # Any expression, not just a bare name: wallet.html
+                        # names wallet-${walletZipKind(FIRMWARE)}.zip, and the
+                        # brackets kept the old pattern from matching, so the
+                        # literal was asked for and always missed.
+                        echo "${ref}" | sed -E "s/\\\$\{[^}]*\}/${fw}/g"
                     done ;;
             *)      echo "${ref}" ;;
         esac
