@@ -97,11 +97,19 @@ directory:
 
 ```sh
 mkdir -p /srv/seedsigner-simulator
-cp -r src/web/.  /srv/seedsigner-simulatorulator/     # page, scripts, icons, and pyodide/
-cp src/shims/browser_*.py /srv/seedsigner-simulatorulator/
-cp build/out/wallet-*.zip /srv/seedsigner-simulatorulator/
-cp build/out/wallet-*.build-info.json /srv/seedsigner-simulatorulator/
+./build/deploy.sh /srv/seedsigner-simulator
 ```
+
+Use the script rather than copying by hand. `src/web/extras/` holds features that
+are in no upstream release, and this page's claim is that you can rebuild it and
+get the pinned release byte for byte, so it must not carry them. A copy of the
+whole of `src/web` does. `build/deploy.sh` leaves them out, and:
+
+```sh
+SIM_DEPLOY_EXTRAS=no ./build/check-deploy.sh
+```
+
+asks the served page to prove they are absent rather than taking anyone's word.
 
 What ends up there, and why each piece has to be exactly where it is (the page,
 the worker and the shims all fetch each other by relative path):
