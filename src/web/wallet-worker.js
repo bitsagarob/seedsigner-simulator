@@ -78,7 +78,11 @@ async function boot(width, height) {
   //
   // numpy is never reachable: decode_qr imports it inside a try that starts with
   // "import cv2", and opencv is not in this list, so np is None either way.
-  const smartcard = firmware === "smartcard" || firmware === "doomsigner";
+  // doomsigner-musig is Doomsigner plus MuSig2 and is still the smartcard fork,
+  // so it needs the stand-in card packages. Only the zip name differs, which is
+  // the one thing below that keeps using `firmware` itself.
+  const base = firmware === "doomsigner-musig" ? "doomsigner" : firmware;
+  const smartcard = base === "smartcard" || base === "doomsigner";
   await pyodide.loadPackage(smartcard
     ? ["Pillow", "pycryptodome", "cryptography"]
     : ["Pillow", "pycryptodome"]);
@@ -276,8 +280,16 @@ sys.path.insert(0, "/wallet")
 # SETTING__NETWORK, TESTNET, SETTING__SILENT_PAYMENTS and OPTION__ENABLED.
 import os, json
 os.chdir("/wallet")
-_settings = {"display_config": "st7789_320x240", "network": ${net}}
-if ${JSON.stringify(firmware)} == "doomsigner":
+_settings = {"display_config": "st7789_320x240", "network": ${net},
+             # SETTING__CACHE_SCARD_PIN. Off on a real device, because a cached
+             # card PIN outlives the flow that asked for it. On here because a
+             # MuSig2 spend goes Home between loading the seed and scanning the
+             # transaction, and going Home drops the whole smartcard session
+             # when this is off: the card is then asked for a PIN again in the
+             # middle of signing, and the nonce the card was holding cannot be
+             # reached at all.
+             "cache_scard_pin": "E"}
+if ${JSON.stringify(firmware === "doomsigner-musig" ? "doomsigner" : firmware)} == "doomsigner":
     _settings["silent_payments"] = "E"
 with open("/wallet/settings.json", "w") as handle:
     json.dump(_settings, handle)
@@ -564,10 +576,20 @@ def _check_for_low(self, key=None, keys=None):
 HardwareButtons.get_instance = classmethod(_get_instance)
 HardwareButtons.wait_for = _wait_for
 HardwareButtons.update_last_input_time = _update_last_input_time
+# A screen showing a code is deaf for a moment after it opens. Presses aimed at
+# the screen before it are still arriving then, and one of them would dismiss a
+# transaction before a single frame of it had been read.
+import time as _clock
+
+_deaf_until = [0.0]
+
 def _poll_button():
     index = js_peek_key()
     if 1 <= index < len(BUTTON_VALUES):
         _PENDING_KEYS.append([BUTTON_VALUES[index], 0])
+    if _clock.monotonic() < _deaf_until[0]:
+        _PENDING_KEYS.clear()
+        return None
     return _PENDING_KEYS.pop(0)[0] if _PENDING_KEYS else None
 
 HardwareButtons.check_for_low = _check_for_low
@@ -620,6 +642,82 @@ def _traced_run(self):
 
 BaseScreen.display = _traced_display
 BaseScreen._run = _traced_run
+
+# A code on screen must not be dismissed by a press made before it appeared.
+#
+# browser_qr pumps this screen by drawing a frame and then polling for a key,
+# and that poll pops from the same queue check_for_low fills, where a press
+# stays claimable for several reads so the scan loop cannot miss it. A press
+# aimed at the screen before this one was therefore still sitting there, and
+# the code was gone after a single frame. An animated transaction never got to
+# animate, so the page had nothing to read back.
+#
+# Real hardware cannot do this: a button pressed before a screen exists is not
+# waiting for it. So the queue is emptied as the screen opens.
+from seedsigner.gui.screens.screen import QRDisplayScreen as _QRScreen
+_pumped_qr_run = _QRScreen._run
+
+def _qr_run_from_a_clean_queue(self):
+    _PENDING_KEYS.clear()
+    while js_peek_key():
+        pass
+    _deaf_until[0] = _clock.monotonic() + 1.5
+    return _pumped_qr_run(self)
+
+_QRScreen._run = _qr_run_from_a_clean_queue
+
+# The keyboard screens have the same problem and it is worse, because a leaked
+# press does not close them, it types a character. The card PIN prompt opens
+# straight after a button press on the screen before it, that press is still
+# claimable, and the PIN came out one letter too long: "aaaaa" for a card whose
+# PIN is "aaaa". The card then refused it, signing fell back to memory and no
+# nonces were ever pooled.
+from seedsigner.gui.screens.seed_screens import SeedAddPassphraseScreen as _KeyboardScreen
+_keyboard_run = _KeyboardScreen._run
+
+
+def _keyboard_run_from_a_clean_queue(self):
+    _PENDING_KEYS.clear()
+    while js_peek_key():
+        pass
+    return _keyboard_run(self)
+
+
+_KeyboardScreen._run = _keyboard_run_from_a_clean_queue
+
+# A browser has no ribbon cable.
+#
+# When getUserMedia is refused, the firmware shows the screen it shows a real
+# device with a loose camera connector: "Hardware Error", "Disconnect power and
+# check for a loose camera connection." Nothing is loose and there is no power
+# to disconnect; a permission prompt was answered with no. That screen is the
+# first thing a visitor who declines the prompt sees, and it sends them looking
+# for a fault that does not exist.
+#
+# The page already says the true thing in red under the device. This makes the
+# device agree with it.
+from seedsigner.views import view as _view
+from seedsigner.gui.screens.screen import ErrorScreen as _ErrorScreen
+from seedsigner.gui.screens.screen import ButtonOption as _ButtonOption
+
+
+def _camera_was_refused(self):
+    # Said out loud so a test can tell which of the two screens ran. Screen text
+    # is drawn, never logged, so without this there is nothing to check and the
+    # wrong message could come back unnoticed.
+    print("camera: the browser refused it, saying so instead of blaming a cable")
+    self.run_screen(
+        _ErrorScreen,
+        title="Camera",
+        status_headline="The browser said no",
+        text="Allow the camera in the address bar, then open Scan again.",
+        button_data=[_ButtonOption("Back to Main Menu")],
+        show_back_button=False,
+    )
+    return _view.Destination(_view.MainMenuView, clear_history=True)
+
+
+_view.CameraConnectionErrorView.run = _camera_was_refused
 
 # Views can stall before they ever construct a Screen, so trace one level up.
 #

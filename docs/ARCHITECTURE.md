@@ -305,12 +305,14 @@ name; that file says which and why.
 | `BIP32 GET AUTHENTIKEY` (`B0 73`) | both | `INS_BIP32_GET_AUTHENTIKEY`, handled by `getBIP32AuthentiKey()` |
 | `BIP32 IMPORT SEED` (`B0 6C`) | Satochip | `INS_BIP32_IMPORT_SEED`, handled by `importBIP32Seed()` |
 | `BIP32 RESET SEED` (`B0 77`) | Satochip | `INS_BIP32_RESET_SEED`, handled by `resetBIP32Seed()` |
-| `BIP32 GET EXTENDED KEY` (`B0 6D`) | Satochip, and the SeedKeeper too | `INS_BIP32_GET_EXTENDED_KEY`, handled by `getBIP32ExtendedKey()` in both trees. Only the Satochip half is simulated; see below |
+| `BIP32 GET EXTENDED KEY` (`B0 6D`) | Satochip, and the SeedKeeper too | `INS_BIP32_GET_EXTENDED_KEY`, handled by `getBIP32ExtendedKey()` in both trees. Both halves are simulated. They differ in where the key comes from: a Satochip derives from the one seed it holds, a SeedKeeper is told which stored masterseed to use, as two bytes of secret id after the path, and answers to that secret's export policy because deriving reads the seed |
 | `SEEDKEEPER GET STATUS` (`B0 A7`) | SeedKeeper | `INS_GET_SEEDKEEPER_STATUS`, handled by `GetSeedKeeperStatus()` |
 | `SEEDKEEPER IMPORT SECRET` (`B0 A1`) | SeedKeeper | `INS_IMPORT_SECRET`, handled by `importSecret()`. P1 is the transport, `SECRET_EXPORT_ALLOWED` (plain) or `SECRET_EXPORT_SECUREONLY` (encrypted); P2 steps `OP_INIT` / `OP_PROCESS` / `OP_FINALIZE` |
 | `SEEDKEEPER EXPORT SECRET` (`B0 A2`) | SeedKeeper | `INS_EXPORT_SECRET`, handled by `exportSecret()`, same P1 and P2 |
 | `SEEDKEEPER LIST HEADERS` (`B0 A6`) | SeedKeeper | `INS_LIST_SECRET_HEADERS`, handled by `listSecretHeaders()` |
 | `SEEDKEEPER RESET SECRET` (`B0 A5`) | SeedKeeper | `INS_RESET_SECRET`, handled by `resetSecret()` |
+| `MUSIG2 GENERATE NONCE` (`B0 7E`) | SeedKeeper, on the branch that adds the nonce vault | `INS_MUSIG2_GENERATE_NONCE`, handled by `musig2GenerateNonce()`. BIP-327 NonceGen for the key `getBIP32ExtendedKey()` derived last. `P2` steps `OP_INIT`, which answers the public nonce and a two-byte id, then `OP_FINALIZE`, which answers the secret nonce sealed. Not in the pinned v0.2-0.1 applet: see the note under the pin in `UPSTREAM` |
+| `MUSIG2 UNSEAL NONCE` (`B0 7F`) | SeedKeeper, same branch | `INS_MUSIG2_UNSEAL_NONCE`, handled by `musig2UnsealNonce()`. Opens one sealed secret nonce and forgets its id, so the second attempt on the same bytes is `9C47`. Signing is not done on the card |
 
 ### What those applets have and this one deliberately does not
 
@@ -324,7 +326,6 @@ this one will not.
 | --- | --- | --- |
 | `SIGN TRANSACTION` (`6F`), `SIGN TRANSACTION HASH` (`7A`), `SIGN MESSAGE` (`6E`), `SIGN SHORT MESSAGE` (`72`), `PARSE TRANSACTION` (`71`) | Satochip | Card signing is not on the path this simulator exercises: the wallet signs with the seed it is holding, and no flow here sends these |
 | `BIP32 GET EXTENDED KEY` with option flags `0x02` or `0x04` | Satochip | `0x02` asks for the private key, which a Satochip does not export at all, and `0x04` is BIP85. Refused rather than quietly ignored, so the wallet cannot mistake silence for an answer |
-| `BIP32 GET EXTENDED KEY` (`6D`) on a **SeedKeeper** | SeedKeeper | The real v0.2 applet does answer it: given a secret id it derives from a masterseed it is already holding, so a card can hand out an xpub without the seed leaving it. This one does not, and it is the one row where the simulation is narrower than the applet rather than narrower than what the wallet asks for |
 | `IMPORT KEY` (`32`), `RESET KEY` (`33`), `GET PUBLIC FROM PRIVATE` (`35`), `BIP32 SET EXTENDED PUBKEY` (`74`), `SET AUTHENTIKEY PUBKEY` (`75`), `EXPORT AUTHENTIKEY` (`AD`) | Satochip (`AD` on both) | Reachable from no screen in this fork |
 | `CREATE PIN` (`40`), `CHANGE PIN` (`44`), `UNBLOCK PIN` (`46`), `LOGOUT ALL` (`60`), `LIST PINS` (`48`) | both | Card management, which is not one of the two flows this exists for. The PIN is set once at setup and checked, and that is all a card here has to be |
 | `SET 2FA KEY` (`79`), `RESET 2FA KEY` (`78`), `CRYPT TRANSACTION 2FA` (`76`), `GENERATE 2FA SECRET` (`AE`) | Satochip, `AE` SeedKeeper | 2FA is a second device approving what the card was asked to do, and there is no second device here |

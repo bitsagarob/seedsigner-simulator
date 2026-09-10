@@ -70,6 +70,22 @@ tag    = bitsaga-sp-v0.13
 wallet_zip_sha256          = a4134474435753ef74c250be7d9ff8aee598dc947b4c9a587173be7b4d4921a3
 wallet_zip_contents_sha256 = 9264629f03f686cb2224f022c6a16afe15c6362207e6cd3dd7c0d2918b01aa9d
 
+
+[doomsigner-musig]
+repo   = https://github.com/bitsagarob/seedsigner.git
+commit = cee8223a4be4a7e2932ccc6ed3b919f487962815
+tag    = none: dev, ahead of the last release
+wallet_zip_sha256 = 94c66d6dadc50089df13506f131893a6c366c03013885d56a7332025c7dfc072
+
+# DoomSigner plus MuSig2: BIP-327 signing, the card-backed nonce vault, and the
+# spare nonces a coordinator pools. Pinned to dev rather than a tag because
+# there is not one yet, which is also why this firmware has no button on the
+# page and is reachable only by URL.
+#
+# No published hashes here on purpose. Those two lines say "this zip is what
+# building that commit produces", and nothing has been published to compare
+# against until the fork tags a release.
+
 # The two smartcard applets, pinned as a reference rather than as an input.
 #
 # Nothing here builds these. They are JavaCard, they run on a secure element,
@@ -98,6 +114,14 @@ tag    = v0.12
 repo   = https://github.com/Toporin/Seedkeeper-Applet.git
 commit = 2e59f0653c5dd39f6793ee5c41ee7344ffdeb48f
 tag    = v0.2-0.1
+
+# Two instructions the simulated SeedKeeper answers are not in the tag above.
+# 0x7E and 0x7F are the MuSig2 nonce vault, which is a branch off it and not a
+# release, so there is no tag to pin and this section stays on the release. A
+# card holding the vault reports the same protocol version, 0.2, because the
+# protocol for every instruction that already existed is unchanged; a client
+# finds out whether it has the vault by asking for a nonce and reading 6D00 if
+# it does not. Everything else in the simulated SeedKeeper is the tag.
 
 # The boot game. Not a firmware and not a wallet: this pins the tree the
 # browser build of the GAME is compiled from. Renamed from [doomsigner] when a

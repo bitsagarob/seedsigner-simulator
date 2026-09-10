@@ -138,9 +138,39 @@ FIRMWARES="$(awk -F= '
 ' "${UPSTREAM_FILE}" | tr '\n' ' ')"
 [ -n "${FIRMWARES}" ] || { echo "no firmware sections in ${UPSTREAM_FILE}" >&2; exit 2; }
 
+# Narrowed when a deployment serves only some of them. The site has two pages
+# and each carries its own firmware, so asking the MuSig2 page for the stock
+# zip reports a difference that means nothing and hides the ones that do.
+if [ -n "${SIM_DEPLOY_FIRMWARES:-}" ]; then
+    FIRMWARES="${SIM_DEPLOY_FIRMWARES}"
+fi
+
+# src/web/extras is the optional half: features not every build carries. The
+# stock page carries none, and that is not a detail of taste. Its whole claim is
+# that you can rebuild it and get the pinned upstream release byte for byte, and
+# unreleased research served alongside it weakens exactly that. So a stock
+# deployment is asked to prove the files are absent, not merely not mentioned.
+WANTS_EXTRAS="${SIM_DEPLOY_EXTRAS:-yes}"
+
 FILES=""
 add_file() { FILES="${FILES}$1|$2|$3
 "; }
+
+# The files under src/web this repository actually ships. Tracked ones only:
+# running anything in that directory leaves a __pycache__ behind, and asking a
+# deployment for a .pyc is asking for junk to be served.
+list_web_files() {
+    if git -C "${REPO_ROOT}" rev-parse --git-dir >/dev/null 2>&1; then
+        git -C "${REPO_ROOT}" ls-files -z -- src/web \
+        | tr '\0' '\n' \
+        | grep -v '^src/web/pyodide' \
+        | sed "s|^|${REPO_ROOT}/|" \
+        | LC_ALL=C sort
+    else
+        find "${REPO_ROOT}/src/web" -path "${REPO_ROOT}/src/web/pyodide" -prune -o \
+             -type f -print | LC_ALL=C sort
+    fi
+}
 
 # Everything under src/web, at whatever depth, minus the Pyodide runtime. The
 # served path is the path below src/web, because that is what `cp -r src/web/.`
@@ -151,8 +181,7 @@ while IFS= read -r file; do
         index.html) add_file "${rel}" "src/web/${rel}" local ;;
         *)          add_file "${rel}" "src/web/${rel}" repo ;;
     esac
-done < <(find "${REPO_ROOT}/src/web" -path "${REPO_ROOT}/src/web/pyodide" -prune -o \
-              -type f -print | LC_ALL=C sort)
+done < <(list_web_files | { [ "${WANTS_EXTRAS}" = "yes" ] && cat || grep -v '/src/web/extras/'; })
 
 # The shims, which are copied flat next to the page and fetched by name at boot.
 while IFS= read -r file; do
@@ -271,13 +300,18 @@ QUOTES="\"'\`"
 
 references_in() {
     local file="$1" ref
-    grep -ohE "[${QUOTES}][^${QUOTES}]*\.(html|js|json|py|zip|png|wasm|woff2|css)[${QUOTES}]" "${file}" \
+    grep -ohE "[^+[:space:]][[:space:]]*[${QUOTES}][^${QUOTES}]*\.(html|js|json|py|zip|png|wasm|woff2|css)[${QUOTES}]|^[${QUOTES}][^${QUOTES}]*\.(html|js|json|py|zip|png|wasm|woff2|css)[${QUOTES}]" "${file}" \
+    | sed -E "s/^[^${QUOTES}]*//" \
     | sed "s/^.//; s/.$//; s|^\./||" \
     | grep -vE '^(/|[a-zA-Z][a-zA-Z0-9+.-]*:)' \
     | while read -r ref; do
         case "${ref}" in
             *'${'*) for fw in ${FIRMWARES}; do
-                        echo "${ref}" | sed -E "s/\\\$\{[A-Za-z_]+\}/${fw}/g"
+                        # Any expression, not just a bare name: wallet.html
+                        # names wallet-${walletZipKind(FIRMWARE)}.zip, and the
+                        # brackets kept the old pattern from matching, so the
+                        # literal was asked for and always missed.
+                        echo "${ref}" | sed -E "s/\\\$\{[^}]*\}/${fw}/g"
                     done ;;
             *)      echo "${ref}" ;;
         esac
@@ -361,11 +395,36 @@ for box in "${BOXES[@]}"; do
         esac
     done <<< "${FILES}"
 
+    # --- what a stock deployment must NOT be serving --------------------------
+    #
+    # Asked as its own question because the answer that matters is a 404. A file
+    # nobody lists is a file nobody notices: the whole point of keeping the
+    # research out of this build is lost the moment a copy puts it back, and
+    # copying src/web wholesale is exactly what the instructions say to do.
+    if [ "${WANTS_EXTRAS}" != "yes" ]; then
+        echo
+        echo "the optional half, which this deployment must not carry"
+        while IFS= read -r file; do
+            rel="${file#"${REPO_ROOT}/src/web/"}"
+            code="$(on_box "${how}" "${name}" \
+                    'curl -s -o /dev/null -w "%{http_code}" --resolve "$1" "$2"' \
+                    "${RESOLVE}" "${SITE_URL}/${rel}" 2>/dev/null || echo "000")"
+            case "${code}" in
+                404|410) pass "${rel}" "absent, as it should be" ;;
+                *)       fail "${rel}" "served (http ${code}) by a build that should not carry it" ;;
+            esac
+        done < <(list_web_files | grep '/src/web/extras/')
+    fi
+
     # --- and the references those files name ---------------------------------
     echo
     echo "references, followed on the served pages"
     for page in ${SCAN}; do
-        body="${WORK_DIR}/${name}.${page}"
+        # The served path can now hold a directory, and a temp file named after
+        # it cannot: extras/musig.js became a write into a directory that does
+        # not exist, and what that looked like was "could not be fetched" for a
+        # file curl fetches perfectly well.
+        body="${WORK_DIR}/${name}.$(printf '%s' "${page}" | tr '/' '_')"
         if ! on_box "${how}" "${name}" "${SH_BODY}" "${RESOLVE}" "${SITE_URL}/${page}" \
                 > "${body}" 2>/dev/null; then
             fail "${page}" "could not be fetched"

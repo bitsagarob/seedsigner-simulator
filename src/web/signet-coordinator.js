@@ -1,4 +1,10 @@
-// The coordinator, on the page.
+// The coordinator, on the page. Nothing calls this any more.
+//
+// The chain half moved to embit, which the device also runs, so the two agree
+// by construction rather than by luck. This survives as the second opinion:
+// test_tutorial.py and test_coordinator_parity.py both check embit against it,
+// and two implementations agreeing is worth something where one agreeing with
+// itself is not. Delete it and those tests start comparing embit with embit.
 //
 // A signing device signs; it does not know what a wallet owns, what a fee is,
 // or where a transaction goes. That job belongs to a coordinator, and in the

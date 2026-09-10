@@ -24,7 +24,8 @@
 (function (scope) {
   "use strict";
 
-  var C = scope.SignetCoordinator;
+  // embit where it has been ported, the hand-written JavaScript for the rest.
+  var C = scope.EmbitCoordinator || scope.SignetCoordinator;
 
   // Bringing your own coordinator is offered on the demo flow and nowhere else.
   // The page at rest is a SeedSigner with a wallet beside it, which is the thing
@@ -47,6 +48,16 @@
   // what every wallet means by a gap limit. Forty addresses is one /scan call
   // with room to spare under its cap of sixty, so a refresh is one request.
   var GAP = 20;
+
+  // Flat, because the whole spend is one input and one output and the
+  // chain it runs on is not busy.
+  var MUSIG_FEE = 1000;
+  // How many addresses of a MuSig2 wallet are watched. Its own spends land on
+  // the next one, so one is never enough.
+  var LOOK_AHEAD = 5;
+
+  // Where a spend goes. The faucet's own address, so the coins come back to
+  // where they came from and nobody has to invent a destination.
 
   // Bitsaga Signet is not busy and nothing here is bidding for space. Two
   // sat/vB is above the relay minimum and small enough that the fee never
@@ -76,7 +87,7 @@
   // Six words where there were twenty. Everything the long version said is
   // still true and still on the page, in the panel behind the i; what this
   // line has to do is stop somebody thinking these coins are theirs.
-  var NOT_A_WALLET = "Signet test coins. Nothing real, nothing kept.";
+  var NOT_A_WALLET = "Signet coins, worth nothing.";
 
   // The device path to the account key, spelled out because the whole point of
   // the landing state is that nobody has to guess it. It ends where the device's
@@ -97,6 +108,7 @@
   var fw = typeof location !== "undefined"
     && new URLSearchParams(location.search).get("firmware");
   var SPRECEIVE = fw === "doomsigner" || fw === "spreceive";
+  // Only this firmware can sign MuSig2, so only here is any of it offered.
   var SP_SEED_URL = "sp-overlay/test-seed.json";
   var SP_SCAN_PATH = "Home → Scan, or Seeds → 24c323b5 → Scan transaction";
   var SP_SEND_SCAN_PATH = "Home → Scan (seed 73c5da0a if asked)";
@@ -189,6 +201,42 @@
     ".wal-head{display:flex;align-items:baseline;justify-content:space-between;gap:.9rem}",
     ".wal h2{font-size:1rem;font-weight:600;color:#d7dbe0;margin:0}",
     ".wal-note{margin:.35rem 0 0;font-size:.82rem;color:#7c848f}",
+    // A letter, not an icon font: one glyph costs nothing and cannot fail to load.
+    // The same circle as the inline i below, so a visitor learns it once. A
+    // button brings its own padding and the header aligns on the baseline,
+    // which between them made it sit low and off centre.
+    ".wal-about-open{width:1.35rem;height:1.35rem;padding:0;border-radius:50%;"
+      + "border:1px solid #3a4048;background:none;color:#9aa3ae;cursor:pointer;"
+      + "display:grid;place-items:center;font:italic 600 .85rem/1 serif;"
+      + "flex:0 0 auto;margin-left:auto;align-self:center}",
+    ".wal-about-open:hover{color:#f7931a;border-color:#f7931a}",
+    ".wal-about-open[aria-expanded=\"true\"]{color:#f7931a;border-color:#f7931a}",
+    ".wal-about{margin:.6rem 0 0;padding:.7rem .9rem;border:1px solid #262b31;"
+      + "border-radius:8px;font-size:.8rem;color:#9aa3ad;max-height:22rem;overflow:auto}",
+    ".wal-about h3{margin:.7rem 0 .25rem;font-size:.78rem;color:#f7931a}",
+    ".wal-about h3:first-child{margin-top:0}",
+    ".wal-about ul{margin:0;padding-left:1.1rem}",
+    ".wal-about li{margin:.15rem 0}",
+    ".wal-about a{color:#9fd0a0}",
+    // The status a BIP carries, so Draft is visible without being shouted.
+    ".wal-about em{font-style:normal;color:#6f7681;font-size:.72rem}",
+    // Sparrow lists cosigners as a numbered column with the fingerprint beside
+    // each, and that is the shape people recognise.
+    ".wal-cosigners{margin:.7rem 0 0;border:1px solid #262b31;border-radius:8px;"
+      + "overflow:hidden}",
+    ".wal-cosigner{display:flex;align-items:center;gap:.6rem;padding:.5rem .7rem;"
+      + "border-top:1px solid #1c2026;font-size:.85rem}",
+    ".wal-cosigner:first-child{border-top:0}",
+    ".wal-cosigner-n{width:1.3rem;height:1.3rem;border-radius:50%;display:grid;"
+      + "place-items:center;font-size:.72rem;border:1px solid #3a4048;color:#7c848f;"
+      + "flex:0 0 auto}",
+    ".wal-cosigner[data-state=have] .wal-cosigner-n{border-color:#f7931a;color:#f7931a}",
+    ".wal-cosigner[data-state=wait]{opacity:.45}",
+    ".wal-cosigner-name{flex:1 1 auto}",
+    ".wal-cosigner-fp{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;"
+      + "font-size:.78rem;color:#7c848f}",
+    ".wal-policy{margin:.6rem 0 0;font-size:.78rem;color:#7c848f}",
+    ".wal-actions button[disabled]{opacity:.4;cursor:not-allowed}",
 
     ".wal button{font:inherit;font-size:.88rem;color:#8b939e;background:#1d2026;",
     "border:1px solid #2a2e35;border-radius:5px;padding:.25rem .7rem;cursor:pointer}",
@@ -217,6 +265,10 @@
     ".wal-verify{margin:1.2rem 0 0;padding:.8rem .9rem;border:1px solid #f7931a;",
     "border-radius:8px;background:#16181c}",
     ".wal-verify-head{margin:0;font-weight:600;color:#f7931a}",
+    // The result of a spend, not a heading for what follows it. Without the
+    // gap it sat flush against "Receiving address" and the two orange lines
+    // read as one block.
+    ".wal-sent{margin:.35rem 0 1.1rem;font-weight:600;color:#f7931a}",
     ".wal-verify-say{margin:.45rem 0 0;font-size:.85rem;color:#9aa3ae}",
     ".wal-verify .wal-actions{margin:.7rem 0 0}",
     ".wal-balance{margin:1.4rem 0 0;font-size:2rem;line-height:1.15;font-weight:600;",
@@ -409,6 +461,79 @@
     return new Uint8Array([0x00, program.length].concat(program));
   }
 
+  // What this thing is, in the panel rather than in a document nobody opens.
+  // Every line is a claim someone can check, so each names the standard it
+  // rests on and the status the BIP index gives it. Which apply depends on the
+  // flow, so the panel lists what this one uses.
+  var SPECS = {
+    base: [
+      ["174", "Partially Signed Bitcoin Transactions", "Deployed"],
+      ["380", "Output script descriptors", "Deployed"],
+      ["386", "tr() descriptors", "Deployed"],
+    ],
+  };
+
+  // Features this build carries. A file in extras/ registers itself here, and
+  // the shell learns what it does from what it registered rather than from an
+  // "if" written in advance. A build that leaves the file out has one fewer
+  // entry and needs no other difference.
+  var FEATURES = [];
+
+  function featureFor(view) {
+    for (var i = 0; i < FEATURES.length; i++) {
+      if (FEATURES[i].view === view) return FEATURES[i];
+    }
+    return null;
+  }
+
+  function specList() {
+    var extra = [];
+    for (var f = 0; f < FEATURES.length; f++) {
+      if (FEATURES[f].specs) extra = extra.concat(FEATURES[f].specs);
+    }
+    return SPECS.base.concat(extra).map(function (one) {
+      return "<li><a href='https://bips.dev/" + one[0] + "/'>BIP-" + one[0]
+        + "</a> " + one[1] + " <em>" + one[2] + "</em></li>";
+    }).join("");
+  }
+
+  function featureAbout() {
+    var out = "";
+    for (var f = 0; f < FEATURES.length; f++) {
+      if (FEATURES[f].about) out += FEATURES[f].about;
+    }
+    return out;
+  }
+
+  function aboutHtml() {
+    var carries = FEATURES.length > 0;
+    var out = [
+      "<h3>What this is</h3><ul>",
+      "<li>A coordinator. It builds the transaction and moves bytes",
+      carries ? ", and keeps the nonce pool.</li>" : ".</li>",
+      "<li>It holds no keys and signs nothing. Every curve operation happens",
+      " on the device.</li></ul>",
+      "<h3>Standards it uses here</h3><ul>", specList(), "</ul>",
+      featureAbout(),
+    ];
+    return out.concat([
+      "<h3>What actually runs</h3><ul>",
+      "<li>The chain half is <b>embit</b>, the library the device runs, pinned",
+      " to the same commit on both sides. Our fork adds BIP-390 and nothing",
+      " else: three files.</li>",
+      carries ? "<li>Ours is about 210 lines: the MuSig2 descriptor, the BIP-373"
+              + " fields no library writes, and the pool.</li>" : "",
+      "<li>Under <b>Pyodide 0.26.4</b>, the project's own release, checked at",
+      " build time against sha256 <code>70dba934…</code>.</li></ul>",
+      "<h3>Code</h3><ul>",
+      "<li><a href='https://github.com/bitsagarob/seedsigner'>bitsagarob/seedsigner</a>",
+      " the device</li>",
+      "<li><a href='https://github.com/bitsagarob/embit'>bitsagarob/embit</a>",
+      " descriptors</li></ul>",
+      "<h3>Chain</h3><ul><li>Bitsaga Signet. Not real bitcoin.</li></ul>",
+    ]).join("");
+  }
+
   function element(tag, className, text) {
     var node = document.createElement(tag);
     if (className) node.className = className;
@@ -419,6 +544,7 @@
   function sats(value) {
     return Number(value).toLocaleString("en-GB") + " sats";
   }
+
 
   // Counted if wallet-track.js is on the page, ignored if it is not, exactly as
   // the tutorial counts itself.
@@ -548,16 +674,29 @@
     var title = element("h2", null, "Simulator wallet");
     title.id = "wal-title";
     head.appendChild(title);
+    this.aboutButton = element("button", "wal-about-open", "i");
+    this.aboutButton.type = "button";
+    this.aboutButton.title = "What this coordinator does";
+    this.aboutButton.setAttribute("aria-label", "What this coordinator does");
+    this.aboutButton.setAttribute("aria-expanded", "false");
+    this.aboutButton.addEventListener("click", function () { self.about(); });
+    head.appendChild(this.aboutButton);
+
     this.closeButton = element("button", null, "Close");
     this.closeButton.type = "button";
     this.closeButton.setAttribute("aria-label", "Close the simulator wallet");
     this.closeButton.addEventListener("click", function () { self.toggle(false); });
     head.appendChild(this.closeButton);
 
+    this.aboutPanel = element("div", "wal-about");
+    this.aboutPanel.hidden = true;
+    this.aboutPanel.innerHTML = aboutHtml();
+
     this.body = element("div", "wal-body");
 
     this.root.appendChild(head);
     this.root.appendChild(element("p", "wal-note", NOT_A_WALLET));
+    this.root.appendChild(this.aboutPanel);
     this.root.appendChild(this.body);
     container.appendChild(this.root);
 
@@ -574,6 +713,23 @@
   };
 
   // ------------------------------------------------------------ open and shut
+
+  Wallet.prototype.about = function () {
+    var open = this.aboutPanel.hidden;
+    this.aboutPanel.hidden = !open;
+    this.aboutButton.setAttribute("aria-expanded", open ? "true" : "false");
+    // Once the coordinator has booted it knows the hash of what it loaded, so
+    // say that rather than what was asked for. Before then the panel shows the
+    // pins, which is all anyone can honestly claim.
+    var loaded = C.loaded && C.loaded();
+    if (open && loaded && !this.aboutPanel.dataset.loaded) {
+      this.aboutPanel.dataset.loaded = "yes";
+      var running = element("p");
+      running.innerHTML = "<b>Loaded now:</b> embit <code>" + loaded.embit.slice(0, 16)
+        + "…</code>, coordinator.py <code>" + loaded.coordinator.slice(0, 16) + "…</code>";
+      this.aboutPanel.appendChild(running);
+    }
+  };
 
   Wallet.prototype.toggle = function (want) {
     var self = this;
@@ -656,7 +812,11 @@
   Wallet.prototype.readDevice = function () {
     if (!scope.jsQR || !this.screen) return null;
     var context = this.screen.getContext("2d");
-    var image = context.getImageData(0, 0, 240, 240);
+    // The whole canvas. This read 240 by 240, which is the SeedSigner's own
+    // screen but not this one: the simulated device is 320 wide, so a centred
+    // QR lost its right quarter and jsQR saw nothing. Small codes happened to
+    // fit inside the crop, which is why it worked at all.
+    var image = context.getImageData(0, 0, this.screen.width, this.screen.height);
     var found = scope.jsQR(image.data, image.width, image.height);
     return found && found.data ? found.data : null;
   };
@@ -1878,9 +2038,18 @@
     else if (this.stage === "sp-ready") this.renderSpReady();
     else if (this.stage === "idle") this.renderIdle();
     else if (this.stage === "connecting") this.renderConnecting();
+    else if (featureFor(this.view)) featureFor(this.view).render(this);
     else if (this.view === "receive") this.renderReceive();
     else if (this.view === "send") this.renderSend();
     else this.renderBalance();
+
+    // Whatever the balance view decided to draw, each feature gets to offer its
+    // own way in. A build carrying no features adds nothing here.
+    if (this.stage === "ready" && this.view === "balance" && !this.verify) {
+      for (var f = 0; f < FEATURES.length; f++) {
+        if (FEATURES[f].entry) this.body.appendChild(FEATURES[f].entry(this));
+      }
+    }
 
     if (this.error) {
       var bad = element("p", "wal-bad", this.error);
@@ -1987,6 +2156,27 @@
   Wallet.prototype.renderConnecting = function () {
     this.body.appendChild(element("p", "wal-say", "Connecting to the device."));
     this.sayInto(this.body);
+  };
+
+  /** A button that puts a long string on the clipboard and says it did.
+   *
+   * An address and a transaction id are 64 characters of hex. On screen they
+   * are unreadable, uncheckable and take a fifth of the panel; nobody types
+   * one in by hand either. So they are not shown at all, and this is how they
+   * leave the page.
+   */
+  Wallet.prototype.copier = function (label, value) {
+    var button = this.button(label, false, function () {
+      var said = button.textContent;
+      var done = function () {
+        button.textContent = "Copied";
+        setTimeout(function () { button.textContent = said; }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(value).then(done, function () {});
+      }
+    });
+    return button;
   };
 
   Wallet.prototype.button = function (label, primary, handler) {
@@ -2618,6 +2808,23 @@
   }
 
   scope.WalletCoordinator = {
+    /** Register an optional feature. See extras/musig.js for the shape. */
+    defineFeature: function (feature) { FEATURES.push(feature); },
+
+    // What a feature needs from the shell to draw itself. Named here so that
+    // moving a view out of this file is a move, not a rewrite. A name left off
+    // this list is not a syntax error anywhere: the feature loads, and throws
+    // the first time the missing name is reached, which is how the cosigner
+    // list stopped filling after the first one.
+    element: element,
+    sats: sats,
+    scanChain: scanChain,
+    track: track,
+    EXPORT_PATH: EXPORT_PATH,
+    ACCOUNT_LINE: ACCOUNT_LINE,
+    ACCOUNT_URS: ACCOUNT_URS,
+    feed: feed,
+
     mount: function (options) {
       var wallet = new Wallet(options);
       scope.WalletCoordinator.current = wallet;
@@ -2645,4 +2852,5 @@
       return wallet ? wallet.stream() : null;
     },
   };
+  scope.WalletCoordinator.Wallet = Wallet;
 })(typeof self !== "undefined" ? self : this);

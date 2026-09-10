@@ -107,9 +107,9 @@ while [ "$#" -gt 0 ]; do
 done
 
 case "${FIRMWARE}" in
-    smartcard|stock|doomsigner) ;;
-    "")  echo "which firmware? one of: smartcard stock doomsigner" >&2; usage >&2; exit 2 ;;
-    *)   echo "no such firmware: ${FIRMWARE} (one of: smartcard stock doomsigner)" >&2; exit 2 ;;
+    smartcard|stock|doomsigner|doomsigner-musig) ;;
+    "")  echo "which firmware? one of: smartcard stock doomsigner doomsigner-musig" >&2; usage >&2; exit 2 ;;
+    *)   echo "no such firmware: ${FIRMWARE} (one of: smartcard stock doomsigner doomsigner-musig)" >&2; exit 2 ;;
 esac
 
 die() {
@@ -295,7 +295,7 @@ STAGE_PACKAGES=(
 )
 
 ;;
-doomsigner)
+doomsigner|doomsigner-musig)
 
 # Our own fork of the fork above. Every row is the smartcard table's, with one
 # exception, and the table is written out in full rather than expressed as a
