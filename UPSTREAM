@@ -71,8 +71,8 @@ tag    = none: dev, ahead of the last release
 # vault, and the spare nonces a coordinator pools, on top of silent payments and
 # the boot game. Pinned to dev rather than a tag because the fork has not tagged
 # a release with the MuSig2 work yet. Re-pinned below once built.
-wallet_zip_sha256          = 94c66d6dadc50089df13506f131893a6c366c03013885d56a7332025c7dfc072
-wallet_zip_contents_sha256 = 4359d3b83789cb34dd5ba0bed25e70d572d1a5aabee6a9ce81c5cf218b4be486
+wallet_zip_sha256          = be9236091a58353715caa0642aa6dd3810638b7e5ef1a86c09e8163142175b84
+wallet_zip_contents_sha256 = 8609c0de96153693ca0e88566dfaa6bdf4c60f25163285509d50189b7db067f2
 
 
 
