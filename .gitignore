@@ -40,3 +40,17 @@ build/out/doom/
 # Anything holding a real seed. research/fund_mainnet.py reads one from
 # outside this tree.
 *.local.json
+
+# Local MuSig2 / DoomSigner dev harnesses. Never run by test/run.py, and each
+# one hardcodes this machine's scratch paths (_scratch, .cache/tmp, sibling
+# repos), so they only work here and leak-scan flagged the home directory in
+# them. Kept on disk for local use, not published.
+demo/core_interop.py
+test/test_camera_refused.py
+test/test_coordinator_flow.py
+test/test_coordinator_parity.py
+test/test_musig_browser.py
+test/test_musig_e2e.py
+test/test_musig_panel.py
+test/test_musig_wallet.py
+test/test_pool_conformance.py

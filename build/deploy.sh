@@ -25,7 +25,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
-SITE_DIR="${1:-/home/rob/apps/bitsaga/webapp/seedsigner-simulator}"
+SITE_DIR="${1:-$HOME/apps/bitsaga/webapp/seedsigner-simulator}"
 
 [ -d "${SITE_DIR}" ] || { echo "no such directory: ${SITE_DIR}" >&2; exit 2; }
 
