@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, "/home/rob/.cache/tmp/ss-sp-spend-nno_t15g")
 sys.path.insert(0, "/home/rob/apps/_scratch/embit-musig/src")
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src" / "web"))
-sys.path.insert(0, "/home/rob/apps/seedsigner-sp/src")
+sys.path.insert(0, "/home/rob/apps/doomsigner/src")
 sys.path.insert(0, "/home/rob/apps/bitsaga/services/signet/test")
 
 from embit import bip32, bip39, networks
