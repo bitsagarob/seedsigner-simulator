@@ -205,7 +205,7 @@ def main() -> int:
         window = wait_screen(log, "WarningScreen", importing, 180,
                              "the wallet to finish with the import")
         check("the wallet's own success screen is unreachable (upstream bug, see header)",
-              log.seen(r"TypeError: cannot unpack non-iterable ECPubkey object",
+              log.seen(r"\[smartcard_views\] Satochip Import Failed: cannot unpack non-iterable ECPubkey object",
                        importing) is not None)
         page.screenshot(path=harness.artifact("cards-seed-imported.png"))
         press(page, "Enter")
