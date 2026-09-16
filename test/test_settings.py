@@ -46,11 +46,14 @@ TO_MAINNET = ("ArrowUp", "Enter")
 # The sentence that is up on either network. A seed you rely on is the same seed
 # whichever network the device is set to, and typing it here compromises its
 # mainnet keys either way, so this half is not a mainnet sentence.
-ALWAYS = "Never enter a seed phrase you rely on"
+ALWAYS = "Never enter a real seed phrase"
 
 # What mainnet adds, and only mainnet: no secure element under keys that are now
 # the real ones.
-ONLY_ON_MAINNET = "no secure element"
+ONLY_ON_MAINNET = (
+    ". On Mainnet this page holds the real mainnet keys for whatever you give it, "
+    "with no secure element under them: treat anything typed in as public."
+)
 
 
 def warning(page):
@@ -93,11 +96,16 @@ def main() -> int:
         check("a fresh page comes up on Testnet",
               indicator(page) == ("Bitcoin network: Testnet", False),
               str(indicator(page)))
-        check("and offers our test network while it is on one",
-              page.locator(".note").is_visible())
+        page.locator("#about > summary").click()
+        check("and describes our test network in About while it is on one",
+              page.locator("#about .note").is_visible()
+              and "Bitsaga Signet is a test network" in page.locator("#about .note").inner_text())
+        page.locator("#about > summary").click()
         said, mainnet_half = warning(page)
         check("the warning is the short one on Testnet",
-              ALWAYS in said and not mainnet_half and ONLY_ON_MAINNET not in said,
+              page.locator("#warning").is_visible()
+              and page.locator("#warning > strong").is_visible()
+              and said == ALWAYS and not mainnet_half,
               said)
         page.screenshot(path=harness.firmware_artifact("network-testnet.png"), full_page=True)
 
@@ -151,13 +159,18 @@ def main() -> int:
               str(indicator(page)))
         # A visitor who has gone to mainnet on purpose is not being taught
         # anything, and should not be handed a test network to play on.
-        check("and the page stops offering our test network",
-              not page.locator(".note").is_visible())
+        page.locator("#about > summary").click()
+        check("and About stops describing our test network on Mainnet",
+              page.locator("#about > div").is_visible()
+              and page.locator("#about .note").count() == 1
+              and not page.locator("#about .note").is_visible())
+        page.locator("#about > summary").click()
         # The short half stays: what changed is that the page now holds real
         # mainnet keys, not whether a seed you rely on may be typed into it.
         said, mainnet_half = warning(page)
         check("the warning keeps its short half and adds the mainnet one",
-              ALWAYS in said and mainnet_half and ONLY_ON_MAINNET in said,
+              page.locator("#warning > strong").is_visible()
+              and mainnet_half and said == ALWAYS + ONLY_ON_MAINNET,
               said)
         page.screenshot(path=harness.firmware_artifact("network-mainnet.png"), full_page=True)
 
