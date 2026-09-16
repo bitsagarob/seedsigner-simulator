@@ -215,6 +215,28 @@ encodes the PNG changes underneath it:
 and look at the file before committing it. A baseline nobody read anchors
 nothing.
 
+**`test_passphrase.py`**: the BIP39 passphrase changes the key, not just the
+screen. The published test mnemonic goes in by camera twice, in fresh browser
+contexts: once with no passphrase, once with `abc` entered through the firmware's
+own Type Passphrase keyboard. The wallet's log has to announce the keyboard,
+return exactly the typed passphrase, reach the review screen and then finalize
+the seed. Both runs export a single-sig native Segwit account at `m/84'/1'/0'`,
+on the simulator's default Testnet, through the wallet's own Export Xpub screens.
+
+Screen names prove the route, not the key. The static QR the wallet draws is read
+back and compared, origin and every character of the `vpub`, against
+`mainnet_reference.py`, which derives both answers independently with and without
+the passphrase. Both fingerprints must match their respective reference roots
+and differ from each other; the account keys must differ too, not just the origin
+labels. A wallet that silently ignores the passphrase cannot pass by reaching a
+convincing-looking review screen.
+
+Smartcard firmware only, one ASCII passphrase and one account path. This does not
+check Unicode normalization, every keyboard layout, editing or discarding a
+passphrase, scanning one, loading one from a card, or signing with the resulting
+key. Nothing here makes a browser safe for real seeds; this mnemonic and
+passphrase are public test inputs and nothing derived from them should hold value.
+
 **`test_cards_browser.py`**: the same card story as `test_cards.py`, but through
 `wallet.html` and the real tray: an empty reader ends in a warning rather than a
 hang, Card A reaches the Python side with Card A's UID, Card B with a different

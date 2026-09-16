@@ -55,6 +55,7 @@ SUITE = [
     ("scan_native", ["test_scan_native.py"], True),
     ("camera_stall", ["test_camera_stall.py"], True),
     ("password", ["test_password.py"], True),
+    ("passphrase", ["test_passphrase.py"], True),
     ("stock_scan_seedqr", ["test_scan.py"], True),
     ("stock_scan_compact", ["test_scan.py"], True),
     ("stock_scan_native", ["test_scan_native.py"], True),
