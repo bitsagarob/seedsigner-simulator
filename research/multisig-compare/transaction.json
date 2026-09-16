@@ -1,0 +1,19 @@
+{
+  "network": "Testnet",
+  "inputs": "Fabricated UTXO, never existed; no chain access or broadcast.",
+  "descriptor": "wsh(sortedmulti(2,[b2269592/48h/1h/0h/2h]tpubDF9sNTC3SuZRxmN51NQmUus1X57QZEuAusZiqQVNkQKZ6Sov8f6ndy5Zg2RjAnErjaS55DUto3gWmzHd8hudYjtcCa5Zacpjk6bM48fTky8/{0,1}/*,[73c5da0a/48h/1h/0h/2h]tpubDFH9dgzveyD8zTbPUFuLrGmCydNvxehyNdUXKJAQN8x4aZ4j6UZqGfnqFrD4NqyaTVGKbvEW54tsvPTK2UoSbCC1PJY8iCNiwTL3RWZEheQ/{0,1}/*,[b8688df1/48h/1h/0h/2h]tpubDEfobrrtptRTbKf4gysDhoabneABDTAcdj3Vbn4XwPsLE2pmqpizSPRG6zHsbAMuiSgWmWPsYCLHTKTPpyrGJ5rAoTpKoQNZcxodiPf2tSJ/{0,1}/*))",
+  "exported_accounts": {
+    "stock": [
+      "[b2269592/48'/1'/0'/2']Vpub5n1oN7ky1E5PQwxMq8KQgtgSZom7ty6hrHaeqKv12FeJs95fKXJrLWxPCHPFCuCgMrjXqGn2DqXsSQBebgPKDKBnEm3p8fzXWR9X6w9Jd5K",
+      "[73c5da0a/48'/1'/0'/2']Vpub5n95dMZrDHj6SeBgJ1oz4Fae2N2eJNuWK3VTKDb2dzGpMFLUHLmtyDfen7AaQxwQ5mZnMyXdVrkEaoMLVTH8FmVBRVWPGFYWhmtDUGehGmq",
+      "[b8688df1/48'/1'/0'/2']Vpub5mXjbXRpPCwR3WFMWjmrunQ2qNotZBN9a94RbhVADFC5zj6X2gw48wJ5dFFPdHKjLiyyXZgzxzBe7jMRHxKwxf9LqenaMTYMPHMomBZhZ24"
+    ],
+    "smartcard": [
+      "[b2269592/48'/1'/0'/2']Vpub5n1oN7ky1E5PQwxMq8KQgtgSZom7ty6hrHaeqKv12FeJs95fKXJrLWxPCHPFCuCgMrjXqGn2DqXsSQBebgPKDKBnEm3p8fzXWR9X6w9Jd5K",
+      "[73c5da0a/48'/1'/0'/2']Vpub5n95dMZrDHj6SeBgJ1oz4Fae2N2eJNuWK3VTKDb2dzGpMFLUHLmtyDfen7AaQxwQ5mZnMyXdVrkEaoMLVTH8FmVBRVWPGFYWhmtDUGehGmq",
+      "[b8688df1/48'/1'/0'/2']Vpub5mXjbXRpPCwR3WFMWjmrunQ2qNotZBN9a94RbhVADFC5zj6X2gw48wJ5dFFPdHKjLiyyXZgzxzBe7jMRHxKwxf9LqenaMTYMPHMomBZhZ24"
+    ]
+  },
+  "unsigned_psbt": "cHNidP8BAFICAAAAAR20+OcKdKCIRujzNOEdxCDBG0ac9izh6jimFcpByxbnAAAAAAD9////AZBfAQAAAAAAFgAUld4dLHjgEcD02OjdIiQ9SGp56oMAAAAAAAEBK6CGAQAAAAAAIgAgHNsfXbLCQAsBRDifa4Mq0qe8R7zw1AEiwk/8QfTaCR8BBWlSIQMLkO0uhrrX8qT+l2m7QX17qcqhEkgH2/s2Lfvutl5+ASEDqpO2pw7SFlivL6/Mc0TMxb/wcDzYcr2dnwaCXgLyFFwhA7pmWP/8uOZLE7/6HAcRHoUW8wbOKo3MLKkoaf3WsM4oU64iBgO6Zlj//LjmSxO/+hwHER6FFvMGziqNzCypKGn91rDOKByyJpWSMAAAgAEAAIAAAACAAgAAgAAAAAAAAAAAIgYDC5DtLoa61/Kk/pdpu0F9e6nKoRJIB9v7Ni377rZefgEcc8XaCjAAAIABAACAAAAAgAIAAIAAAAAAAAAAACIGA6qTtqcO0hZYry+vzHNEzMW/8HA82HK9nZ8Ggl4C8hRcHLhojfEwAACAAQAAgAAAAIACAACAAAAAAAAAAAAAAA==",
+  "sighash": "0cff6da3bcb0fa1829490a49353d4d80a065bb0be735978d6403c8ff85148285"
+}

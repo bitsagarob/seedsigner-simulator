@@ -1,0 +1,7 @@
+{
+  "descriptor-scan": "Both ScanScreen captures show the same bottom instruction on a blank white preview, but stock fills the width with white while smartcard has black vertical bars on both sides.",
+  "sign-1-select": "Both ButtonListScreen captures show the same three fingerprints with b2269592 highlighted, but smartcard shows Use Satochip card followed by Scan a seed in the bottom two visible rows where stock shows Scan a seed followed by Enter 12-word seed.",
+  "sign-2-select": "Both ButtonListScreen captures still highlight b2269592 and show the same three fingerprints, but smartcard shows Use Satochip card followed by Scan a seed in the bottom two visible rows where stock shows Scan a seed followed by Enter 12-word seed.",
+  "sign-1-qr": "The QRDisplayScreen captures show different black QR patterns on the same dark gray square with the same black area to the right, consistent with unsynchronized animation frames rather than a visible firmware layout difference, while signatures.json records identical exported PSBTs with one verified signature each.",
+  "sign-2-qr": "The QRDisplayScreen captures show different black QR patterns on the same dark gray square with the same black area to the right, consistent with unsynchronized animation frames rather than a visible firmware layout difference, while signatures.json records identical exported PSBTs with two verified signatures each."
+}

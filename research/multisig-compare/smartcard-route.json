@@ -1,0 +1,1711 @@
+{
+  "rows": [
+    {
+      "action": "Main menu ready (no key)",
+      "screen": "MainMenuScreen",
+      "note": "Scan selected; fresh Testnet session",
+      "entered": [
+        "[py] display() enter: OpeningSplashScreen",
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ScanScreen",
+      "note": "Both devices scan the same published seed as a numeric SeedQR.",
+      "entered": [
+        "[py] display() enter: ScanScreen"
+      ]
+    },
+    {
+      "action": "Wait (no key)",
+      "screen": "SeedFinalizeScreen",
+      "note": "SeedQR decoded",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Both devices finalize the scanned seed into memory.",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowUp",
+      "screen": "SeedOptionsScreen",
+      "note": "Back arrow",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Return to main menu; seed retained",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Loaded seeds",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Backup seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Backup seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Backup seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Smartcard offers backup methods; stock keeps the scanned seed in memory.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "To SeedKeeper",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Smartcard asks for the inserted SeedKeeper PIN.",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN a",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaaa",
+      "entered": []
+    },
+    {
+      "action": "3",
+      "screen": "WarningScreen",
+      "note": "Card not initialized",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Smartcard asks for a new SeedKeeper PIN.",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN a",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaaa",
+      "entered": []
+    },
+    {
+      "action": "3",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Confirm new PIN",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN a",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaaa",
+      "entered": []
+    },
+    {
+      "action": "3",
+      "screen": "LargeIconStatusScreen",
+      "note": "Card initialized",
+      "entered": [
+        "[py] display() enter: LargeIconStatusScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Smartcard offers the seed fingerprint as its card label.",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "3",
+      "screen": "LargeIconStatusScreen",
+      "note": "Smartcard confirms that the seed was saved to the SeedKeeper.",
+      "entered": [
+        "[py] display() enter: LargeIconStatusScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Return to seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "WarningScreen",
+      "note": "Smartcard asks before removing the seed from device memory, leaving the card copy.",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "WarningScreen",
+      "note": "Discard selected",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Smartcard has discarded the current seed from device memory.",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Seed list",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "From SeedKeeper",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "From SeedKeeper",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "From SeedKeeper",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Smartcard asks for the PIN to restore the seed from its SeedKeeper.",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN a",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaaa",
+      "entered": []
+    },
+    {
+      "action": "3",
+      "screen": "ButtonListScreen",
+      "note": "Stored secret list",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedFinalizeScreen",
+      "note": "Smartcard reads the seed back from its SeedKeeper for finalization.",
+      "entered": [
+        "[py] display() enter: SeedFinalizeScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Finalize restored seed",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowUp",
+      "screen": "SeedOptionsScreen",
+      "note": "Back arrow",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Return to main menu; seed retained",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ScanScreen",
+      "note": "Both devices scan the same published seed as a numeric SeedQR.",
+      "entered": [
+        "[py] display() enter: ScanScreen"
+      ]
+    },
+    {
+      "action": "Wait (no key)",
+      "screen": "SeedFinalizeScreen",
+      "note": "SeedQR decoded",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Both devices finalize the scanned seed into memory.",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowUp",
+      "screen": "SeedOptionsScreen",
+      "note": "Back arrow",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Return to main menu; seed retained",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Loaded seeds",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Choose seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Backup seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Backup seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Backup seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Smartcard offers backup methods; stock keeps the scanned seed in memory.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "To SeedKeeper",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Smartcard asks for the inserted SeedKeeper PIN.",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN a",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaaa",
+      "entered": []
+    },
+    {
+      "action": "3",
+      "screen": "WarningScreen",
+      "note": "Card not initialized",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Smartcard asks for a new SeedKeeper PIN.",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN a",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaaa",
+      "entered": []
+    },
+    {
+      "action": "3",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Confirm new PIN",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN a",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaaa",
+      "entered": []
+    },
+    {
+      "action": "3",
+      "screen": "LargeIconStatusScreen",
+      "note": "Card initialized",
+      "entered": [
+        "[py] display() enter: LargeIconStatusScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Smartcard offers the seed fingerprint as its card label.",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "3",
+      "screen": "LargeIconStatusScreen",
+      "note": "Smartcard confirms that the seed was saved to the SeedKeeper.",
+      "entered": [
+        "[py] display() enter: LargeIconStatusScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Return to seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "WarningScreen",
+      "note": "Smartcard asks before removing the seed from device memory, leaving the card copy.",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "WarningScreen",
+      "note": "Discard selected",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Smartcard has discarded the current seed from device memory.",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Seed list",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Load a seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Load a seed methods",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "From SeedKeeper",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "From SeedKeeper",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "From SeedKeeper",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Smartcard asks for the PIN to restore the seed from its SeedKeeper.",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN a",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaaa",
+      "entered": []
+    },
+    {
+      "action": "3",
+      "screen": "ButtonListScreen",
+      "note": "Stored secret list",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedFinalizeScreen",
+      "note": "Smartcard reads the seed back from its SeedKeeper for finalization.",
+      "entered": [
+        "[py] display() enter: SeedFinalizeScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Finalize restored seed",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowUp",
+      "screen": "SeedOptionsScreen",
+      "note": "Back arrow",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Return to main menu; seed retained",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ScanScreen",
+      "note": "Both devices scan the same published seed as a numeric SeedQR.",
+      "entered": [
+        "[py] display() enter: ScanScreen"
+      ]
+    },
+    {
+      "action": "Wait (no key)",
+      "screen": "SeedFinalizeScreen",
+      "note": "SeedQR decoded",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Both devices finalize the scanned seed into memory.",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowUp",
+      "screen": "SeedOptionsScreen",
+      "note": "Back arrow",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Return to main menu; seed retained",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Loaded seeds",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Choose seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Choose seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Backup seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Backup seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Backup seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Smartcard offers backup methods; stock keeps the scanned seed in memory.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "To SeedKeeper",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Smartcard asks for the inserted SeedKeeper PIN.",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN a",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaaa",
+      "entered": []
+    },
+    {
+      "action": "3",
+      "screen": "WarningScreen",
+      "note": "Card not initialized",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Smartcard asks for a new SeedKeeper PIN.",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN a",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaaa",
+      "entered": []
+    },
+    {
+      "action": "3",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Confirm new PIN",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN a",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaaa",
+      "entered": []
+    },
+    {
+      "action": "3",
+      "screen": "LargeIconStatusScreen",
+      "note": "Card initialized",
+      "entered": [
+        "[py] display() enter: LargeIconStatusScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Smartcard offers the seed fingerprint as its card label.",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "3",
+      "screen": "LargeIconStatusScreen",
+      "note": "Smartcard confirms that the seed was saved to the SeedKeeper.",
+      "entered": [
+        "[py] display() enter: LargeIconStatusScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Return to seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Discard seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "WarningScreen",
+      "note": "Smartcard asks before removing the seed from device memory, leaving the card copy.",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "WarningScreen",
+      "note": "Discard selected",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Smartcard has discarded the current seed from device memory.",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Seed list",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Load a seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Load a seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Load a seed methods",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "From SeedKeeper",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "From SeedKeeper",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "From SeedKeeper",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "Smartcard asks for the PIN to restore the seed from its SeedKeeper.",
+      "entered": [
+        "[py] display() enter: SeedAddPassphraseScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN a",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaa",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedAddPassphraseScreen",
+      "note": "PIN aaaa",
+      "entered": []
+    },
+    {
+      "action": "3",
+      "screen": "ButtonListScreen",
+      "note": "Stored secret list",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedFinalizeScreen",
+      "note": "Smartcard reads the seed back from its SeedKeeper for finalization.",
+      "entered": [
+        "[py] display() enter: SeedFinalizeScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Finalize restored seed",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowUp",
+      "screen": "SeedOptionsScreen",
+      "note": "Back arrow",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Return to main menu; seed retained",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Loaded seeds",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Export Xpub",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose the signature type for the account key export.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Multisig",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose Native Segwit for the multisig account.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose the account key QR format.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Static QR",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "WarningScreen",
+      "note": "Acknowledge the account key privacy warning.",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedExportXpubDetailsScreen",
+      "note": "Review the multisig account key at m/48'/1'/0'/2'.",
+      "entered": [
+        "[py] display() enter: SeedExportXpubDetailsScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "QRDisplayScreen",
+      "note": "Export the multisig account key as a static QR.",
+      "entered": [
+        "[py] display() enter: QRDisplayScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Leave account key QR",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Loaded seeds",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Choose seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Export Xpub",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose the signature type for the account key export.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Multisig",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose Native Segwit for the multisig account.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose the account key QR format.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Static QR",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "WarningScreen",
+      "note": "Acknowledge the account key privacy warning.",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedExportXpubDetailsScreen",
+      "note": "Review the multisig account key at m/48'/1'/0'/2'.",
+      "entered": [
+        "[py] display() enter: SeedExportXpubDetailsScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "QRDisplayScreen",
+      "note": "Export the multisig account key as a static QR.",
+      "entered": [
+        "[py] display() enter: QRDisplayScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Leave account key QR",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Loaded seeds",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Choose seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Choose seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Export Xpub",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose the signature type for the account key export.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Multisig",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose Native Segwit for the multisig account.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose the account key QR format.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Static QR",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "WarningScreen",
+      "note": "Acknowledge the account key privacy warning.",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedExportXpubDetailsScreen",
+      "note": "Review the multisig account key at m/48'/1'/0'/2'.",
+      "entered": [
+        "[py] display() enter: SeedExportXpubDetailsScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "QRDisplayScreen",
+      "note": "Export the multisig account key as a static QR.",
+      "entered": [
+        "[py] display() enter: QRDisplayScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Leave account key QR",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ScanScreen",
+      "note": "Scan the 2-of-3 descriptor assembled from the three exported account keys.",
+      "entered": [
+        "[py] display() enter: ScanScreen"
+      ]
+    },
+    {
+      "action": "Wait (no key)",
+      "screen": "MultisigWalletDescriptorScreen",
+      "note": "Parsed 2-of-3 descriptor",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Accept descriptor",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ScanScreen",
+      "note": "Scan PSBT",
+      "entered": [
+        "[py] display() enter: ScanScreen"
+      ]
+    },
+    {
+      "action": "Wait (no key)",
+      "screen": "ButtonListScreen",
+      "note": "Select signer",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTOverviewScreen",
+      "note": "Review the multisig transaction overview.",
+      "entered": [
+        "[py] display() enter: PSBTOverviewScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "WarningScreen",
+      "note": "Review the warning that this transaction has no change output.",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTMathScreen",
+      "note": "Review 100000 sats in, 90000 sats to the recipient, and a 10000 sat fee.",
+      "entered": [
+        "[py] display() enter: PSBTMathScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTAddressDetailsScreen",
+      "note": "Review the fabricated recipient address and amount.",
+      "entered": [
+        "[py] display() enter: PSBTAddressDetailsScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTFinalizeScreen",
+      "note": "Approve signing the multisig transaction.",
+      "entered": [
+        "[py] display() enter: PSBTFinalizeScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "QRDisplayScreen",
+      "note": "Read the signed PSBT from the device animated QR.",
+      "entered": [
+        "[py] display() enter: QRDisplayScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Leave signed PSBT QR",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ScanScreen",
+      "note": "Scan PSBT",
+      "entered": [
+        "[py] display() enter: ScanScreen"
+      ]
+    },
+    {
+      "action": "Wait (no key)",
+      "screen": "ButtonListScreen",
+      "note": "Select signer",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Select second seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTOverviewScreen",
+      "note": "Review the multisig transaction overview.",
+      "entered": [
+        "[py] display() enter: PSBTOverviewScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "WarningScreen",
+      "note": "Review the warning that this transaction has no change output.",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTMathScreen",
+      "note": "Review 100000 sats in, 90000 sats to the recipient, and a 10000 sat fee.",
+      "entered": [
+        "[py] display() enter: PSBTMathScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTAddressDetailsScreen",
+      "note": "Review the fabricated recipient address and amount.",
+      "entered": [
+        "[py] display() enter: PSBTAddressDetailsScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTFinalizeScreen",
+      "note": "Approve signing the multisig transaction.",
+      "entered": [
+        "[py] display() enter: PSBTFinalizeScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "QRDisplayScreen",
+      "note": "Read the signed PSBT from the device animated QR.",
+      "entered": [
+        "[py] display() enter: QRDisplayScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Leave signed PSBT QR",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    }
+  ],
+  "checks": [
+    "[card] Card A stored secret 1, type 0x10 subtype 0x01, label 'b2269592', 84 bytes",
+    "[card] Card B stored secret 1, type 0x10 subtype 0x01, label '73c5da0a', 84 bytes",
+    "[card] Card C stored secret 1, type 0x10 subtype 0x01, label 'b8688df1', 84 bytes",
+    {
+      "path": "m/48'/1'/0'/2'",
+      "exported": "[b2269592/48'/1'/0'/2']Vpub5n1oN7ky1E5PQwxMq8KQgtgSZom7ty6hrHaeqKv12FeJs95fKXJrLWxPCHPFCuCgMrjXqGn2DqXsSQBebgPKDKBnEm3p8fzXWR9X6w9Jd5K",
+      "independent_match": true
+    },
+    {
+      "path": "m/48'/1'/0'/2'",
+      "exported": "[73c5da0a/48'/1'/0'/2']Vpub5n95dMZrDHj6SeBgJ1oz4Fae2N2eJNuWK3VTKDb2dzGpMFLUHLmtyDfen7AaQxwQ5mZnMyXdVrkEaoMLVTH8FmVBRVWPGFYWhmtDUGehGmq",
+      "independent_match": true
+    },
+    {
+      "path": "m/48'/1'/0'/2'",
+      "exported": "[b8688df1/48'/1'/0'/2']Vpub5mXjbXRpPCwR3WFMWjmrunQ2qNotZBN9a94RbhVADFC5zj6X2gw48wJ5dFFPdHKjLiyyXZgzxzBe7jMRHxKwxf9LqenaMTYMPHMomBZhZ24",
+      "independent_match": true
+    },
+    {
+      "signer": 1,
+      "signatures_verified": 1
+    },
+    {
+      "signer": 2,
+      "signatures_verified": 2
+    }
+  ]
+}
