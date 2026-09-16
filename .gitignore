@@ -1,7 +1,7 @@
 # The Pyodide runtime: ~26 MB of prebuilt WebAssembly, fetched and hash-verified
 # by build/fetch-assets.sh. Deliberately not committed -- a binary nobody can
 # read does not belong in a repository whose point is that you can read it.
-/src/web/pyodide/
+/src/web/pyodide-e24b45d3/
 
 # Build artefacts. wallet.zip is what build/build-wallet-zip.sh produces; it is
 # not a source file, and committing it would invite people to trust the copy in

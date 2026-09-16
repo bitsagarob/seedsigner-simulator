@@ -43,8 +43,9 @@ FIRMWARE = os.environ.get("SIM_FIRMWARE", "smartcard")
 # The build outputs, none of which is committed. build/build-wallet-zip.sh
 # assembles a wallet zip per firmware from its pinned upstream SeedSigner commit
 # and leaves it in build/out; build/fetch-assets.sh downloads the Pyodide
-# runtime into src/web/pyodide. Both are looked for in a list rather than at one
-# path, so a deploy that puts everything in one directory still works.
+# runtime into src/web/pyodide-e24b45d3. Both are looked for in a list rather
+# than at one path, so a deploy that puts everything in one directory still
+# works.
 # SIM_ASSETS replaces the list, which is how the suite is pointed at an
 # already-built tree.
 ASSET_DIRS = [d for d in os.environ.get("SIM_ASSETS", "").split(os.pathsep) if d] or [

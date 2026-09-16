@@ -39,7 +39,7 @@
 # Pyodide is deliberately not compared byte for byte: it is 26 MB per box of
 # somebody else's release, build/fetch-assets.sh already hash-checks it where it
 # is fetched, and an absent or half-copied one shows up in question 3 anyway,
-# because the worker names pyodide/pyodide.js.
+# because the worker names pyodide-e24b45d3/pyodide.js.
 
 set -uo pipefail
 
@@ -121,9 +121,9 @@ trap 'rm -rf -- "${WORK_DIR}"' EXIT
 # itself loads is `repo`: a customised one of those is not a re-skin, it is a
 # different simulator.
 #
-# src/web/pyodide is skipped for the reason in the header: 26 MB per box of
-# somebody else's release, hash-checked where it is fetched, and an absent one
-# shows up in question 3 anyway.
+# src/web/pyodide-e24b45d3 is skipped for the reason in the header: 26 MB per
+# box of somebody else's release, hash-checked where it is fetched, and an
+# absent one shows up in question 3 anyway.
 
 UPSTREAM_FILE="${REPO_ROOT}/UPSTREAM"
 [ -f "${UPSTREAM_FILE}" ] || { echo "missing ${UPSTREAM_FILE}" >&2; exit 2; }
@@ -158,11 +158,11 @@ list_web_files() {
     if git -C "${REPO_ROOT}" rev-parse --git-dir >/dev/null 2>&1; then
         git -C "${REPO_ROOT}" ls-files -z -- src/web \
         | tr '\0' '\n' \
-        | grep -v '^src/web/pyodide' \
+        | grep -v '^src/web/pyodide-e24b45d3' \
         | sed "s|^|${REPO_ROOT}/|" \
         | LC_ALL=C sort
     else
-        find "${REPO_ROOT}/src/web" -path "${REPO_ROOT}/src/web/pyodide" -prune -o \
+        find "${REPO_ROOT}/src/web" -path "${REPO_ROOT}/src/web/pyodide-e24b45d3" -prune -o \
              -type f -print | LC_ALL=C sort
     fi
 }

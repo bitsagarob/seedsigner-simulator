@@ -92,7 +92,8 @@ def ensure_assets() -> bool:
     wanted = [
         ("wallet-smartcard.zip", ["build/build-wallet-zip.sh", "smartcard"]),
         ("wallet-stock.zip", ["build/build-wallet-zip.sh", "stock"]),
-        (os.path.join("pyodide", "pyodide.js"), ["build/fetch-assets.sh"]),
+        (os.path.join("pyodide-e24b45d3", "pyodide.js"),
+         ["build/fetch-assets.sh"]),
     ]
     for name, argv in wanted:
         if harness.find_asset(name):

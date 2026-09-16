@@ -62,13 +62,14 @@ ALLOWED_HOME_USERS = {"runner", "user", "username", "you", "youruser", "example"
 # Nothing under these is a tracked source file worth scanning: generated output,
 # vendored dependencies, and the git directory itself.
 #
-# "pyodide" is the downloaded WebAssembly runtime. It is gitignored, hash-checked
-# by build/fetch-assets.sh, and never published from here, so git never reports
-# it -- this entry only matters to the directory-walk fallback below, which
-# otherwise flags the home directory Emscripten hardcodes for its own virtual
-# filesystem. That is a path inside a sandbox, not a path on anybody's machine.
+# "pyodide-e24b45d3" is the downloaded WebAssembly runtime. It is gitignored,
+# hash-checked by build/fetch-assets.sh, and never published from here, so git
+# never reports it -- this entry only matters to the directory-walk fallback
+# below, which otherwise flags the home directory Emscripten hardcodes for its
+# own virtual filesystem. That is a path inside a sandbox, not a path on
+# anybody's machine.
 SKIP_DIRECTORIES = {".git", "node_modules", "artifacts", "__pycache__", ".venv",
-                    "pyodide"}
+                    "pyodide-e24b45d3"}
 
 # Binary-ish files carry no infrastructure and produce noise if grepped.
 SKIP_SUFFIXES = (".png", ".jpg", ".jpeg", ".gif", ".ico", ".woff", ".woff2",

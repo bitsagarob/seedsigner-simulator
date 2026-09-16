@@ -47,7 +47,7 @@ jobs:
         with:
           path: |
             build/out
-            src/web/pyodide
+            src/web/pyodide-e24b45d3
           key: assets-${{ hashFiles('build/*.sh', 'build/checksums.txt', 'UPSTREAM') }}
 
       # fetch-assets.sh needs curl and python3; build-wallet-zip.sh also needs

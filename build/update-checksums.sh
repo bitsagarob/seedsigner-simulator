@@ -82,7 +82,7 @@ fi
 # and src/fakes are copied whole into a wallet zip by build/build-wallet-zip.sh,
 # so a file added to one of them changes that zip's hash.
 #
-# Excluded: src/web/pyodide, which is 26 MB of fetched runtime that
+# Excluded: src/web/pyodide-e24b45d3, which is 26 MB of fetched runtime that
 # build/fetch-assets.sh hash-checks where it fetches it and .gitignore keeps out
 # of the repository, and __pycache__, which is generated and which the build
 # refuses to package anyway.
@@ -105,7 +105,7 @@ list_dirs() {
         [ -d "${ROOT}/${dir}" ] || die "missing ${ROOT}/${dir}"
         find "${ROOT}/${dir}" \
              -name '__pycache__' -prune -o \
-             -path "${ROOT}/src/web/pyodide" -prune -o \
+             -path "${ROOT}/src/web/pyodide-e24b45d3" -prune -o \
              -type f ! -name '*.pyc' \
                      ! -name 'doom.js' ! -name 'doom.wasm' \
                      ! -name 'doom-run.js' ! -name '*.wad' -print

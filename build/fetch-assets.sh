@@ -10,7 +10,7 @@
 # is written down here in plain sight. A mismatch stops the script; it never
 # unpacks something it could not identify.
 #
-#   ./build/fetch-assets.sh              # fetch into src/web/pyodide
+#   ./build/fetch-assets.sh              # fetch into src/web/pyodide-e24b45d3
 #   ./build/fetch-assets.sh --check      # re-verify what is already on disk
 #
 # Trust chain, in the order it is established:
@@ -66,7 +66,7 @@ PYODIDE_PACKAGES=(Pillow pycryptodome cryptography)
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 
-DEST_DIR="${REPO_ROOT}/src/web/pyodide"
+DEST_DIR="${REPO_ROOT}/src/web/pyodide-e24b45d3"
 CHECKSUMS_FILE="${SCRIPT_DIR}/checksums.txt"
 MODE="fetch"
 
@@ -75,8 +75,8 @@ usage() {
 Usage: fetch-assets.sh [options]
 
   --dest DIR   Where to put the Pyodide runtime
-               (default: <repo>/src/web/pyodide, which is where the worker
-               looks for it and which .gitignore excludes)
+               (default: <repo>/src/web/pyodide-e24b45d3, which is the name the
+               worker loads and which .gitignore excludes)
   --check      Verify what is already on disk and exit. Touches the network
                only if something is missing.
   --force      Re-download even if the destination already verifies
