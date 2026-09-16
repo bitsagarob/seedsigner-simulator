@@ -1,0 +1,758 @@
+{
+  "rows": [
+    {
+      "action": "Main menu ready (no key)",
+      "screen": "MainMenuScreen",
+      "note": "Scan selected; fresh Testnet session",
+      "entered": [
+        "[py] display() enter: OpeningSplashScreen",
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ScanScreen",
+      "note": "Both devices scan the same published seed as a numeric SeedQR.",
+      "entered": [
+        "[py] display() enter: ScanScreen"
+      ]
+    },
+    {
+      "action": "Wait (no key)",
+      "screen": "SeedFinalizeScreen",
+      "note": "SeedQR decoded",
+      "entered": [
+        "[py] display() enter: SeedFinalizeScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Both devices finalize the scanned seed into memory.",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowUp",
+      "screen": "SeedOptionsScreen",
+      "note": "Back arrow",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Return to main menu; seed retained",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Loaded seeds",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowUp",
+      "screen": "SeedOptionsScreen",
+      "note": "Back arrow",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Return to main menu; seed retained",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ScanScreen",
+      "note": "Both devices scan the same published seed as a numeric SeedQR.",
+      "entered": [
+        "[py] display() enter: ScanScreen"
+      ]
+    },
+    {
+      "action": "Wait (no key)",
+      "screen": "SeedFinalizeScreen",
+      "note": "SeedQR decoded",
+      "entered": [
+        "[py] display() enter: SeedFinalizeScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Both devices finalize the scanned seed into memory.",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowUp",
+      "screen": "SeedOptionsScreen",
+      "note": "Back arrow",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Return to main menu; seed retained",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Loaded seeds",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Choose seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowUp",
+      "screen": "SeedOptionsScreen",
+      "note": "Back arrow",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Return to main menu; seed retained",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ScanScreen",
+      "note": "Both devices scan the same published seed as a numeric SeedQR.",
+      "entered": [
+        "[py] display() enter: ScanScreen"
+      ]
+    },
+    {
+      "action": "Wait (no key)",
+      "screen": "SeedFinalizeScreen",
+      "note": "SeedQR decoded",
+      "entered": [
+        "[py] display() enter: SeedFinalizeScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Both devices finalize the scanned seed into memory.",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowUp",
+      "screen": "SeedOptionsScreen",
+      "note": "Back arrow",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Return to main menu; seed retained",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Loaded seeds",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Choose seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Choose seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowUp",
+      "screen": "SeedOptionsScreen",
+      "note": "Back arrow",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Return to main menu; seed retained",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Loaded seeds",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Export Xpub",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose the signature type for the account key export.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Multisig",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose Native Segwit for the multisig account.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose the account key QR format.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Static QR",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "WarningScreen",
+      "note": "Acknowledge the account key privacy warning.",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedExportXpubDetailsScreen",
+      "note": "Review the multisig account key at m/48'/1'/0'/2'.",
+      "entered": [
+        "[py] display() enter: SeedExportXpubDetailsScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "QRDisplayScreen",
+      "note": "Export the multisig account key as a static QR.",
+      "entered": [
+        "[py] display() enter: QRDisplayScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Leave account key QR",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Loaded seeds",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Choose seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Export Xpub",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose the signature type for the account key export.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Multisig",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose Native Segwit for the multisig account.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose the account key QR format.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Static QR",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "WarningScreen",
+      "note": "Acknowledge the account key privacy warning.",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedExportXpubDetailsScreen",
+      "note": "Review the multisig account key at m/48'/1'/0'/2'.",
+      "entered": [
+        "[py] display() enter: SeedExportXpubDetailsScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "QRDisplayScreen",
+      "note": "Export the multisig account key as a static QR.",
+      "entered": [
+        "[py] display() enter: QRDisplayScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Leave account key QR",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "ArrowRight",
+      "screen": "MainMenuScreen",
+      "note": "Seeds",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Loaded seeds",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Choose seed",
+      "entered": []
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Choose seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedOptionsScreen",
+      "note": "Seed options",
+      "entered": [
+        "[py] display() enter: SeedOptionsScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "SeedOptionsScreen",
+      "note": "Export Xpub",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose the signature type for the account key export.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Multisig",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose Native Segwit for the multisig account.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ButtonListScreen",
+      "note": "Choose the account key QR format.",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Static QR",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "WarningScreen",
+      "note": "Acknowledge the account key privacy warning.",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "SeedExportXpubDetailsScreen",
+      "note": "Review the multisig account key at m/48'/1'/0'/2'.",
+      "entered": [
+        "[py] display() enter: SeedExportXpubDetailsScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "QRDisplayScreen",
+      "note": "Export the multisig account key as a static QR.",
+      "entered": [
+        "[py] display() enter: QRDisplayScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Leave account key QR",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ScanScreen",
+      "note": "Scan the 2-of-3 descriptor assembled from the three exported account keys.",
+      "entered": [
+        "[py] display() enter: ScanScreen"
+      ]
+    },
+    {
+      "action": "Wait (no key)",
+      "screen": "MultisigWalletDescriptorScreen",
+      "note": "Parsed 2-of-3 descriptor",
+      "entered": [
+        "[py] display() enter: MultisigWalletDescriptorScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Accept descriptor",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ScanScreen",
+      "note": "Scan PSBT",
+      "entered": [
+        "[py] display() enter: ScanScreen"
+      ]
+    },
+    {
+      "action": "Wait (no key)",
+      "screen": "ButtonListScreen",
+      "note": "Select signer",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTOverviewScreen",
+      "note": "Review the multisig transaction overview.",
+      "entered": [
+        "[py] display() enter: PSBTOverviewScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "WarningScreen",
+      "note": "Review the warning that this transaction has no change output.",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTMathScreen",
+      "note": "Review 100000 sats in, 90000 sats to the recipient, and a 10000 sat fee.",
+      "entered": [
+        "[py] display() enter: PSBTMathScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTAddressDetailsScreen",
+      "note": "Review the fabricated recipient address and amount.",
+      "entered": [
+        "[py] display() enter: PSBTAddressDetailsScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTFinalizeScreen",
+      "note": "Approve signing the multisig transaction.",
+      "entered": [
+        "[py] display() enter: PSBTFinalizeScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "QRDisplayScreen",
+      "note": "Read the signed PSBT from the device animated QR.",
+      "entered": [
+        "[py] display() enter: QRDisplayScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Leave signed PSBT QR",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "ScanScreen",
+      "note": "Scan PSBT",
+      "entered": [
+        "[py] display() enter: ScanScreen"
+      ]
+    },
+    {
+      "action": "Wait (no key)",
+      "screen": "ButtonListScreen",
+      "note": "Select signer",
+      "entered": [
+        "[py] display() enter: ButtonListScreen"
+      ]
+    },
+    {
+      "action": "ArrowDown",
+      "screen": "ButtonListScreen",
+      "note": "Select second seed",
+      "entered": []
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTOverviewScreen",
+      "note": "Review the multisig transaction overview.",
+      "entered": [
+        "[py] display() enter: PSBTOverviewScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "WarningScreen",
+      "note": "Review the warning that this transaction has no change output.",
+      "entered": [
+        "[py] display() enter: WarningScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTMathScreen",
+      "note": "Review 100000 sats in, 90000 sats to the recipient, and a 10000 sat fee.",
+      "entered": [
+        "[py] display() enter: PSBTMathScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTAddressDetailsScreen",
+      "note": "Review the fabricated recipient address and amount.",
+      "entered": [
+        "[py] display() enter: PSBTAddressDetailsScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "PSBTFinalizeScreen",
+      "note": "Approve signing the multisig transaction.",
+      "entered": [
+        "[py] display() enter: PSBTFinalizeScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "QRDisplayScreen",
+      "note": "Read the signed PSBT from the device animated QR.",
+      "entered": [
+        "[py] display() enter: QRDisplayScreen"
+      ]
+    },
+    {
+      "action": "Enter",
+      "screen": "MainMenuScreen",
+      "note": "Leave signed PSBT QR",
+      "entered": [
+        "[py] display() enter: MainMenuScreen"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "path": "m/48'/1'/0'/2'",
+      "exported": "[b2269592/48'/1'/0'/2']Vpub5n1oN7ky1E5PQwxMq8KQgtgSZom7ty6hrHaeqKv12FeJs95fKXJrLWxPCHPFCuCgMrjXqGn2DqXsSQBebgPKDKBnEm3p8fzXWR9X6w9Jd5K",
+      "independent_match": true
+    },
+    {
+      "path": "m/48'/1'/0'/2'",
+      "exported": "[73c5da0a/48'/1'/0'/2']Vpub5n95dMZrDHj6SeBgJ1oz4Fae2N2eJNuWK3VTKDb2dzGpMFLUHLmtyDfen7AaQxwQ5mZnMyXdVrkEaoMLVTH8FmVBRVWPGFYWhmtDUGehGmq",
+      "independent_match": true
+    },
+    {
+      "path": "m/48'/1'/0'/2'",
+      "exported": "[b8688df1/48'/1'/0'/2']Vpub5mXjbXRpPCwR3WFMWjmrunQ2qNotZBN9a94RbhVADFC5zj6X2gw48wJ5dFFPdHKjLiyyXZgzxzBe7jMRHxKwxf9LqenaMTYMPHMomBZhZ24",
+      "independent_match": true
+    },
+    {
+      "signer": 1,
+      "signatures_verified": 1
+    },
+    {
+      "signer": 2,
+      "signatures_verified": 2
+    }
+  ]
+}

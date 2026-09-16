@@ -1,0 +1,2082 @@
+Failed to load resource: the server responded with a status of 404 (File not found)
+Loading Pillow, cffi, cryptography, openssl, pycparser, pycryptodome, six
+Loaded Pillow, cffi, cryptography, openssl, pycparser, pycryptodome, six
+[py] [settings] System detection: type=Desktop variant=Unknown runtime_profile=desktop hardware_profile=n/a hostname=emscripten model=unknown gpio_backend=mock
+[py] [settings] Auto-configured defaults: hardware=n/a display=st7789_320x240 camera_rotation=180
+[py] [card] tray attached, 3 slots, a SeedKeeper and a Satochip each, reader empty
+[py] patched in password_generator_views._format_word_password
+[py] patched in SeedKeeperSelectView.seed
+[py] starting controller…
+[py] controller imported
+[py] [controller] libraqm support: NOT AVAILABLE - Complex text rendering may be limited
+[py] [controller] Startup hardware: type=Desktop variant=Unknown runtime_profile=desktop hardware_profile=None display=st7789_320x240
+[py] thread start: MicroSD loop=True target=None
+[py] thread start: BackgroundImportThread loop=False target=None
+[py] inline thread nothread failed: ModuleNotFoundError: No module named 'numpy'
+[py] thread start: WipeTimerThread loop=True target=None
+[py] thread start: HardwareRngMonitorThread loop=True target=None
+[py] display() enter: OpeningSplashScreen
+[py] show_image #1: mode=RGB size=(320, 240) driver=320x240
+[py] show_image #2: mode=RGB size=(320, 240) driver=320x240
+[py] show_image #3: mode=RGB size=(320, 240) driver=320x240
+[py] sleep(1)
+[py] sleep(2)
+[py] display() exit: OpeningSplashScreen -> None
+[py] is_seedsigner_os_dev_build() called
+[py] is_seedsigner_os_dev_build() -> False
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView()
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 0
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: ScanView()
+[py] [controller] 
+back_stack: [
+     0: ScanView()
+]
+[py] [controller] Executing ScanView()
+[py] View.run enter: ScanView
+[py] thread start: LoadingScreenThread loop=True target=None
+[cam] 640x480 decoding with jsQR
+[py] display() enter: ScanScreen
+[py] thread start: LivePreviewThread loop=True target=None
+[py] display() exit: ScanScreen -> None
+[py] View.run exit: ScanView
+[py] [controller] Appending next destination: SeedFinalizeView()
+[py] [controller] 
+back_stack: [
+     1: SeedFinalizeView()
+     0: ScanView()
+]
+[py] [controller] Executing SeedFinalizeView()
+[py] View.run enter: SeedFinalizeView
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() enter: SeedFinalizeScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedFinalizeScreen -> 0
+[py] View.run exit: SeedFinalizeView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 0}) | clear_history: True
+[py] [controller] 
+back_stack: [
+     0: SeedOptionsView({'seed_num': 0}) | clear_history: True
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 0}) | clear_history: True
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=1 -> 'KEY_UP' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 1000
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: MainMenuView()
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView()
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=4 -> 'KEY_RIGHT' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 1
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: SeedsMenuView()
+[py] [controller] 
+back_stack: [
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedsMenuView()
+[py] View.run enter: SeedsMenuView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 0
+[py] View.run exit: SeedsMenuView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 0})
+[py] [controller] 
+back_stack: [
+     1: SeedOptionsView({'seed_num': 0})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 0})
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 3
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: SeedBackupView({'seed_num': 0})
+[py] [controller] 
+back_stack: [
+     2: SeedBackupView({'seed_num': 0})
+     1: SeedOptionsView({'seed_num': 0})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedBackupView({'seed_num': 0})
+[py] View.run enter: SeedBackupView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+Checking existing card connector...
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+No Working CardConnector, Connecting
+[py] display() exit: ButtonListScreen -> 1
+[py] View.run exit: SeedBackupView
+[py] [controller] Appending next destination: SaveToSeedkeeperView({'seed_num': 0})
+[py] [controller] 
+back_stack: [
+     3: SaveToSeedkeeperView({'seed_num': 0})
+     2: SeedBackupView({'seed_num': 0})
+     1: SeedOptionsView({'seed_num': 0})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SaveToSeedkeeperView({'seed_num': 0})
+[py] View.run enter: SaveToSeedkeeperView
+Card Filter: ['seedkeeper']
+Backend Preference: auto
+[py] [card] Card A inserted, uid=496159371cd8bbaf3d1ea2247d693aba08c52b0b, SeedKeeper
+[py] [card] a watcher registered, Card A is in the reader, uid=496159371cd8bbaf3d1ea2247d693aba08c52b0b, SeedKeeper
+[py] sleep(0.6)
+Card Backend: pysatochip
+No Cached pin, prompting for pin
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': 'aaaa'}
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] sleep(0.5)
+Found Card: 496159371cd8bbaf3d1ea2247d693aba08c52b0b
+{'protocol_major_version': 0, 'protocol_minor_version': 2, 'applet_major_version': 0, 'applet_minor_version': 2, 'protocol_version': 2, 'PIN0_remaining_tries': 5, 'PUK0_remaining_tries': 5, 'PIN1_remaining_tries': 5, 'PUK1_remaining_tries': 5, 'needs2FA': False, 'is_seeded': False, 'setup_done': False, 'needs_secure_channel': False, 'nfc_policy': 0, 'feature_schnorr_policy': None, 'feature_nostr_policy': None, 'feature_liquid_policy': None}
+Card Needs Initial Setup
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+[py] display() enter: WarningScreen
+[py] thread start: WarningEdgesThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: WarningScreen -> 0
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': 'aaaa'}
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+Setup Succeeded
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': 'aaaa'}
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+[py] display() enter: LargeIconStatusScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: LargeIconStatusScreen -> 0
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+{'protocol_major_version': 0, 'protocol_minor_version': 2, 'applet_major_version': 0, 'applet_minor_version': 2, 'protocol_version': 2, 'PIN0_remaining_tries': 5, 'PUK0_remaining_tries': 1, 'PIN1_remaining_tries': 1, 'PUK1_remaining_tries': 1, 'needs2FA': False, 'is_seeded': False, 'setup_done': True, 'needs_secure_channel': False, 'nfc_policy': 0, 'feature_schnorr_policy': None, 'feature_nostr_policy': None, 'feature_liquid_policy': None}
+Saving to SeedKeeper V2
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': 'b2269592'}
+Worldlist: english
+Imported - SID: 1  Fingerprint: f6a7b0a8
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [card] Card A stored secret 1, type 0x10 subtype 0x01, label 'b2269592', 84 bytes, fingerprint f6a7b0a8
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+[py] display() enter: LargeIconStatusScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: LargeIconStatusScreen -> 0
+[py] View.run exit: SaveToSeedkeeperView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 0}) | clear_history: True
+[py] [controller] 
+back_stack: [
+     0: SeedOptionsView({'seed_num': 0}) | clear_history: True
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 0}) | clear_history: True
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 5
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: SeedDiscardView({'seed_num': 0})
+[py] [controller] 
+back_stack: [
+     1: SeedDiscardView({'seed_num': 0})
+     0: SeedOptionsView({'seed_num': 0}) | clear_history: True
+]
+[py] [controller] Executing SeedDiscardView({'seed_num': 0})
+[py] View.run enter: SeedDiscardView
+Supersampled font load time: 0.0
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: WarningScreen
+[py] thread start: WarningEdgesThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: WarningScreen -> 1
+[py] View.run exit: SeedDiscardView
+[py] [controller] Appending next destination: MainMenuView() | clear_history: True
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView() | clear_history: True
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=4 -> 'KEY_RIGHT' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 1
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: SeedsMenuView()
+[py] [controller] 
+back_stack: [
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedsMenuView()
+[py] View.run enter: SeedsMenuView
+[py] View.run exit: SeedsMenuView
+[py] [controller] Appending next destination: LoadSeedView() | clear_history: True
+[py] [controller] 
+back_stack: [
+     0: LoadSeedView() | clear_history: True
+]
+[py] [controller] Executing LoadSeedView() | clear_history: True
+[py] View.run enter: LoadSeedView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+Checking existing card connector...
+No Working CardConnector, Connecting
+Card Filter: ['seedkeeper']
+Backend Preference: pysatochip
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 3
+[py] View.run exit: LoadSeedView
+[py] [controller] Appending next destination: SeedKeeperSelectView()
+[py] [controller] 
+back_stack: [
+     1: SeedKeeperSelectView()
+     0: LoadSeedView() | clear_history: True
+]
+[py] [controller] Executing SeedKeeperSelectView()
+[py] View.run enter: SeedKeeperSelectView
+[py] [card] a watcher registered, Card A is in the reader, uid=496159371cd8bbaf3d1ea2247d693aba08c52b0b, SeedKeeper
+[py] sleep(0.6)
+Card Backend: pysatochip
+No Cached pin, prompting for pin
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': 'aaaa'}
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] sleep(0.5)
+Found Card: 496159371cd8bbaf3d1ea2247d693aba08c52b0b
+{'protocol_major_version': 0, 'protocol_minor_version': 2, 'applet_major_version': 0, 'applet_minor_version': 2, 'protocol_version': 2, 'PIN0_remaining_tries': 5, 'PUK0_remaining_tries': 1, 'PIN1_remaining_tries': 1, 'PUK1_remaining_tries': 1, 'needs2FA': False, 'is_seeded': True, 'setup_done': True, 'needs_secure_channel': False, 'nfc_policy': 0, 'feature_schnorr_policy': None, 'feature_nostr_policy': None, 'feature_liquid_policy': None}
+Same card, using existing PIN, already loaded...
+Verifying PIN
+Pin Correct
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 0
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [card] Card A exporting secret 1 in the clear, label 'b2269592'
+Worldlist: english
+[py] View.run exit: SeedKeeperSelectView
+[py] [controller] Appending next destination: SeedFinalizeView()
+[py] [controller] 
+back_stack: [
+     2: SeedFinalizeView()
+     1: SeedKeeperSelectView()
+     0: LoadSeedView() | clear_history: True
+]
+[py] [controller] Executing SeedFinalizeView()
+[py] View.run enter: SeedFinalizeView
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() enter: SeedFinalizeScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedFinalizeScreen -> 0
+[py] View.run exit: SeedFinalizeView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 0}) | clear_history: True
+[py] [controller] 
+back_stack: [
+     0: SeedOptionsView({'seed_num': 0}) | clear_history: True
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 0}) | clear_history: True
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=1 -> 'KEY_UP' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 1000
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: MainMenuView()
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView()
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 0
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: ScanView()
+[py] [controller] 
+back_stack: [
+     0: ScanView()
+]
+[py] [controller] Executing ScanView()
+[py] View.run enter: ScanView
+[py] thread start: LoadingScreenThread loop=True target=None
+[cam] 640x480 decoding with jsQR
+[py] display() enter: ScanScreen
+[py] thread start: LivePreviewThread loop=True target=None
+[py] display() exit: ScanScreen -> None
+[py] View.run exit: ScanView
+[py] [controller] Appending next destination: SeedFinalizeView()
+[py] [controller] 
+back_stack: [
+     1: SeedFinalizeView()
+     0: ScanView()
+]
+[py] [controller] Executing SeedFinalizeView()
+[py] View.run enter: SeedFinalizeView
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() enter: SeedFinalizeScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedFinalizeScreen -> 0
+[py] View.run exit: SeedFinalizeView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 1}) | clear_history: True
+[py] [controller] 
+back_stack: [
+     0: SeedOptionsView({'seed_num': 1}) | clear_history: True
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 1}) | clear_history: True
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=1 -> 'KEY_UP' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 1000
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: MainMenuView()
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView()
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=4 -> 'KEY_RIGHT' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 1
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: SeedsMenuView()
+[py] [controller] 
+back_stack: [
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedsMenuView()
+[py] View.run enter: SeedsMenuView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 1
+[py] View.run exit: SeedsMenuView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 1})
+[py] [controller] 
+back_stack: [
+     1: SeedOptionsView({'seed_num': 1})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 1})
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 3
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: SeedBackupView({'seed_num': 1})
+[py] [controller] 
+back_stack: [
+     2: SeedBackupView({'seed_num': 1})
+     1: SeedOptionsView({'seed_num': 1})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedBackupView({'seed_num': 1})
+[py] View.run enter: SeedBackupView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+Checking existing card connector...
+No Working CardConnector, Connecting
+Card Filter: ['seedkeeper']
+Backend Preference: pysatochip
+[py] display() exit: ButtonListScreen -> 1
+[py] View.run exit: SeedBackupView
+[py] [controller] Appending next destination: SaveToSeedkeeperView({'seed_num': 1})
+[py] [controller] 
+back_stack: [
+     3: SaveToSeedkeeperView({'seed_num': 1})
+     2: SeedBackupView({'seed_num': 1})
+     1: SeedOptionsView({'seed_num': 1})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SaveToSeedkeeperView({'seed_num': 1})
+[py] View.run enter: SaveToSeedkeeperView
+[py] [card] Card A removed, SeedKeeper
+[py] [card] Card B inserted, uid=1f363e67ee5ab18d2321bc7d2c5a72676e41102b, SeedKeeper
+[py] [card] a watcher registered, Card B is in the reader, uid=1f363e67ee5ab18d2321bc7d2c5a72676e41102b, SeedKeeper
+[py] sleep(0.6)
+Card Backend: pysatochip
+No Cached pin, prompting for pin
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': 'aaaa'}
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] sleep(0.5)
+Found Card: 1f363e67ee5ab18d2321bc7d2c5a72676e41102b
+{'protocol_major_version': 0, 'protocol_minor_version': 2, 'applet_major_version': 0, 'applet_minor_version': 2, 'protocol_version': 2, 'PIN0_remaining_tries': 5, 'PUK0_remaining_tries': 5, 'PIN1_remaining_tries': 5, 'PUK1_remaining_tries': 5, 'needs2FA': False, 'is_seeded': False, 'setup_done': False, 'needs_secure_channel': False, 'nfc_policy': 0, 'feature_schnorr_policy': None, 'feature_nostr_policy': None, 'feature_liquid_policy': None}
+Card Needs Initial Setup
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+[py] display() enter: WarningScreen
+[py] thread start: WarningEdgesThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: WarningScreen -> 0
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': 'aaaa'}
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+Setup Succeeded
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': 'aaaa'}
+Supersampled font load time: 0.0
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: LargeIconStatusScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: LargeIconStatusScreen -> 0
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+{'protocol_major_version': 0, 'protocol_minor_version': 2, 'applet_major_version': 0, 'applet_minor_version': 2, 'protocol_version': 2, 'PIN0_remaining_tries': 5, 'PUK0_remaining_tries': 1, 'PIN1_remaining_tries': 1, 'PUK1_remaining_tries': 1, 'needs2FA': False, 'is_seeded': False, 'setup_done': True, 'needs_secure_channel': False, 'nfc_policy': 0, 'feature_schnorr_policy': None, 'feature_nostr_policy': None, 'feature_liquid_policy': None}
+Saving to SeedKeeper V2
+Worldlist: english
+Imported - SID: 1  Fingerprint: c422cdb9
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': '73c5da0a'}
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [card] Card B stored secret 1, type 0x10 subtype 0x01, label '73c5da0a', 84 bytes, fingerprint c422cdb9
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+[py] display() enter: LargeIconStatusScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: LargeIconStatusScreen -> 0
+[py] View.run exit: SaveToSeedkeeperView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 1}) | clear_history: True
+[py] [controller] 
+back_stack: [
+     0: SeedOptionsView({'seed_num': 1}) | clear_history: True
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 1}) | clear_history: True
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 5
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: SeedDiscardView({'seed_num': 1})
+[py] [controller] 
+back_stack: [
+     1: SeedDiscardView({'seed_num': 1})
+     0: SeedOptionsView({'seed_num': 1}) | clear_history: True
+]
+[py] [controller] Executing SeedDiscardView({'seed_num': 1})
+[py] View.run enter: SeedDiscardView
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+[py] display() enter: WarningScreen
+[py] thread start: WarningEdgesThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: WarningScreen -> 1
+[py] View.run exit: SeedDiscardView
+[py] [controller] Appending next destination: MainMenuView() | clear_history: True
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView() | clear_history: True
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=4 -> 'KEY_RIGHT' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 1
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: SeedsMenuView()
+[py] [controller] 
+back_stack: [
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedsMenuView()
+[py] View.run enter: SeedsMenuView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 1
+[py] View.run exit: SeedsMenuView
+[py] [controller] Appending next destination: LoadSeedView()
+[py] [controller] 
+back_stack: [
+     1: LoadSeedView()
+     0: SeedsMenuView()
+]
+[py] [controller] Executing LoadSeedView()
+[py] View.run enter: LoadSeedView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 3
+[py] View.run exit: LoadSeedView
+[py] [controller] Appending next destination: SeedKeeperSelectView()
+[py] [controller] 
+back_stack: [
+     2: SeedKeeperSelectView()
+     1: LoadSeedView()
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedKeeperSelectView()
+[py] View.run enter: SeedKeeperSelectView
+Checking existing card connector...
+No Working CardConnector, Connecting
+Card Filter: ['seedkeeper']
+Backend Preference: pysatochip
+[py] [card] a watcher registered, Card B is in the reader, uid=1f363e67ee5ab18d2321bc7d2c5a72676e41102b, SeedKeeper
+[py] sleep(0.6)
+Card Backend: pysatochip
+No Cached pin, prompting for pin
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': 'aaaa'}
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] sleep(0.5)
+Found Card: 1f363e67ee5ab18d2321bc7d2c5a72676e41102b
+{'protocol_major_version': 0, 'protocol_minor_version': 2, 'applet_major_version': 0, 'applet_minor_version': 2, 'protocol_version': 2, 'PIN0_remaining_tries': 5, 'PUK0_remaining_tries': 1, 'PIN1_remaining_tries': 1, 'PUK1_remaining_tries': 1, 'needs2FA': False, 'is_seeded': True, 'setup_done': True, 'needs_secure_channel': False, 'nfc_policy': 0, 'feature_schnorr_policy': None, 'feature_nostr_policy': None, 'feature_liquid_policy': None}
+[py] thread start: LoadingScreenThread loop=True target=None
+Same card, using existing PIN, already loaded...
+Verifying PIN
+Pin Correct
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 0
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [card] Card B exporting secret 1 in the clear, label '73c5da0a'
+Worldlist: english
+[py] View.run exit: SeedKeeperSelectView
+[py] [controller] Appending next destination: SeedFinalizeView()
+[py] [controller] 
+back_stack: [
+     3: SeedFinalizeView()
+     2: SeedKeeperSelectView()
+     1: LoadSeedView()
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedFinalizeView()
+[py] View.run enter: SeedFinalizeView
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() enter: SeedFinalizeScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedFinalizeScreen -> 0
+[py] View.run exit: SeedFinalizeView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 1}) | clear_history: True
+[py] [controller] 
+back_stack: [
+     0: SeedOptionsView({'seed_num': 1}) | clear_history: True
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 1}) | clear_history: True
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=1 -> 'KEY_UP' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 1000
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: MainMenuView()
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView()
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 0
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: ScanView()
+[py] [controller] 
+back_stack: [
+     0: ScanView()
+]
+[py] [controller] Executing ScanView()
+[py] View.run enter: ScanView
+[py] thread start: LoadingScreenThread loop=True target=None
+[cam] 640x480 decoding with jsQR
+[py] display() enter: ScanScreen
+[py] thread start: LivePreviewThread loop=True target=None
+[py] display() exit: ScanScreen -> None
+[py] View.run exit: ScanView
+[py] [controller] Appending next destination: SeedFinalizeView()
+[py] [controller] 
+back_stack: [
+     1: SeedFinalizeView()
+     0: ScanView()
+]
+[py] [controller] Executing SeedFinalizeView()
+[py] View.run enter: SeedFinalizeView
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() enter: SeedFinalizeScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedFinalizeScreen -> 0
+[py] View.run exit: SeedFinalizeView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 2}) | clear_history: True
+[py] [controller] 
+back_stack: [
+     0: SeedOptionsView({'seed_num': 2}) | clear_history: True
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 2}) | clear_history: True
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=1 -> 'KEY_UP' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 1000
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: MainMenuView()
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView()
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=4 -> 'KEY_RIGHT' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 1
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: SeedsMenuView()
+[py] [controller] 
+back_stack: [
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedsMenuView()
+[py] View.run enter: SeedsMenuView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 2
+[py] View.run exit: SeedsMenuView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 2})
+[py] [controller] 
+back_stack: [
+     1: SeedOptionsView({'seed_num': 2})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 2})
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 3
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: SeedBackupView({'seed_num': 2})
+[py] [controller] 
+back_stack: [
+     2: SeedBackupView({'seed_num': 2})
+     1: SeedOptionsView({'seed_num': 2})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedBackupView({'seed_num': 2})
+[py] View.run enter: SeedBackupView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+Checking existing card connector...
+No Working CardConnector, Connecting
+Card Filter: ['seedkeeper']
+Backend Preference: pysatochip
+[py] display() exit: ButtonListScreen -> 1
+[py] View.run exit: SeedBackupView
+[py] [controller] Appending next destination: SaveToSeedkeeperView({'seed_num': 2})
+[py] [controller] 
+back_stack: [
+     3: SaveToSeedkeeperView({'seed_num': 2})
+     2: SeedBackupView({'seed_num': 2})
+     1: SeedOptionsView({'seed_num': 2})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SaveToSeedkeeperView({'seed_num': 2})
+[py] View.run enter: SaveToSeedkeeperView
+[py] [card] Card B removed, SeedKeeper
+[py] [card] Card C inserted, uid=7b7a5cc1c0e88501f044120e31cd7b850e8981a5, SeedKeeper
+[py] [card] a watcher registered, Card C is in the reader, uid=7b7a5cc1c0e88501f044120e31cd7b850e8981a5, SeedKeeper
+[py] sleep(0.6)
+Card Backend: pysatochip
+No Cached pin, prompting for pin
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': 'aaaa'}
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] sleep(0.5)
+Found Card: 7b7a5cc1c0e88501f044120e31cd7b850e8981a5
+{'protocol_major_version': 0, 'protocol_minor_version': 2, 'applet_major_version': 0, 'applet_minor_version': 2, 'protocol_version': 2, 'PIN0_remaining_tries': 5, 'PUK0_remaining_tries': 5, 'PIN1_remaining_tries': 5, 'PUK1_remaining_tries': 5, 'needs2FA': False, 'is_seeded': False, 'setup_done': False, 'needs_secure_channel': False, 'nfc_policy': 0, 'feature_schnorr_policy': None, 'feature_nostr_policy': None, 'feature_liquid_policy': None}
+Card Needs Initial Setup
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+[py] display() enter: WarningScreen
+[py] thread start: WarningEdgesThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: WarningScreen -> 0
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': 'aaaa'}
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+Setup Succeeded
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': 'aaaa'}
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+[py] display() enter: LargeIconStatusScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: LargeIconStatusScreen -> 0
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+{'protocol_major_version': 0, 'protocol_minor_version': 2, 'applet_major_version': 0, 'applet_minor_version': 2, 'protocol_version': 2, 'PIN0_remaining_tries': 5, 'PUK0_remaining_tries': 1, 'PIN1_remaining_tries': 1, 'PUK1_remaining_tries': 1, 'needs2FA': False, 'is_seeded': False, 'setup_done': True, 'needs_secure_channel': False, 'nfc_policy': 0, 'feature_schnorr_policy': None, 'feature_nostr_policy': None, 'feature_liquid_policy': None}
+Saving to SeedKeeper V2
+Worldlist: english
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': 'b8688df1'}
+Imported - SID: 1  Fingerprint: 220c9b1f
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [card] Card C stored secret 1, type 0x10 subtype 0x01, label 'b8688df1', 84 bytes, fingerprint 220c9b1f
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+[py] display() enter: LargeIconStatusScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: LargeIconStatusScreen -> 0
+[py] View.run exit: SaveToSeedkeeperView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 2}) | clear_history: True
+[py] [controller] 
+back_stack: [
+     0: SeedOptionsView({'seed_num': 2}) | clear_history: True
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 2}) | clear_history: True
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 5
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: SeedDiscardView({'seed_num': 2})
+[py] [controller] 
+back_stack: [
+     1: SeedDiscardView({'seed_num': 2})
+     0: SeedOptionsView({'seed_num': 2}) | clear_history: True
+]
+[py] [controller] Executing SeedDiscardView({'seed_num': 2})
+[py] View.run enter: SeedDiscardView
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+[py] display() enter: WarningScreen
+[py] thread start: WarningEdgesThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: WarningScreen -> 1
+[py] View.run exit: SeedDiscardView
+[py] [controller] Appending next destination: MainMenuView() | clear_history: True
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView() | clear_history: True
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=4 -> 'KEY_RIGHT' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 1
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: SeedsMenuView()
+[py] [controller] 
+back_stack: [
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedsMenuView()
+[py] View.run enter: SeedsMenuView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 2
+[py] View.run exit: SeedsMenuView
+[py] [controller] Appending next destination: LoadSeedView()
+[py] [controller] 
+back_stack: [
+     1: LoadSeedView()
+     0: SeedsMenuView()
+]
+[py] [controller] Executing LoadSeedView()
+[py] View.run enter: LoadSeedView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+Checking existing card connector...
+No Working CardConnector, Connecting
+Card Filter: ['seedkeeper']
+Backend Preference: pysatochip
+[py] display() exit: ButtonListScreen -> 3
+[py] View.run exit: LoadSeedView
+[py] [controller] Appending next destination: SeedKeeperSelectView()
+[py] [controller] 
+back_stack: [
+     2: SeedKeeperSelectView()
+     1: LoadSeedView()
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedKeeperSelectView()
+[py] View.run enter: SeedKeeperSelectView
+[py] [card] a watcher registered, Card C is in the reader, uid=7b7a5cc1c0e88501f044120e31cd7b850e8981a5, SeedKeeper
+[py] sleep(0.6)
+Card Backend: pysatochip
+No Cached pin, prompting for pin
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedAddPassphraseScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=8 -> 'KEY3' accepted=True
+[py] display() exit: SeedAddPassphraseScreen -> {'passphrase': 'aaaa'}
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] sleep(0.5)
+Found Card: 7b7a5cc1c0e88501f044120e31cd7b850e8981a5
+{'protocol_major_version': 0, 'protocol_minor_version': 2, 'applet_major_version': 0, 'applet_minor_version': 2, 'protocol_version': 2, 'PIN0_remaining_tries': 5, 'PUK0_remaining_tries': 1, 'PIN1_remaining_tries': 1, 'PUK1_remaining_tries': 1, 'needs2FA': False, 'is_seeded': True, 'setup_done': True, 'needs_secure_channel': False, 'nfc_policy': 0, 'feature_schnorr_policy': None, 'feature_nostr_policy': None, 'feature_liquid_policy': None}
+Same card, using existing PIN, already loaded...
+Verifying PIN
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [components] Supersampling disabled for large font size: 20
+Pin Correct
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 0
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [card] Card C exporting secret 1 in the clear, label 'b8688df1'
+Worldlist: english
+[py] View.run exit: SeedKeeperSelectView
+[py] [controller] Appending next destination: SeedFinalizeView()
+[py] [controller] 
+back_stack: [
+     3: SeedFinalizeView()
+     2: SeedKeeperSelectView()
+     1: LoadSeedView()
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedFinalizeView()
+[py] View.run enter: SeedFinalizeView
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() enter: SeedFinalizeScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedFinalizeScreen -> 0
+[py] View.run exit: SeedFinalizeView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 2}) | clear_history: True
+[py] [controller] 
+back_stack: [
+     0: SeedOptionsView({'seed_num': 2}) | clear_history: True
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 2}) | clear_history: True
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=1 -> 'KEY_UP' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 1000
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: MainMenuView()
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView()
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=4 -> 'KEY_RIGHT' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 1
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: SeedsMenuView()
+[py] [controller] 
+back_stack: [
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedsMenuView()
+[py] View.run enter: SeedsMenuView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 0
+[py] View.run exit: SeedsMenuView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 0})
+[py] [controller] 
+back_stack: [
+     1: SeedOptionsView({'seed_num': 0})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 0})
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 1
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: SeedExportXpubSigTypeView({'seed_num': 0})
+[py] [controller] 
+back_stack: [
+     2: SeedExportXpubSigTypeView({'seed_num': 0})
+     1: SeedOptionsView({'seed_num': 0})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubSigTypeView({'seed_num': 0})
+[py] View.run enter: SeedExportXpubSigTypeView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 1
+[py] View.run exit: SeedExportXpubSigTypeView
+[py] [controller] Appending next destination: SeedExportXpubScriptTypeView({'seed_num': 0, 'sig_type': 'ms'})
+[py] [controller] 
+back_stack: [
+     3: SeedExportXpubScriptTypeView({'seed_num': 0, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 0})
+     1: SeedOptionsView({'seed_num': 0})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubScriptTypeView({'seed_num': 0, 'sig_type': 'ms'})
+[py] View.run enter: SeedExportXpubScriptTypeView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 0
+[py] View.run exit: SeedExportXpubScriptTypeView
+[py] [controller] Appending next destination: SeedExportXpubQRFormatView({'seed_num': 0, 'sig_type': 'ms', 'script_type': 'nat'})
+[py] [controller] 
+back_stack: [
+     4: SeedExportXpubQRFormatView({'seed_num': 0, 'sig_type': 'ms', 'script_type': 'nat'})
+     3: SeedExportXpubScriptTypeView({'seed_num': 0, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 0})
+     1: SeedOptionsView({'seed_num': 0})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubQRFormatView({'seed_num': 0, 'sig_type': 'ms', 'script_type': 'nat'})
+[py] View.run enter: SeedExportXpubQRFormatView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 1
+[py] View.run exit: SeedExportXpubQRFormatView
+Supersampled font load time: 0.0
+[py] [controller] Appending next destination: SeedExportXpubWarningView({'seed_num': 0, 'sig_type': 'ms', 'script_type': 'nat', 'custom_derivation': None, 'account': 0, 'xpub_qr_format': 'sta'})
+[py] [controller] 
+back_stack: [
+     5: SeedExportXpubWarningView({'seed_num': 0, 'sig_type': 'ms', 'script_type': 'nat', 'custom_derivation': None, 'account': 0, 'xpub_qr_format': 'sta'})
+     4: SeedExportXpubQRFormatView({'seed_num': 0, 'sig_type': 'ms', 'script_type': 'nat'})
+     3: SeedExportXpubScriptTypeView({'seed_num': 0, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 0})
+     1: SeedOptionsView({'seed_num': 0})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubWarningView({'seed_num': 0, 'sig_type': 'ms', 'script_type': 'nat', 'custom_derivation': None, 'account': 0, 'xpub_qr_format': 'sta'})
+[py] View.run enter: SeedExportXpubWarningView
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+[py] display() enter: WarningScreen
+[py] thread start: WarningEdgesThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: WarningScreen -> 0
+[py] View.run exit: SeedExportXpubWarningView
+[py] [controller] Skipping current view: SeedExportXpubWarningView({'seed_num': 0, 'sig_type': 'ms', 'script_type': 'nat', 'custom_derivation': None, 'account': 0, 'xpub_qr_format': 'sta'})
+[py] [controller] Appending next destination: SeedExportXpubDetailsView({'seed_num': 0, 'sig_type': 'ms', 'script_type': 'nat', 'xpub_qr_format': 'sta', 'custom_derivation': None, 'coordinator_label': '', 'account': 0})
+[py] [controller] 
+back_stack: [
+     5: SeedExportXpubDetailsView({'seed_num': 0, 'sig_type': 'ms', 'script_type': 'nat', 'xpub_qr_format': 'sta', 'custom_derivation': None, 'coordinator_label': '', 'account': 0})
+     4: SeedExportXpubQRFormatView({'seed_num': 0, 'sig_type': 'ms', 'script_type': 'nat'})
+     3: SeedExportXpubScriptTypeView({'seed_num': 0, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 0})
+     1: SeedOptionsView({'seed_num': 0})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubDetailsView({'seed_num': 0, 'sig_type': 'ms', 'script_type': 'nat', 'xpub_qr_format': 'sta', 'custom_derivation': None, 'coordinator_label': '', 'account': 0})
+[py] View.run enter: SeedExportXpubDetailsView
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() enter: SeedExportXpubDetailsScreen
+[py] thread start: WarningEdgesThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedExportXpubDetailsScreen -> 0
+[py] View.run exit: SeedExportXpubDetailsView
+[py] [controller] Appending next destination: SeedExportXpubQRDisplayView({'seed_num': 0, 'xpub_qr_format': 'sta', 'derivation_path': "m/48'/1'/0'/2'", 'sig_type': 'ms', 'script_type': 'nat', 'coordinator_label': ''})
+[py] [controller] 
+back_stack: [
+     6: SeedExportXpubQRDisplayView({'seed_num': 0, 'xpub_qr_format': 'sta', 'derivation_path': "m/48'/1'/0'/2'", 'sig_type': 'ms', 'script_type': 'nat', 'coordinator_label': ''})
+     5: SeedExportXpubDetailsView({'seed_num': 0, 'sig_type': 'ms', 'script_type': 'nat', 'xpub_qr_format': 'sta', 'custom_derivation': None, 'coordinator_label': '', 'account': 0})
+     4: SeedExportXpubQRFormatView({'seed_num': 0, 'sig_type': 'ms', 'script_type': 'nat'})
+     3: SeedExportXpubScriptTypeView({'seed_num': 0, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 0})
+     1: SeedOptionsView({'seed_num': 0})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubQRDisplayView({'seed_num': 0, 'xpub_qr_format': 'sta', 'derivation_path': "m/48'/1'/0'/2'", 'sig_type': 'ms', 'script_type': 'nat', 'coordinator_label': ''})
+[py] View.run enter: SeedExportXpubQRDisplayView
+[py] display() enter: QRDisplayScreen
+[py] thread start: QRDisplayThread loop=True target=None
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() exit: QRDisplayScreen -> None
+[py] View.run exit: SeedExportXpubQRDisplayView
+[py] [controller] Appending next destination: MainMenuView()
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView()
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=4 -> 'KEY_RIGHT' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 1
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: SeedsMenuView()
+[py] [controller] 
+back_stack: [
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedsMenuView()
+[py] View.run enter: SeedsMenuView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 1
+[py] View.run exit: SeedsMenuView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 1})
+[py] [controller] 
+back_stack: [
+     1: SeedOptionsView({'seed_num': 1})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 1})
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 1
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: SeedExportXpubSigTypeView({'seed_num': 1})
+[py] [controller] 
+back_stack: [
+     2: SeedExportXpubSigTypeView({'seed_num': 1})
+     1: SeedOptionsView({'seed_num': 1})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubSigTypeView({'seed_num': 1})
+[py] View.run enter: SeedExportXpubSigTypeView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 1
+[py] View.run exit: SeedExportXpubSigTypeView
+[py] [controller] Appending next destination: SeedExportXpubScriptTypeView({'seed_num': 1, 'sig_type': 'ms'})
+[py] [controller] 
+back_stack: [
+     3: SeedExportXpubScriptTypeView({'seed_num': 1, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 1})
+     1: SeedOptionsView({'seed_num': 1})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubScriptTypeView({'seed_num': 1, 'sig_type': 'ms'})
+[py] View.run enter: SeedExportXpubScriptTypeView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 0
+[py] View.run exit: SeedExportXpubScriptTypeView
+[py] [controller] Appending next destination: SeedExportXpubQRFormatView({'seed_num': 1, 'sig_type': 'ms', 'script_type': 'nat'})
+[py] [controller] 
+back_stack: [
+     4: SeedExportXpubQRFormatView({'seed_num': 1, 'sig_type': 'ms', 'script_type': 'nat'})
+     3: SeedExportXpubScriptTypeView({'seed_num': 1, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 1})
+     1: SeedOptionsView({'seed_num': 1})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubQRFormatView({'seed_num': 1, 'sig_type': 'ms', 'script_type': 'nat'})
+[py] View.run enter: SeedExportXpubQRFormatView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 1
+[py] View.run exit: SeedExportXpubQRFormatView
+[py] [controller] Appending next destination: SeedExportXpubWarningView({'seed_num': 1, 'sig_type': 'ms', 'script_type': 'nat', 'custom_derivation': None, 'account': 0, 'xpub_qr_format': 'sta'})
+[py] [controller] 
+back_stack: [
+     5: SeedExportXpubWarningView({'seed_num': 1, 'sig_type': 'ms', 'script_type': 'nat', 'custom_derivation': None, 'account': 0, 'xpub_qr_format': 'sta'})
+     4: SeedExportXpubQRFormatView({'seed_num': 1, 'sig_type': 'ms', 'script_type': 'nat'})
+     3: SeedExportXpubScriptTypeView({'seed_num': 1, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 1})
+     1: SeedOptionsView({'seed_num': 1})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubWarningView({'seed_num': 1, 'sig_type': 'ms', 'script_type': 'nat', 'custom_derivation': None, 'account': 0, 'xpub_qr_format': 'sta'})
+[py] View.run enter: SeedExportXpubWarningView
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() enter: WarningScreen
+[py] thread start: WarningEdgesThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: WarningScreen -> 0
+[py] View.run exit: SeedExportXpubWarningView
+[py] [controller] Skipping current view: SeedExportXpubWarningView({'seed_num': 1, 'sig_type': 'ms', 'script_type': 'nat', 'custom_derivation': None, 'account': 0, 'xpub_qr_format': 'sta'})
+[py] [controller] Appending next destination: SeedExportXpubDetailsView({'seed_num': 1, 'sig_type': 'ms', 'script_type': 'nat', 'xpub_qr_format': 'sta', 'custom_derivation': None, 'coordinator_label': '', 'account': 0})
+[py] [controller] 
+back_stack: [
+     5: SeedExportXpubDetailsView({'seed_num': 1, 'sig_type': 'ms', 'script_type': 'nat', 'xpub_qr_format': 'sta', 'custom_derivation': None, 'coordinator_label': '', 'account': 0})
+     4: SeedExportXpubQRFormatView({'seed_num': 1, 'sig_type': 'ms', 'script_type': 'nat'})
+     3: SeedExportXpubScriptTypeView({'seed_num': 1, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 1})
+     1: SeedOptionsView({'seed_num': 1})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubDetailsView({'seed_num': 1, 'sig_type': 'ms', 'script_type': 'nat', 'xpub_qr_format': 'sta', 'custom_derivation': None, 'coordinator_label': '', 'account': 0})
+[py] View.run enter: SeedExportXpubDetailsView
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0009999
+Supersampled font load time: 0.0
+[py] display() enter: SeedExportXpubDetailsScreen
+[py] thread start: WarningEdgesThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedExportXpubDetailsScreen -> 0
+[py] View.run exit: SeedExportXpubDetailsView
+[py] [controller] Appending next destination: SeedExportXpubQRDisplayView({'seed_num': 1, 'xpub_qr_format': 'sta', 'derivation_path': "m/48'/1'/0'/2'", 'sig_type': 'ms', 'script_type': 'nat', 'coordinator_label': ''})
+[py] [controller] 
+back_stack: [
+     6: SeedExportXpubQRDisplayView({'seed_num': 1, 'xpub_qr_format': 'sta', 'derivation_path': "m/48'/1'/0'/2'", 'sig_type': 'ms', 'script_type': 'nat', 'coordinator_label': ''})
+     5: SeedExportXpubDetailsView({'seed_num': 1, 'sig_type': 'ms', 'script_type': 'nat', 'xpub_qr_format': 'sta', 'custom_derivation': None, 'coordinator_label': '', 'account': 0})
+     4: SeedExportXpubQRFormatView({'seed_num': 1, 'sig_type': 'ms', 'script_type': 'nat'})
+     3: SeedExportXpubScriptTypeView({'seed_num': 1, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 1})
+     1: SeedOptionsView({'seed_num': 1})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubQRDisplayView({'seed_num': 1, 'xpub_qr_format': 'sta', 'derivation_path': "m/48'/1'/0'/2'", 'sig_type': 'ms', 'script_type': 'nat', 'coordinator_label': ''})
+[py] View.run enter: SeedExportXpubQRDisplayView
+[py] display() enter: QRDisplayScreen
+[py] thread start: QRDisplayThread loop=True target=None
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute set to true. See: https://html.spec.whatwg.org/multipage/canvas.html#concept-canvas-will-read-frequently
+[py] display() exit: QRDisplayScreen -> None
+[py] View.run exit: SeedExportXpubQRDisplayView
+[py] [controller] Appending next destination: MainMenuView()
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView()
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=4 -> 'KEY_RIGHT' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 1
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: SeedsMenuView()
+[py] [controller] 
+back_stack: [
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedsMenuView()
+[py] View.run enter: SeedsMenuView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 2
+[py] View.run exit: SeedsMenuView
+[py] [controller] Appending next destination: SeedOptionsView({'seed_num': 2})
+[py] [controller] 
+back_stack: [
+     1: SeedOptionsView({'seed_num': 2})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedOptionsView({'seed_num': 2})
+[py] View.run enter: SeedOptionsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: SeedOptionsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedOptionsScreen -> 1
+[py] View.run exit: SeedOptionsView
+[py] [controller] Appending next destination: SeedExportXpubSigTypeView({'seed_num': 2})
+[py] [controller] 
+back_stack: [
+     2: SeedExportXpubSigTypeView({'seed_num': 2})
+     1: SeedOptionsView({'seed_num': 2})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubSigTypeView({'seed_num': 2})
+[py] View.run enter: SeedExportXpubSigTypeView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 1
+[py] View.run exit: SeedExportXpubSigTypeView
+[py] [controller] Appending next destination: SeedExportXpubScriptTypeView({'seed_num': 2, 'sig_type': 'ms'})
+[py] [controller] 
+back_stack: [
+     3: SeedExportXpubScriptTypeView({'seed_num': 2, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 2})
+     1: SeedOptionsView({'seed_num': 2})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubScriptTypeView({'seed_num': 2, 'sig_type': 'ms'})
+[py] View.run enter: SeedExportXpubScriptTypeView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 0
+[py] View.run exit: SeedExportXpubScriptTypeView
+[py] [controller] Appending next destination: SeedExportXpubQRFormatView({'seed_num': 2, 'sig_type': 'ms', 'script_type': 'nat'})
+[py] [controller] 
+back_stack: [
+     4: SeedExportXpubQRFormatView({'seed_num': 2, 'sig_type': 'ms', 'script_type': 'nat'})
+     3: SeedExportXpubScriptTypeView({'seed_num': 2, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 2})
+     1: SeedOptionsView({'seed_num': 2})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubQRFormatView({'seed_num': 2, 'sig_type': 'ms', 'script_type': 'nat'})
+[py] View.run enter: SeedExportXpubQRFormatView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 1
+[py] View.run exit: SeedExportXpubQRFormatView
+[py] [controller] Appending next destination: SeedExportXpubWarningView({'seed_num': 2, 'sig_type': 'ms', 'script_type': 'nat', 'custom_derivation': None, 'account': 0, 'xpub_qr_format': 'sta'})
+[py] [controller] 
+back_stack: [
+     5: SeedExportXpubWarningView({'seed_num': 2, 'sig_type': 'ms', 'script_type': 'nat', 'custom_derivation': None, 'account': 0, 'xpub_qr_format': 'sta'})
+     4: SeedExportXpubQRFormatView({'seed_num': 2, 'sig_type': 'ms', 'script_type': 'nat'})
+     3: SeedExportXpubScriptTypeView({'seed_num': 2, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 2})
+     1: SeedOptionsView({'seed_num': 2})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubWarningView({'seed_num': 2, 'sig_type': 'ms', 'script_type': 'nat', 'custom_derivation': None, 'account': 0, 'xpub_qr_format': 'sta'})
+[py] View.run enter: SeedExportXpubWarningView
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() enter: WarningScreen
+[py] thread start: WarningEdgesThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: WarningScreen -> 0
+[py] View.run exit: SeedExportXpubWarningView
+[py] [controller] Skipping current view: SeedExportXpubWarningView({'seed_num': 2, 'sig_type': 'ms', 'script_type': 'nat', 'custom_derivation': None, 'account': 0, 'xpub_qr_format': 'sta'})
+[py] [controller] Appending next destination: SeedExportXpubDetailsView({'seed_num': 2, 'sig_type': 'ms', 'script_type': 'nat', 'xpub_qr_format': 'sta', 'custom_derivation': None, 'coordinator_label': '', 'account': 0})
+[py] [controller] 
+back_stack: [
+     5: SeedExportXpubDetailsView({'seed_num': 2, 'sig_type': 'ms', 'script_type': 'nat', 'xpub_qr_format': 'sta', 'custom_derivation': None, 'coordinator_label': '', 'account': 0})
+     4: SeedExportXpubQRFormatView({'seed_num': 2, 'sig_type': 'ms', 'script_type': 'nat'})
+     3: SeedExportXpubScriptTypeView({'seed_num': 2, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 2})
+     1: SeedOptionsView({'seed_num': 2})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubDetailsView({'seed_num': 2, 'sig_type': 'ms', 'script_type': 'nat', 'xpub_qr_format': 'sta', 'custom_derivation': None, 'coordinator_label': '', 'account': 0})
+[py] View.run enter: SeedExportXpubDetailsView
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() enter: SeedExportXpubDetailsScreen
+[py] thread start: WarningEdgesThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: SeedExportXpubDetailsScreen -> 0
+[py] View.run exit: SeedExportXpubDetailsView
+[py] [controller] Appending next destination: SeedExportXpubQRDisplayView({'seed_num': 2, 'xpub_qr_format': 'sta', 'derivation_path': "m/48'/1'/0'/2'", 'sig_type': 'ms', 'script_type': 'nat', 'coordinator_label': ''})
+[py] [controller] 
+back_stack: [
+     6: SeedExportXpubQRDisplayView({'seed_num': 2, 'xpub_qr_format': 'sta', 'derivation_path': "m/48'/1'/0'/2'", 'sig_type': 'ms', 'script_type': 'nat', 'coordinator_label': ''})
+     5: SeedExportXpubDetailsView({'seed_num': 2, 'sig_type': 'ms', 'script_type': 'nat', 'xpub_qr_format': 'sta', 'custom_derivation': None, 'coordinator_label': '', 'account': 0})
+     4: SeedExportXpubQRFormatView({'seed_num': 2, 'sig_type': 'ms', 'script_type': 'nat'})
+     3: SeedExportXpubScriptTypeView({'seed_num': 2, 'sig_type': 'ms'})
+     2: SeedExportXpubSigTypeView({'seed_num': 2})
+     1: SeedOptionsView({'seed_num': 2})
+     0: SeedsMenuView()
+]
+[py] [controller] Executing SeedExportXpubQRDisplayView({'seed_num': 2, 'xpub_qr_format': 'sta', 'derivation_path': "m/48'/1'/0'/2'", 'sig_type': 'ms', 'script_type': 'nat', 'coordinator_label': ''})
+[py] View.run enter: SeedExportXpubQRDisplayView
+[py] display() enter: QRDisplayScreen
+[py] thread start: QRDisplayThread loop=True target=None
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() exit: QRDisplayScreen -> None
+[py] View.run exit: SeedExportXpubQRDisplayView
+[py] [controller] Appending next destination: MainMenuView()
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView()
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 0
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: ScanView()
+[py] [controller] 
+back_stack: [
+     0: ScanView()
+]
+[py] [controller] Executing ScanView()
+[py] View.run enter: ScanView
+[py] thread start: LoadingScreenThread loop=True target=None
+[cam] 640x480 decoding with jsQR
+[py] display() enter: ScanScreen
+[py] thread start: LivePreviewThread loop=True target=None
+[py] display() exit: ScanScreen -> None
+[py] View.run exit: ScanView
+[py] [controller] Skipping current view: ScanView()
+[py] [controller] Appending next destination: MultisigWalletDescriptorView()
+[py] [controller] 
+back_stack: [
+     0: MultisigWalletDescriptorView()
+]
+[py] [controller] Executing MultisigWalletDescriptorView()
+[py] View.run enter: MultisigWalletDescriptorView
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+[py] [components] Supersampling disabled for large font size: 24
+[py] display() enter: MultisigWalletDescriptorScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MultisigWalletDescriptorScreen -> 0
+[py] View.run exit: MultisigWalletDescriptorView
+[py] [controller] Appending next destination: MainMenuView()
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView()
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 0
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: ScanView()
+[py] [controller] 
+back_stack: [
+     0: ScanView()
+]
+[py] [controller] Executing ScanView()
+[py] View.run enter: ScanView
+[py] thread start: LoadingScreenThread loop=True target=None
+[cam] 640x480 decoding with jsQR
+[py] display() enter: ScanScreen
+[py] thread start: LivePreviewThread loop=True target=None
+[py] display() exit: ScanScreen -> None
+[py] View.run exit: ScanView
+[py] [controller] Skipping current view: ScanView()
+[py] [controller] Appending next destination: PSBTSelectSeedView()
+[py] [controller] 
+back_stack: [
+     0: PSBTSelectSeedView()
+]
+[py] [controller] Executing PSBTSelectSeedView()
+[py] View.run enter: PSBTSelectSeedView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 0
+[py] View.run exit: PSBTSelectSeedView
+[py] [controller] Appending next destination: PSBTOverviewView()
+[py] [controller] 
+back_stack: [
+     1: PSBTOverviewView()
+     0: PSBTSelectSeedView()
+]
+[py] [controller] Executing PSBTOverviewView()
+[py] View.run enter: PSBTOverviewView
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [components] Supersampling disabled for large font size: 20
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: PSBTOverviewScreen
+[py] thread start: TxExplorerAnimationThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: PSBTOverviewScreen -> 0
+[py] View.run exit: PSBTOverviewView
+[py] [controller] Appending next destination: PSBTNoChangeWarningView()
+[py] [controller] 
+back_stack: [
+     2: PSBTNoChangeWarningView()
+     1: PSBTOverviewView()
+     0: PSBTSelectSeedView()
+]
+[py] [controller] Executing PSBTNoChangeWarningView()
+[py] View.run enter: PSBTNoChangeWarningView
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() enter: WarningScreen
+[py] thread start: WarningEdgesThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: WarningScreen -> 0
+[py] View.run exit: PSBTNoChangeWarningView
+[py] [controller] Skipping current view: PSBTNoChangeWarningView()
+[py] [controller] Appending next destination: PSBTMathView()
+[py] [controller] 
+back_stack: [
+     2: PSBTMathView()
+     1: PSBTOverviewView()
+     0: PSBTSelectSeedView()
+]
+[py] [controller] Executing PSBTMathView()
+[py] View.run enter: PSBTMathView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: PSBTMathScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: PSBTMathScreen -> 0
+[py] View.run exit: PSBTMathView
+[py] [controller] Appending next destination: PSBTAddressDetailsView({'address_num': 0})
+[py] [controller] 
+back_stack: [
+     3: PSBTAddressDetailsView({'address_num': 0})
+     2: PSBTMathView()
+     1: PSBTOverviewView()
+     0: PSBTSelectSeedView()
+]
+[py] [controller] Executing PSBTAddressDetailsView({'address_num': 0})
+[py] View.run enter: PSBTAddressDetailsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: PSBTAddressDetailsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+Supersampled font load time: 0.0
+[py] display() exit: PSBTAddressDetailsScreen -> 0
+[py] View.run exit: PSBTAddressDetailsView
+[py] [controller] Appending next destination: PSBTFinalizeView()
+[py] [controller] 
+back_stack: [
+     4: PSBTFinalizeView()
+     3: PSBTAddressDetailsView({'address_num': 0})
+     2: PSBTMathView()
+     1: PSBTOverviewView()
+     0: PSBTSelectSeedView()
+]
+[py] [controller] Executing PSBTFinalizeView()
+[py] View.run enter: PSBTFinalizeView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: PSBTFinalizeScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: PSBTFinalizeScreen -> 0
+[py] [psbt_views] PSBTFinalize: approve selected; signer_mode=seed initial_sig_count=0 inputs=1
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [psbt_views] PSBTFinalize: post-sign trimmed_sig_count=1 delta=1
+[py] [psbt_views] PSBTFinalize: finalize_psbt(trimmed) raised=Missing previous utxo on input 0
+[py] [psbt_views] PSBTFinalize: signatures added; routing=PSBTSignedQRDisplayView
+[py] View.run exit: PSBTFinalizeView
+[py] [controller] Appending next destination: PSBTSignedQRDisplayView()
+[py] [controller] 
+back_stack: [
+     5: PSBTSignedQRDisplayView()
+     4: PSBTFinalizeView()
+     3: PSBTAddressDetailsView({'address_num': 0})
+     2: PSBTMathView()
+     1: PSBTOverviewView()
+     0: PSBTSelectSeedView()
+]
+[py] [controller] Executing PSBTSignedQRDisplayView()
+[py] View.run enter: PSBTSignedQRDisplayView
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] display() enter: QRDisplayScreen
+[py] thread start: QRDisplayThread loop=True target=None
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() exit: QRDisplayScreen -> None
+[py] View.run exit: PSBTSignedQRDisplayView
+[py] [controller] Appending next destination: MainMenuView() | clear_history: True
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView() | clear_history: True
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: MainMenuScreen -> 0
+[py] View.run exit: MainMenuView
+[py] [controller] Appending next destination: ScanView()
+[py] [controller] 
+back_stack: [
+     0: ScanView()
+]
+[py] [controller] Executing ScanView()
+[py] View.run enter: ScanView
+[py] thread start: LoadingScreenThread loop=True target=None
+[cam] 640x480 decoding with jsQR
+[py] display() enter: ScanScreen
+[py] thread start: LivePreviewThread loop=True target=None
+[py] display() exit: ScanScreen -> None
+[py] View.run exit: ScanView
+[py] [controller] Skipping current view: ScanView()
+[py] [controller] Appending next destination: PSBTSelectSeedView()
+[py] [controller] 
+back_stack: [
+     0: PSBTSelectSeedView()
+]
+[py] [controller] Executing PSBTSelectSeedView()
+[py] View.run enter: PSBTSelectSeedView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: ButtonListScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=2 -> 'KEY_DOWN' accepted=True
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: ButtonListScreen -> 1
+[py] View.run exit: PSBTSelectSeedView
+[py] [controller] Appending next destination: PSBTOverviewView()
+[py] [controller] 
+back_stack: [
+     1: PSBTOverviewView()
+     0: PSBTSelectSeedView()
+]
+[py] [controller] Executing PSBTOverviewView()
+[py] View.run enter: PSBTOverviewView
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [components] Supersampling disabled for large font size: 20
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: PSBTOverviewScreen
+[py] thread start: TxExplorerAnimationThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: PSBTOverviewScreen -> 0
+[py] View.run exit: PSBTOverviewView
+[py] [controller] Appending next destination: PSBTNoChangeWarningView()
+[py] [controller] 
+back_stack: [
+     2: PSBTNoChangeWarningView()
+     1: PSBTOverviewView()
+     0: PSBTSelectSeedView()
+]
+[py] [controller] Executing PSBTNoChangeWarningView()
+[py] View.run enter: PSBTNoChangeWarningView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: WarningScreen
+[py] thread start: WarningEdgesThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: WarningScreen -> 0
+[py] View.run exit: PSBTNoChangeWarningView
+[py] [controller] Skipping current view: PSBTNoChangeWarningView()
+[py] [controller] Appending next destination: PSBTMathView()
+[py] [controller] 
+back_stack: [
+     2: PSBTMathView()
+     1: PSBTOverviewView()
+     0: PSBTSelectSeedView()
+]
+[py] [controller] Executing PSBTMathView()
+[py] View.run enter: PSBTMathView
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: PSBTMathScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: PSBTMathScreen -> 0
+[py] View.run exit: PSBTMathView
+[py] [controller] Appending next destination: PSBTAddressDetailsView({'address_num': 0})
+[py] [controller] 
+back_stack: [
+     3: PSBTAddressDetailsView({'address_num': 0})
+     2: PSBTMathView()
+     1: PSBTOverviewView()
+     0: PSBTSelectSeedView()
+]
+[py] [controller] Executing PSBTAddressDetailsView({'address_num': 0})
+[py] View.run enter: PSBTAddressDetailsView
+[py] [components] Supersampling disabled for large font size: 20
+[py] [components] Supersampling disabled for large font size: 20
+[py] display() enter: PSBTAddressDetailsScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: PSBTAddressDetailsScreen -> 0
+[py] View.run exit: PSBTAddressDetailsView
+[py] [controller] Appending next destination: PSBTFinalizeView()
+[py] [controller] 
+back_stack: [
+     4: PSBTFinalizeView()
+     3: PSBTAddressDetailsView({'address_num': 0})
+     2: PSBTMathView()
+     1: PSBTOverviewView()
+     0: PSBTSelectSeedView()
+]
+[py] [controller] Executing PSBTFinalizeView()
+[py] View.run enter: PSBTFinalizeView
+[py] [components] Supersampling disabled for large font size: 20
+Supersampled font load time: 0.0
+[py] display() enter: PSBTFinalizeScreen
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
+[py] key index=5 -> 'KEY_PRESS' accepted=True
+[py] display() exit: PSBTFinalizeScreen -> 0
+[py] [psbt_views] PSBTFinalize: approve selected; signer_mode=seed initial_sig_count=1 inputs=1
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] [psbt_views] PSBTFinalize: post-sign trimmed_sig_count=2 delta=1
+[py] [psbt_views] PSBTFinalize: finalize_psbt(trimmed) raised=Missing previous utxo on input 0
+[py] [psbt_views] PSBTFinalize: signatures added; routing=PSBTSignedQRDisplayView
+[py] View.run exit: PSBTFinalizeView
+[py] [controller] Appending next destination: PSBTSignedQRDisplayView()
+[py] [controller] 
+back_stack: [
+     5: PSBTSignedQRDisplayView()
+     4: PSBTFinalizeView()
+     3: PSBTAddressDetailsView({'address_num': 0})
+     2: PSBTMathView()
+     1: PSBTOverviewView()
+     0: PSBTSelectSeedView()
+]
+[py] [controller] Executing PSBTSignedQRDisplayView()
+[py] View.run enter: PSBTSignedQRDisplayView
+[py] thread start: LoadingScreenThread loop=True target=None
+[py] display() enter: QRDisplayScreen
+[py] thread start: QRDisplayThread loop=True target=None
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+Supersampled font load time: 0.0
+[py] display() exit: QRDisplayScreen -> None
+[py] View.run exit: PSBTSignedQRDisplayView
+[py] [controller] Appending next destination: MainMenuView() | clear_history: True
+[py] [controller] 
+back_stack: []
+[py] [controller] Executing MainMenuView() | clear_history: True
+[py] View.run enter: MainMenuView
+[py] [components] Supersampling disabled for large font size: 26
+[py] display() enter: MainMenuScreen
+[py] thread start: UpdateThread loop=True target=None
+[py] wait_for keys=['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_PRESS', 'KEY1', 'KEY2', 'KEY3']
