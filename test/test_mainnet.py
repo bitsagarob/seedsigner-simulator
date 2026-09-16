@@ -334,6 +334,7 @@ def main() -> int:
         check("the multisig account key is the one derived independently",
               drawn == expected, compared(drawn, expected))
         window = log.mark()
+        page.wait_for_timeout(1600)
         press(page, "Enter")            # leave the QR screen; multisig comes home
 
         # --- the fabricated transaction --------------------------------------
@@ -384,6 +385,7 @@ def main() -> int:
         check("the signed PSBT comes back off the screen",
               signed is not None, f"{len(frames)} distinct frames read")
         window = log.mark()
+        page.wait_for_timeout(1600)
         press(page, "Enter")            # leave the QR screen; signing comes home
 
         # --- the single sig account key --------------------------------------
