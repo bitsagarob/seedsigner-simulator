@@ -47,16 +47,7 @@ const SHELL = [
   "./wallet-coordinator.js",
   "./wallet-track.js",
   "./seedsigner-device.js",
-  // The boot itself, and the placeholder that stands in for DOOM. Both are
-  // small and both are on every load. What is deliberately not here is DOOM:
-  // doom.js, doom.wasm and the WAD are about ten megabytes gzipped, and
-  // precaching them would charge every visitor for a game before they had asked
-  // for one -- including the ones who arrived at ?wallet and will never see it.
-  // Nothing big is in this list and never has been, for exactly that reason:
-  // Pyodide and the wallet zip are not here either. They are fetched when they
-  // are actually wanted, and kept by the rules below.
   "./doom-boot.js",
-  "./doom-run.js",
   "./jsQR.js",
   // The four the page loads once somebody does more than look at the device:
   // the coordinator beside it, the tutorial that drives it, and the two codecs

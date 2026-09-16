@@ -183,7 +183,7 @@
      * options.onUnlock()     the sequence was spelled: start the wallet
      * options.onUnavailable(reason)   DOOM cannot run: start the wallet anyway
      */
-    boot: function (opts) {
+    boot: async function (opts) {
       options = opts;
       SEQUENCE = (opts.sequence && opts.sequence.length)
         ? opts.sequence.slice()
@@ -202,11 +202,26 @@
       // be a SeedSigner.
       state = "holding";
 
+      opts.status("loading DOOM…");
+      if (!scope.DoomRun) {
+        try {
+          await new Promise(function (resolve, reject) {
+            var script = document.createElement("script");
+            script.src = "doom-run.js";
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+        } catch (error) {
+          unavailable("this page was built without it");
+          return;
+        }
+      }
+      if (state !== "holding") return;
       if (!scope.DoomRun) {
         unavailable("this page was built without it");
         return;
       }
-      opts.status("loading DOOM…");
       try {
         scope.DoomRun.start({ wadUrl: WAD_URL, onFrame: onFrame });
       } catch (error) {

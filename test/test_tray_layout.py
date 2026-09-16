@@ -46,9 +46,10 @@ def main() -> int:
         check("each card is a readable size",
               all(b["width"] > 90 and b["height"] > 60 for b in boxes),
               f"{int(boxes[0]['width'])}x{int(boxes[0]['height'])}")
-        check("labelled A, B, C",
-              [page.locator(".cardtray-name").nth(i).inner_text() for i in range(3)]
-              == ["Card A", "Card B", "Card C"])
+        check("labelled SeedKeeper A, B, C",
+              page.locator(".cardtray-name").all_inner_texts()
+              == ["SeedKeeper A", "SeedKeeper B", "SeedKeeper C"],
+              str(page.locator(".cardtray-name").all_inner_texts()))
         # The product this simulator demonstrates ships SeedKeeper cards, so that
         # is what the tray offers until the user says otherwise.
         check("every card is a SeedKeeper to begin with",
@@ -90,11 +91,19 @@ def main() -> int:
               [page.locator(".cardtray-kind").nth(i).inner_text() for i in range(3)]
               == ["SeedKeeper", "Satochip", "SeedKeeper"],
               str([page.locator(".cardtray-kind").nth(i).inner_text() for i in range(3)]))
+        check("the printed name follows the card type",
+              page.locator(".cardtray-name").all_inner_texts()
+              == ["SeedKeeper A", "Satochip B", "SeedKeeper C"],
+              str(page.locator(".cardtray-name").all_inner_texts()))
         check("and does not disturb the reader",
               page.locator(".cardtray-slotlabel").inner_text() == "Card A inserted")
         page.locator(".cardtray-kind").nth(1).click()
         page.wait_for_timeout(300)
         check("and swaps it back", page.locator(".cardtray-kind").nth(1).inner_text() == "SeedKeeper")
+        check("the printed name switches back too",
+              page.locator(".cardtray-name").all_inner_texts()
+              == ["SeedKeeper A", "SeedKeeper B", "SeedKeeper C"],
+              str(page.locator(".cardtray-name").all_inner_texts()))
         check("focus went back to the page so the wallet keeps the keyboard",
               page.evaluate("document.activeElement === document.body"),
               page.evaluate("document.activeElement.className"))
