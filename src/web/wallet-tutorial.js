@@ -108,7 +108,7 @@
     },
     multi: {
       title: "Multisig",
-      firmwares: ["smartcard", "doomsigner"],
+      firmwares: ["smartcard", "doomsigner", "stock"],
       phases: ["Seeds onto cards", "Keys off the cards", "Build the wallet",
                "Get test coins", "Sign it twice", "Send it"],
       build: function (tutorial) { return createSteps(tutorial, multiSteps); },
@@ -365,7 +365,9 @@
     if (!this.entry) throw new Error("Unknown tutorial: " + this.id);
     this.firmware = options.firmware || this.entry.firmwares[0];
     this.passphrase = options.passphrase === true || options.passphrase === "1";
+    this.qrSeeds = this.id === "multi" && this.firmware === "stock";
     this.phases = this.entry.phases.slice();
+    if (this.qrSeeds) this.phases.splice(0, 2, "Scan three seeds", "Export the keys");
     this.sendKey = options.sendKey;
     this.keymap = options.keymap;
     this.tray = options.tray;
@@ -554,7 +556,11 @@
     // No seed words here. The three seeds are made on the device from a
     // photograph and are different on every run, so what this panel can honestly
     // show is what came back off each card, which the run adds as it reads them.
-    this.detail("the photograph", "Each seed is made from one, taken by the "
+    if (this.qrSeeds) {
+      this.detail("the demo seeds", "Three published test seeds are scanned as SeedQRs "
+        + "and kept in device memory. No cards or webcam are used. Never send real funds "
+        + "to these public seeds.", true);
+    } else this.detail("the photograph", "Each seed is made from one, taken by the "
       + "device. Your camera is asked for once, when Play is pressed; refused or "
       + "unavailable, the picture is noise from this browser's own random "
       + "source. The device refuses either if it is not random enough.", true);
@@ -1038,6 +1044,7 @@
       // Asked every time, and not remembered anywhere. Turning a camera on is
       // not a preference to be inferred from something somebody clicked once.
       track("play", "asked");
+      if (this.qrSeeds) return this.start("self");
       this.pending = "self";
       this.chooser.hidden = false;
       return;
@@ -1485,7 +1492,7 @@
 
   function createSteps(tutorial, builder) {
     var t = tutorial;
-    var PHASES = t.entry.phases;
+    var PHASES = t.phases;
 
     function keys(names, gap) {
       return function () { return t.press(names, gap); };
@@ -1798,13 +1805,33 @@
 
     // -------------------------------------------------- the key off a card
 
+    function scanSeed(i) {
+      var seed = SEEDS[i];
+      return step("Scan test seed " + seed.card, PHASES[0], [
+        i === 0 ? act(null, null, screenIs("MainMenuScreen")) : homeAgain(),
+        act("Open Scan", keys(["Enter"]), screenIs("ScanScreen")),
+        handUp("Public test SeedQR " + seed.card, seed.seedqr, screenIs("SeedFinalizeScreen")),
+        act("Done, keep this seed in memory", keys(["Enter"]), screenIs("SeedOptionsScreen")),
+        homeAgain(),
+      ], false);
+    }
+
+    function selectSeed(i) {
+      return [
+        homeAgain(),
+        act("Seeds", keys(["ArrowRight", "Enter"]), screenIs("ButtonListScreen")),
+        act("Select seed " + SEEDS[i].card,
+            keys(Array(i).fill("ArrowDown").concat(["Enter"])), screenIs("SeedOptionsScreen")),
+      ];
+    }
+
     function keyOffCard(i) {
       var seed = SEEDS[i];
-      var card = "Card " + seed.card;
+      var card = (t.qrSeeds ? "Seed " : "Card ") + seed.card;
       return step(
         "Read " + card + "'s public key",
         PHASES[1],
-        [
+        (t.qrSeeds ? selectSeed(i) : [
           act(card + " into the reader",
               function () { t.tray.insert(i); }, inserted(i)),
           act("Seeds",
@@ -1819,6 +1846,7 @@
               logged("\\[card\\] Card " + seed.card + " exporting secret", 240000)),
           act(null, null, screenIs("SeedFinalizeScreen", 240000)),
           act("Done", keys(["Enter"]), screenIs("SeedOptionsScreen")),
+        ]).concat([
           act("Export Xpub",
               keys(["ArrowDown", "Enter"]), screenIs("ButtonListScreen")),
           act("Multisig",
@@ -1838,19 +1866,21 @@
                     t.detail(card + " account key", text);
                     return true;
                   }),
-          act("Any button leaves the QR", keys(["Enter"]), screenIs("MainMenuScreen")),
-        ].concat(forgetTheSeed(card)));
+          act("Any button leaves the QR", t.qrSeeds
+              ? function () { return t.sleep(1600).then(keys(["Enter"])); } : keys(["Enter"]),
+              screenIs("MainMenuScreen")),
+        ]).concat(t.qrSeeds ? [] : forgetTheSeed(card)));
     }
 
     // -------------------------------------------------- signing, twice
 
     function signWith(i) {
       var seed = SEEDS[i];
-      var card = "Card " + seed.card;
+      var card = (t.qrSeeds ? "Seed " : "Card ") + seed.card;
       return step(
         "Sign with " + card,
         PHASES[4],
-        [
+        (t.qrSeeds ? selectSeed(i) : [
           act(card + " into the reader",
               function () { t.tray.insert(i); }, inserted(i)),
           act("Seeds",
@@ -1864,6 +1894,7 @@
           act(null, null, screenIs("SeedFinalizeScreen", 240000)),
           act("Done", keys(["Enter"]), screenIs("SeedOptionsScreen")),
           homeAgain(),
+        ]).concat([
           act("Open Scan", keys(["Enter"]), screenIs("ScanScreen")),
           handUpFrames("The transaction to be signed, in several codes",
                        function (context) { return context.state.frames; },
@@ -1884,13 +1915,14 @@
                     t.detail(card + " signed PSBT", psbt);
                     return true;
                   }, 300000),
-          act("Any button leaves the QR", keys(["Enter"]),
+          act("Any button leaves the QR", t.qrSeeds
+              ? function () { return t.sleep(1600).then(keys(["Enter"])); } : keys(["Enter"]),
               function () {
                 return t.poll(60000, function () {
                   return t.currentScreen() === "MainMenuScreen";
                 }, "the home screen");
               }),
-        ].concat(forgetTheSeed(card)));
+        ]).concat(t.qrSeeds ? [] : forgetTheSeed(card)));
     }
 
     // -------------------------------------------------- the coordinator's own
@@ -1913,7 +1945,7 @@
       settle: settle, homeAgain: homeAgain, advance: advance,
       handUp: handUp, handUpFrames: handUpFrames, readOff: readOff,
       coordinator: coordinator, seedOntoCard: seedOntoCard,
-      keyOffCard: keyOffCard, signWith: signWith,
+      keyOffCard: keyOffCard, signWith: signWith, scanSeed: scanSeed,
     });
   }
 
@@ -2231,14 +2263,14 @@
     }
 
   function multiSteps(t, helpers) {
-    var PHASES = t.entry.phases;
+    var PHASES = t.phases;
     var keys = helpers.keys, screenIs = helpers.screenIs;
     var homeAgain = helpers.homeAgain, handUp = helpers.handUp;
     var coordinator = helpers.coordinator;
     var seedOntoCard = helpers.seedOntoCard, keyOffCard = helpers.keyOffCard;
     var signWith = helpers.signWith;
     var steps = [];
-    for (var s = 0; s < 3; s++) steps.push(seedOntoCard(s));
+    for (var s = 0; s < 3; s++) steps.push(t.qrSeeds ? helpers.scanSeed(s) : seedOntoCard(s));
     for (var k = 0; k < 3; k++) steps.push(keyOffCard(k));
 
     steps.push(step(
@@ -2555,7 +2587,8 @@
       // is not an answer. What the URL decides is which mode the answer starts.
       if (options.mode) {
         tutorial.pending = options.mode === "hands" ? "hands" : "self";
-        tutorial.chooser.hidden = false;
+        if (tutorial.qrSeeds) tutorial.start(tutorial.pending);
+        else tutorial.chooser.hidden = false;
       }
       // The same decoder the wallet's own camera path uses, because the phone
       // reading the device's screen is the same job in the other direction.

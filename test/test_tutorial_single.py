@@ -167,10 +167,10 @@ def boot(context, chain, query, page=None, log=None):
     assert page.evaluate("window.__firmware") == "stock"
     assert page.evaluate(CURRENT + ".id") == "single"
     assert page.locator(".cardtray-card").count() == 0
-    check("registry restricts single to stock and multisig to smartcard/Doomsigner",
+    check("registry offers single on stock and multisig on all three firmwares",
           page.evaluate("() => Object.fromEntries(Object.entries(window.WalletTutorial.registry)"
                         ".map(([id, entry]) => [id, entry.firmwares]))")
-          == {"single": ["stock"], "multi": ["smartcard", "doomsigner"]})
+          == {"single": ["stock"], "multi": ["smartcard", "doomsigner", "stock"]})
     page.evaluate("() => { const t = " + CURRENT + "; "
                   "t.pace = () => Promise.resolve(); t.beat = () => Promise.resolve(); }")
     return page, log
@@ -466,8 +466,8 @@ def main():
                     page.locator("#wallet-button").click()
                     picker = page.locator("#wallet #start-tutorial")
                     picker.wait_for(state="visible")
-                    check("stock drawer offers only Single sig and an unchecked passphrase",
-                          picker.get_by_role("button").all_text_contents() == ["Single sig"]
+                    check("stock drawer offers Single sig, Multisig and an unchecked passphrase",
+                          picker.get_by_role("button").all_text_contents() == ["Single sig", "Multisig"]
                           and not picker.get_by_role("checkbox").is_checked())
                     picker.get_by_role("checkbox").check()
                     log.lines.clear()
