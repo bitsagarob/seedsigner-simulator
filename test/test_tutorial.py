@@ -33,6 +33,7 @@ import zipfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import harness
+import mainnet_reference as reference
 from harness import Log, check, report
 from signet_bridge import API, serve_at
 
@@ -276,6 +277,177 @@ def boot(context, log_lines, query="tutorial=1&debug=1"):
     return page, log
 
 
+def stock_qr(browser):
+    from test_tutorial_single import OfflineChain, evidence, load_embit, ordered, wait
+
+    load_embit()
+    from embit.descriptor import Descriptor
+    from embit.networks import NETWORKS
+    from embit.transaction import Transaction
+
+    for name, passed, detail in reference.check_published_vectors():
+        check(name, passed, detail)
+        assert passed, name
+    mnemonics = SIGNING_SEEDS + [
+        "letter advice cage absurd amount doctor acoustic avoid letter advice cage above",
+    ]
+    path = "m/48'/1'/0'/2'"
+    roots = [reference.root_from_mnemonic(mnemonic) for mnemonic in mnemonics]
+    accounts = [root.derive(path) for root in roots]
+    exported = [
+        f"[{root.fingerprint.hex()}/48'/1'/0'/2']"
+        + account.extended_public_key(bytes.fromhex("02575483"))
+        for root, account in zip(roots, accounts)
+    ]
+    descriptor = "wsh(sortedmulti(2," + ",".join(
+        f"[{root.fingerprint.hex()}/48h/1h/0h/2h]"
+        + account.extended_public_key(bytes.fromhex("043587cf")) + "/{0,1}/*"
+        for root, account in zip(roots, accounts)
+    ) + "))"
+    parsed = Descriptor.from_string(descriptor)
+    context = browser.new_context(viewport={"width": 1000, "height": 1300},
+                                  service_workers="block")
+    chain = OfflineChain(context)
+    page = context.new_page()
+    log = Log(page)
+    chain.log = log
+    try:
+        page.goto(f"{ORIGIN}/wallet.html?tutorial=multi&firmware=stock&debug=1")
+        log.wait(r"display\(\) enter: MainMenuScreen\b", 180, "stock multisig boot")
+        page.wait_for_function("window.WalletTutorial && window.WalletTutorial.current",
+                               timeout=60000)
+        check("stock mounts the same multisig tutorial without cards",
+              page.evaluate("window.__firmware") == "stock"
+              and page.evaluate("window.WalletTutorial.current.firmware") == "stock"
+              and page.evaluate("window.WalletTutorial.current.id") == "multi"
+              and page.locator("#tutorial h2").inner_text() == "Multisig"
+              and page.locator(".cardtray-card").count() == 0)
+        check("stock multisig replaces only the two card phases",
+              page.evaluate("window.WalletTutorial.current.phases")
+              == ["Scan three seeds", "Export the keys", "Build the wallet",
+                  "Get test coins", "Sign it twice", "Send it"])
+        page.evaluate("() => { const t = window.WalletTutorial.current; "
+                      "t.pace = () => Promise.resolve(); t.beat = () => Promise.resolve(); }")
+        mark = log.mark()
+        page.locator('#tutorial button[aria-label="Play"]').click()
+        check("stock multisig Play does not show the entropy chooser",
+              not page.get_by_role("button", name="Random noise instead", exact=True).is_visible())
+        log.wait(r"display\(\) enter: ScanScreen\b", 90, "Play directly opens seed scanning", mark)
+        wait(page, "t.state && t.state.keys && t.state.keys[0]", "first optical multisig account", 180)
+        first_key = page.evaluate("window.WalletTutorial.current.state.keys[0]")
+        check("first decoded stock QR matches independent BIP32 before leaving the export",
+              first_key == exported[0], first_key)
+        assert first_key == exported[0], "first optical account differs from independent BIP32"
+        wait(page, "t.finished", "stock multisig confirmed end to end", 600)
+        got = evidence(page)
+        state = got["state"]
+        assert got["finished"] and len(chain.claims) == len(chain.broadcasts) == 1, \
+            "missing or duplicate offline funding/broadcast"
+        claim, broadcast = chain.claims[0], chain.broadcasts[0]
+        check("three optical exports exactly match independent BIP39/BIP32 Vpubs in A/B/C order",
+              state["keys"] == exported, repr(state["keys"]))
+        check("coordinator descriptor exactly matches independently derived tpub accounts",
+              state["wallet"]["descriptor"] == descriptor)
+        index = state["index"]
+        assert isinstance(index, int) and 0 <= index < 10000, "invalid receive index"
+        scripts = {}
+        witnesses = {}
+        for branch, name in ((0, "receive"), (1, "change")):
+            leaf = parsed.derive(index, branch_index=branch)
+            public_keys = sorted(account.derive(f"{branch}/{index}").public for account in accounts)
+            witnesses[name] = b"\x52" + b"".join(b"\x21" + key for key in public_keys) + b"\x53\xae"
+            scripts[name] = b"\x00\x20" + reference.sha256(witnesses[name])
+            check(f"stock {name} address, script and sortedmulti witness use the actual index",
+                  state[name]["address"] == leaf.address(NETWORKS["test"])
+                  and bytes(state[name]["scriptPubkey"]) == leaf.script_pubkey().data == scripts[name]
+                  and bytes(state[name]["witnessScript"]) == leaf.witness_script().data == witnesses[name])
+        check("offline faucet pays the independently derived receive address at output one",
+              claim["address"] == parsed.derive(index, branch_index=0).address(NETWORKS["test"])
+              and claim["script"] == scripts["receive"]
+              and state["funding"] == state["input"]["txid"] == claim["txid"]
+              and state["input"]["vout"] == claim["vout"] == 1
+              and int(state["input"]["value"]) == claim["value"] == INPUT["value"])
+        outputs = [(claim["value"] - FEE, scripts["change"])]
+        expected_tx = reference.unsigned_transaction(bytes.fromhex(claim["txid"]), 1, outputs)
+        unsigned, partials = reference.read_psbt(base64.b64decode(state["psbt"]))
+        check("unsigned optical PSBT spends exactly the reference transaction with no signatures",
+              unsigned == expected_tx and not partials
+              and int(state["amount"]) == outputs[0][0] and len(state["frames"]) > 1)
+        assert len(state["signed"]) == 2, "expected two optical signed PSBTs"
+        digest = reference.bip143_sighash(bytes.fromhex(claim["txid"]), 1,
+                                         witnesses["receive"], claim["value"], outputs)
+        changed = reference.bip143_sighash(bytes.fromhex(claim["txid"]), 1,
+                                          witnesses["receive"], claim["value"],
+                                          [(outputs[0][0] - 1, scripts["change"])])
+        signatures = {}
+        for i, signed in enumerate(state["signed"]):
+            signed_tx, partials = reference.read_psbt(base64.b64decode(signed))
+            key = accounts[i].derive(f"0/{index}").public
+            assert set(partials) == {key}, f"optical PSBT {i + 1} must sign only selected seed {'AB'[i]}"
+            signature = partials[key]
+            assert signature[-1] == 1, "signature must commit to SIGHASH_ALL"
+            r, s = reference.decode_der(signature[:-1])
+            check(f"seed {'AB'[i]} optical signature verifies independently with BIP143/ECDSA",
+                  signed_tx == expected_tx and s <= reference.N // 2
+                  and reference.verify_signature(key, digest, r, s))
+            check(f"seed {'AB'[i]} signature rejects changed output, signature and seed C",
+                  not reference.verify_signature(key, changed, r, s)
+                  and not reference.verify_signature(key, digest, r, s ^ 1)
+                  and not reference.verify_signature(accounts[2].derive(f"0/{index}").public,
+                                                     digest, r, s))
+            signatures[key] = signature
+        check("two different loaded seeds return two distinct optical signatures",
+              len(signatures) == len(set(signatures.values())) == 2)
+        tx = Transaction.parse(bytes.fromhex(broadcast["hex"]))
+        expected_id = reference.double_sha256(expected_tx)[::-1].hex()
+        check("captured broadcast contains the coordinator spend and independent txid",
+              broadcast["hex"] == state["spend"]["hex"]
+              and broadcast["txid"] == state["spend"]["txid"] == expected_id)
+        assert len(tx.vin) == 1, "expected one P2WSH input"
+        check("broadcast witness contains the two optical signatures in public-key order",
+              tx.vin[0].witness.items == [b""] + [signatures[key] for key in sorted(signatures)]
+              + [witnesses["receive"]])
+        check("finalisation preserves the independently constructed spend",
+              tx.version == 2 and tx.locktime == 0
+              and tx.vin[0].txid.hex() == claim["txid"] and tx.vin[0].vout == 1
+              and tx.vin[0].sequence == 0xFFFFFFFD and tx.vin[0].script_sig.data == b""
+              and [(out.value, out.script_pubkey.data) for out in tx.vout] == outputs)
+        check("stock run confirms both funding and captured spend using offline proofs",
+              sum(item["txid"] == claim["txid"] for item in chain.proofs) >= 2
+              and any(item["txid"] == expected_id for item in chain.proofs))
+        scan_route = ["ScanScreen", "SeedFinalizeScreen", "SeedOptionsScreen", "MainMenuScreen"]
+        export_route = ["ButtonListScreen", "SeedOptionsScreen", "SeedExportXpubDetailsScreen",
+                        "QRDisplayScreen", "MainMenuScreen"]
+        check("firmware scans all three seeds before exporting all three keys and accepting descriptor",
+              ordered(log, scan_route * 3 + export_route * 3
+                      + ["ScanScreen", "MultisigWalletDescriptorScreen", "MainMenuScreen"],
+                      mark, claim["mark"]))
+        sign_route = ["ButtonListScreen", "SeedOptionsScreen", "ScanScreen", "PSBTOverviewScreen",
+                      "PSBTFinalizeScreen", "QRDisplayScreen", "MainMenuScreen"]
+        check("firmware selects, reviews and approves two loaded seeds before broadcast",
+              ordered(log, sign_route * 2, claim["mark"], broadcast["mark"]))
+        check("three seeds remain loaded without rescanning during export or signing",
+              sum("display() enter: SeedFinalizeScreen" in line for line in log.lines) == 3
+              and sum("display() enter: SeedExportXpubDetailsScreen" in line for line in log.lines) == 3
+              and sum("display() enter: PSBTOverviewScreen" in line for line in log.lines) == 2
+              and sum("display() enter: PSBTFinalizeScreen" in line for line in log.lines) == 2)
+        check("stock QR run uses the camera, never card storage/export or image entropy",
+              log.seen(r"\[cam\] .*decoding with (\S+)") is not None
+              and not log.seen(r"\[card\].*(stored secret|exporting secret)|"
+                               r"display\(\) enter: ToolsImageEntropy\w+"))
+        check("stock QR run has no firmware/page errors or unhandled network endpoints",
+              not log.seen(r"RAISED|PAGEERROR|Traceback|display\(\) enter: UnhandledException")
+              and not chain.unexpected, repr(chain.unexpected))
+    except Exception:
+        with open(harness.artifact("tutorial-stock-qr-failure.log"), "w") as handle:
+            handle.write("\n".join(log.lines))
+        page.screenshot(path=harness.artifact("tutorial-stock-qr-failure.png"), full_page=True)
+        print("\n".join(log.lines[-45:]), flush=True)
+        raise
+    finally:
+        context.close()
+
+
 def doomsigner_card(browser):
     from test_tutorial_single import OfflineChain, ordered, wait
 
@@ -342,6 +514,7 @@ def main() -> int:
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
+        stock_qr(browser)
         doomsigner_card(browser)
         context = browser.new_context(viewport={"width": 1000, "height": 1300},
                                       service_workers="block")
@@ -665,13 +838,13 @@ def main() -> int:
 
         # The picker lives inside the wallet drawer on ordinary pages; only the
         # tutorial supported by the selected firmware is offered.
-        for query, label in [
-            ("wallet=1", "Single sig"),
-            ("wallet=1&firmware=stock", "Single sig"),
-            ("wallet=1&firmware=smartcard", "Multisig"),
-            ("wallet=1&firmware=doomsigner", "Multisig"),
-            ("wallet=1&firmware=stock&tutorial=offer", "Single sig"),
-            ("wallet=1&firmware=smartcard&tutorial=offer", "Multisig"),
+        for query, labels in [
+            ("wallet=1", ["Single sig", "Multisig"]),
+            ("wallet=1&firmware=stock", ["Single sig", "Multisig"]),
+            ("wallet=1&firmware=smartcard", ["Multisig"]),
+            ("wallet=1&firmware=doomsigner", ["Multisig"]),
+            ("wallet=1&firmware=stock&tutorial=offer", ["Single sig", "Multisig"]),
+            ("wallet=1&firmware=smartcard&tutorial=offer", ["Multisig"]),
         ]:
             resting = context.new_page()
             logs.append(Log(resting))
@@ -689,9 +862,10 @@ def main() -> int:
                   and picker.is_visible() and resting.locator("#wallet").is_visible()
                   and resting.locator("#tutorial").count() == 0)
             buttons = picker.get_by_role("button")
-            check(f"{query}: only {label} is offered",
-                  buttons.all_text_contents() == [label]
-                  and picker.get_by_role("button", name=label, exact=True).is_visible(),
+            check(f"{query}: exactly {labels!r} are offered",
+                  buttons.all_text_contents() == labels
+                  and all(picker.get_by_role("button", name=label, exact=True).is_visible()
+                          for label in labels),
                   repr(buttons.all_text_contents()))
             rest_width = resting.evaluate(
                 "() => [document.documentElement.scrollWidth, window.innerWidth]")
