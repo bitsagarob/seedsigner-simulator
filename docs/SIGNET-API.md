@@ -15,11 +15,14 @@ uses Bitsaga Signet's public API over HTTPS, at `https://signet.bitsaga.be/api`.
 | `GET /status` | yes | how old the last block is, which is what the progress line follows while waiting for a confirmation |
 | `POST /claim` | yes | asks the faucet to pay the wallet's first address |
 | `GET /tx-proof?txid=` | yes | two jobs at once: it answers 404 until the transaction is in a block, so it *is* the confirmation check, and it returns the raw transaction, which is where the coordinator finds the output it is about to spend and what that output is worth |
-| `POST /broadcast` | **no** | sends the finished transaction |
+| `POST /broadcast` | yes | sends the finished transaction |
 
-Three of the four are already there and needed nothing. The fourth does not
-exist, and there is no way to spend without it: a signed transaction has to
-reach a node, and nothing else on this page can carry it.
+All four are there and needed nothing. This document used to say the fourth
+did not exist, and that was true when it was written; the endpoint has since
+been added. Measured on 2026-09-17: `POST /api/broadcast` with an unusable body
+answers `{"error": "Send the transaction as hexadecimal text."}`, while a URL
+that really is absent answers 404. `src/web/signet-coordinator.js` already
+posts `{tx: "<hex>"}`, which is the shape described below.
 
 ## The one endpoint to add
 

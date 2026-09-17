@@ -99,6 +99,16 @@
   // step names the phase it belongs to, rather than this list naming ranges of
   // step numbers, so inserting a step cannot silently move the marks.
   var REGISTRY = {
+    // Mounted by URL, ?tutorial=musig, and deliberately absent from the
+    // drawer picker: the picker is the resting page's invitation, and the
+    // suite pins what each firmware offers there.
+    musig: {
+      title: "MuSig2",
+      firmwares: ["doomsigner"],
+      phases: ["Seeds onto cards", "Keys off the cards", "Build the wallet",
+               "Get test coins", "Exchange nonces and sign", "Send it"],
+      build: function (tutorial) { return createSteps(tutorial, musigSteps); },
+    },
     single: {
       title: "Single sig",
       firmwares: ["stock", "smartcard", "doomsigner"],
@@ -2286,6 +2296,156 @@
       return steps;
     }
 
+  function musigSteps(t, h) {
+    var C = scope.EmbitCoordinator;
+    var state = t.state || (t.state = {});
+    var phases = t.entry.phases;
+    var keys = h.keys, screenIs = h.screenIs, coordinator = h.coordinator;
+    var steps = [];
+    function down(n) { return Array(n).fill("ArrowDown").concat(["Enter"]); }
+    function home() { return t.currentScreen() === "MainMenuScreen"; }
+    function replay() { return home() && !state.claimPending && !state.session; }
+    function forget() {
+      return [
+        act("Seeds", keys(["ArrowRight", "Enter"]), screenIs("ButtonListScreen")),
+        act("The loaded seed", keys(["Enter"]), screenIs("SeedOptionsScreen")),
+        act("Discard the loaded seed", keys(down(6)), screenIs("WarningScreen")),
+        act("Confirm discard", keys(["ArrowDown", "Enter"]), screenIs("MainMenuScreen")),
+        coordinator(function () { t.tray.eject(); }),
+      ];
+    }
+    function load(i) {
+      return [
+        act("Card " + SEEDS[i].card + " into the reader", function () { t.tray.insert(i); },
+            function () { return t.poll(60000, function () { return t.tray.inserted() === i; }, "the card"); }),
+        act("Seeds", keys(["ArrowRight", "Enter"]), screenIs("ButtonListScreen")),
+        act("From SeedKeeper", keys(down(3)), screenIs("SeedAddPassphraseScreen")),
+        act("The demo card PIN", keys(["Enter", "Enter", "Enter", "Enter", "3"]), screenIs("ButtonListScreen")),
+        act("Load the card's seed", keys(["Enter"]), screenIs("SeedFinalizeScreen")),
+        act("Done", keys(["Enter"]), screenIs("SeedOptionsScreen")),
+      ];
+    }
+    for (var i = 0; i < 3; i++) steps.push(h.seedOntoCard(i));
+    for (var k = 0; k < 3; k++) {
+      (function (i) {
+        steps.push(step("Read Card " + SEEDS[i].card + "'s account key", phases[1], load(i).concat([
+          act("Export Xpub", keys(down(1)), screenIs("ButtonListScreen")),
+          act("Multisig account", keys(down(1)), screenIs("ButtonListScreen")),
+          act("Native Segwit account key, to aggregate into Taproot", keys(["Enter"]), screenIs("ButtonListScreen")),
+          act("Static QR", keys(down(1)), h.settle(1500)),
+          h.advance("QRDisplayScreen", 5, "Review the public account export"),
+          h.readOff("Card " + SEEDS[i].card + "'s public account key", function (context, text) {
+            return Promise.resolve(C.parseAccount(text)).then(function (a) {
+              context.check();
+              state.keys = state.keys || [];
+              state.keys[i] = "[" + a.fingerprint + a.path + "]" + a.tpub;
+              t.detail("Card " + SEEDS[i].card + " account", state.keys[i]);
+              return t.sleep(1600);
+            });
+          }),
+          act("Leave the account QR", keys(["Enter"]), screenIs("MainMenuScreen")),
+        ], forget()), false));
+      })(k);
+    }
+    steps.push(step("Build the MuSig2 2 of 3 wallet", phases[2], [coordinator(function (context) {
+      if (state.receive) return;
+      return C.musigWallet(state.keys).then(function (descriptor) {
+        context.check();
+        state.descriptor = descriptor;
+        state.wallet = { descriptor: descriptor };
+        return C.musigAddress(descriptor, 0, 0);
+      }).then(function (out) {
+        context.check();
+        state.receive = out;
+        t.detail("MuSig2 descriptor", state.descriptor);
+        t.detail("receive address", out.address);
+        t.verdict.textContent = "A and B sign the Taproot key path. A+C and B+C are fallback leaves, not exercised here.";
+      });
+    })], replay));
+    steps.push(step("Ask Bitsaga Signet's faucet for test coins", phases[3], [coordinator(function (context) {
+      if (state.funding) return;
+      state.claimPending = true;
+      t.reflect();
+      return scope.SignetCoordinator.network.claim(state.receive.address).then(function (paid) {
+        state.funding = paid.txid;
+        state.claimPending = false;
+        context.check();
+        t.detail("faucet transaction", paid.txid);
+        t.verdict.textContent = NOT_REAL;
+      }, function (error) { state.claimPending = false; throw error; });
+    }), coordinator(function () {
+      return waitForBlock(t, state.funding, "the faucet payment", "Waiting for test coins.");
+    })], false));
+    steps.push(step("Build the MuSig2 spend", phases[4], [coordinator(function (context) {
+      if (state.session) return;
+      return scope.SignetCoordinator.network.proof(state.funding).then(function (proof) {
+        context.check();
+        return C.transactionOutputs(proof.tx);
+      }).then(function (outputs) {
+        context.check();
+        var out = outputs.filter(function (o) { return o.script === state.receive.script_pubkey; })[0];
+        if (!out || Number(out.value) <= Number(FEE)) throw new Error("the faucet did not fund this MuSig2 wallet sufficiently");
+        return C.spendStart({ descriptor: state.descriptor, branch: 0, index: 0,
+          utxo: { txid: state.funding, vout: out.index, value: Number(out.value) },
+          destination: state.receive.script_pubkey, amount: Number(out.value) - Number(FEE), pool: {} });
+      }).then(function (session) {
+        context.check();
+        state.session = session;
+        state.rounds = [];
+        t.detail("unsigned MuSig2 PSBT", session.psbt);
+      });
+    })], replay));
+    [0, 1, 0].forEach(function (i, round) {
+      steps.push(step(["Card A publishes its nonce", "Card B publishes a nonce and signs", "Card A signs and completes the spend"][round],
+        phases[4], load(i).concat([
+          h.homeAgain(),
+          act("Open Scan", keys(["Enter"]), screenIs("ScanScreen")),
+          h.handUpFrames("MuSig2 round " + (round + 1) + ": the current PSBT", function () {
+            return specterFrames(state.session.psbt);
+          }, h.logged("View.run enter: PSBTSelectSeedView", 300000)),
+          act("Select the loaded seed", keys(["Enter"]), screenIs("PSBTOverviewScreen")),
+          act("Review the spend", keys(["Enter"]), screenIs("WarningScreen")),
+          act("No change output: the whole balance returns to the wallet", keys(["Enter"]), screenIs("PSBTMathScreen")),
+          act("Review the amount and fee", keys(["Enter"]), screenIs("PSBTAddressDetailsScreen")),
+          act("Review the destination", keys(["Enter"]), screenIs("PSBTFinalizeScreen")),
+          act(round === 0 ? "Approve nonce generation, not a completed signature" : "Approve this signing round",
+              keys(["Enter"]), h.logged("PSBTMusig2Round: stage=" + (round === 0 ? "nonce signed=0 waiting=1" : "signed signed=1 waiting=0"))),
+          act("Continue to the round's PSBT QR", keys(["Enter"]), screenIs("QRDisplayScreen")),
+          h.readOff("Read MuSig2 round " + (round + 1) + " back from the device", function (context, collector) {
+            var psbt = scope.SignetCoordinator.toBase64(collector.psbt());
+            return C.spendReturned(state.session, psbt).then(function (next) {
+              context.check();
+              if (next.done !== (round === 2)) throw new Error("unexpected MuSig2 completion state");
+              state.session = next;
+              state.rounds.push(psbt);
+              t.detail("MuSig2 round " + (round + 1), psbt);
+              return t.sleep(1600);
+            });
+          }, 300000),
+          act("Leave the round QR", keys(["Enter"]), screenIs("MainMenuScreen")),
+        ], forget()), false));
+    });
+    steps.push(step("Send the completed MuSig2 spend", phases[5], [coordinator(function (context) {
+      if (!state.session.done) throw new Error("MuSig2 has not completed");
+      state.broadcasting = true;
+      t.reflect();
+      state.spend = { hex: state.session.txhex, txid: singleTxid(state.session.psbt) };
+      if (state.sent) return;
+      return scope.SignetCoordinator.network.broadcast(state.spend.hex).then(function (sent) {
+        state.sent = sent;
+        context.check();
+        if (sent.txid !== state.spend.txid) throw new Error("the network returned a different transaction id");
+        t.detail("signed MuSig2 transaction", state.spend.hex);
+      });
+    }), coordinator(function () {
+      return waitForBlock(t, state.spend.txid, "the MuSig2 spend", "Waiting for the spend to be mined.");
+    }), coordinator(function () {
+      t.verdict.dataset.state = "good";
+      t.verdict.textContent = "MuSig2 signed by A and B, sent and confirmed on Bitsaga Signet: " + state.spend.txid;
+    })], false));
+    return steps;
+  }
+
   function multiSteps(t, helpers) {
     var PHASES = t.phases;
     var keys = helpers.keys, screenIs = helpers.screenIs;
@@ -2572,7 +2732,7 @@
       firmware = firmware || "stock";
       Object.keys(REGISTRY).forEach(function (id) {
         var entry = REGISTRY[id];
-        if (entry.firmwares.indexOf(firmware) < 0) return;
+        if (entry.firmwares.indexOf(firmware) < 0 || entry.offer === false) return;
         var item = element("div");
         var button = element("button", "tut-start", entry.title);
         button.type = "button";

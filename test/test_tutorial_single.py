@@ -171,7 +171,8 @@ def boot(context, chain, query, page=None, log=None):
           page.evaluate("() => Object.fromEntries(Object.entries(window.WalletTutorial.registry)"
                         ".map(([id, entry]) => [id, entry.firmwares]))")
           == {"single": ["stock", "smartcard", "doomsigner"],
-              "multi": ["smartcard", "doomsigner", "stock"]})
+              "multi": ["smartcard", "doomsigner", "stock"],
+              "musig": ["doomsigner"]})
     page.evaluate("() => { const t = " + CURRENT + "; "
                   "t.pace = () => Promise.resolve(); t.beat = () => Promise.resolve(); }")
     return page, log
