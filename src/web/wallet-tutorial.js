@@ -108,7 +108,6 @@
       phases: ["Seeds onto cards", "Keys off the cards", "Build the wallet",
                "Get test coins", "Exchange nonces and sign", "Send it"],
       build: function (tutorial) { return createSteps(tutorial, musigSteps); },
-      offer: false,
     },
     single: {
       title: "Single sig",
