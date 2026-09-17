@@ -875,7 +875,9 @@ def main() -> int:
             ("wallet=1", ["Single sig", "Multisig"]),
             ("wallet=1&firmware=stock", ["Single sig", "Multisig"]),
             ("wallet=1&firmware=smartcard", ["Single sig", "Multisig"]),
-            ("wallet=1&firmware=doomsigner", ["Single sig", "Multisig"]),
+            # DoomSigner is the firmware that can sign a MuSig2 spend, so it is
+            # the only one offered that walkthrough.
+            ("wallet=1&firmware=doomsigner", ["MuSig2", "Single sig", "Multisig"]),
             ("wallet=1&firmware=stock&tutorial=offer", ["Single sig", "Multisig"]),
             ("wallet=1&firmware=smartcard&tutorial=offer", ["Single sig", "Multisig"]),
         ]:
