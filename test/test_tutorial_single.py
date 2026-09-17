@@ -170,7 +170,8 @@ def boot(context, chain, query, page=None, log=None):
     check("registry restricts single to stock and multisig to smartcard/Doomsigner",
           page.evaluate("() => Object.fromEntries(Object.entries(window.WalletTutorial.registry)"
                         ".map(([id, entry]) => [id, entry.firmwares]))")
-          == {"single": ["stock"], "multi": ["smartcard", "doomsigner"]})
+          == {"single": ["stock"], "multi": ["smartcard", "doomsigner"],
+              "musig": ["doomsigner"]})
     page.evaluate("() => { const t = " + CURRENT + "; "
                   "t.pace = () => Promise.resolve(); t.beat = () => Promise.resolve(); }")
     return page, log
