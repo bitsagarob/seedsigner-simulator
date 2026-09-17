@@ -296,8 +296,12 @@ def doomsigner_card(browser):
         assert page.evaluate("window.__firmware") == "doomsigner"
         assert page.evaluate("window.WalletTutorial.current.firmware") == "doomsigner"
         assert page.evaluate("window.WalletTutorial.current.id") == "multi"
-        page.evaluate("() => { const t = window.WalletTutorial.current; "
-                      "t.pace = () => Promise.resolve(); }")
+        page.evaluate("""() => {
+            const t = window.WalletTutorial.current;
+            t.pace = text => text === 'Put a test seed on Card B'
+                ? new Promise(resolve => { window.releaseCardBTitle = resolve; })
+                : Promise.resolve();
+        }""")
         page.locator('#tutorial button[aria-label="Play"]').click()
         page.get_by_role("button", name="Random noise instead", exact=True).click()
         stored = log.wait(
@@ -310,6 +314,7 @@ def doomsigner_card(browser):
         mark = next(i for i, line in enumerate(log.lines) if stored.group(0) in line)
         wait(page, "t.stepText.textContent.includes('Card B')", "Doomsigner Card A discard", 90)
         page.locator('#tutorial button[aria-label="Pause"]').click()
+        page.evaluate("() => window.releaseCardBTitle()")
         wait(page, "t.paused && !t.performing", "stop at Card B")
         check("Doomsigner discards Card A's seed through its real discard menu",
               ordered(log, ["SeedOptionsScreen", "WarningScreen", "MainMenuScreen"], mark)

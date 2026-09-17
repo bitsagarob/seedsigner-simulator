@@ -1596,6 +1596,8 @@
      * loaded, and a list of seeds when there is.
      */
     function discardKeys() {
+      // Wallet narration exposes no menu labels. DoomSigner's finalized menu adds
+      // Silent payments before Discard seed: six downs, versus five on smartcard.
       return keys(Array(t.firmware === "doomsigner" ? 6 : 5).fill("ArrowDown").concat(["Enter"]));
     }
 
