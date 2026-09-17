@@ -1208,9 +1208,13 @@ const BITCOIN_NETWORK = search.get("network") === "mainnet" ? "M"
 // payments live now. There is no separate receive firmware.
 const askedRaw = search.get("firmware");
 const asked = askedRaw === "spreceive" ? "doomsigner" : askedRaw;
-const FORK_ASKED_FOR = search.has("doom") || search.get("tutorial") !== null;
+const tutorialAsked = search.get("tutorial");
+const tutorialId = ["1", "play", "hands"].includes(tutorialAsked) ? "multi" : tutorialAsked;
+const tutorialEntry = Object.hasOwn(WalletTutorial.registry, tutorialId)
+                    ? WalletTutorial.registry[tutorialId] : null;
 const FIRMWARE = FIRMWARES.includes(asked) ? asked
-               : (FORK_ASKED_FOR ? "smartcard" : FIRMWARES[0]);
+               : tutorialEntry ? tutorialEntry.firmwares[0]
+               : search.has("doom") ? "smartcard" : FIRMWARES[0];
 // A name for what the rest of the file asks about, kept for readability.
 const BASE_FIRMWARE = FIRMWARE;
 // Which firmware actually loaded, readable from outside. A driver that asks the
@@ -1240,8 +1244,7 @@ function walletZipKind(firmware) {
 // to people given a link to it and to nobody else. ?tutorial=offer is the
 // button that used to sit on every visit, ?tutorial=1 starts the thing.
 const TUTORIAL_ASKED = new URLSearchParams(location.search).get("tutorial");
-const TUTORIAL_OFFERED = TUTORIAL_ASKED !== null && FIRMWARE === "smartcard";
-const TUTORIAL = TUTORIAL_OFFERED && TUTORIAL_ASKED !== "offer";
+const TUTORIAL = !!tutorialEntry && tutorialEntry.firmwares.includes(FIRMWARE);
 // Set here rather than when the tutorial mounts, which is after the wallet has
 // started: the layout has to be its final shape while the page is still
 // loading, or the device jumps across the screen a minute in. "paired" rather
@@ -2047,6 +2050,7 @@ function startWallet() {
     if (trayEl) document.getElementById("stage-device").appendChild(trayEl);
     tutorial = WalletTutorial.mount({
       container: slot, sendKey: devicePress, keymap: KEYMAP, tray, screen: canvas,
+      id: tutorialId, firmware: FIRMWARE, passphrase: search.get("passphrase"),
       // What is happening now goes under the device; the machinery stays in the
       // panel. Two glances rather than one ping-pong for six minutes.
       sayInto: document.getElementById("device-say"),
@@ -2056,8 +2060,8 @@ function startWallet() {
       // ?tutorial=hands is what the end of a run offers, ?tutorial=play is what
       // Begin again reloads into: both come back already running, because the
       // alternative is a page that looks like it merely refreshed.
-      mode: TUTORIAL_ASKED === "hands" ? "hands"
-          : (TUTORIAL_ASKED === "play" ? "self" : null),
+      mode: search.get("mode") || (TUTORIAL_ASKED === "hands" ? "hands"
+          : (TUTORIAL_ASKED === "play" ? "self" : null)),
     });
     // The demo's i goes up beside the warning, in front of the control that
     // fills the screen: it is the page's "what is all this" and the two other
@@ -2083,8 +2087,6 @@ function startWallet() {
     } else if (about) {
       about.hidden = true;
     }
-  } else if (TUTORIAL_OFFERED) {
-    WalletTutorial.offer(slot);
   }
 
   // The wallet half, beside the device and never on it. Not while the tutorial

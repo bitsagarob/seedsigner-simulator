@@ -67,6 +67,7 @@ SUITE = [
     ("stock_image_entropy", ["test_image_entropy.py"], True),
     ("mainnet", ["test_mainnet.py"], True),
     ("tutorial", ["test_tutorial.py"], True),
+    ("tutorial_single", ["test_tutorial_single.py"], True),
 ]
 
 # test_tutorial_live.py is deliberately not here. It drives the whole multisig
@@ -85,6 +86,7 @@ EXTRA_ENV = {
     "stock_scan_compact": {"QR_KIND": "qr-compact", **STOCK},
     "stock_scan_native": dict(STOCK),
     "stock_image_entropy": dict(STOCK),
+    "tutorial_single": dict(STOCK),
 }
 
 

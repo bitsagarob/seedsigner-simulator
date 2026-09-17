@@ -18,8 +18,8 @@ against embit, taken out of the wallet zip, which is the library the device
 itself parses these with. Two implementations agreeing is worth something; one
 implementation agreeing with itself is not.
 
-The seeds are the three published BIP39 test vectors the tutorial uses. Nothing
-about them is secret and nothing should ever hold value.
+The coordinator checks use three published BIP39 test vectors. The hands-on run
+creates a fresh seed from image entropy. None of these should ever hold value.
 """
 
 import base64
@@ -239,7 +239,8 @@ def bar_width(page):
 
 
 def panel(page, selector):
-    node = page.locator("#tutorial " + selector)
+    container = "#device-say" if selector in (".tut-do", ".tut-step") else "#tutorial"
+    node = page.locator(container + " " + selector)
     return node.inner_text().strip() if node.count() else ""
 
 
@@ -275,11 +276,73 @@ def boot(context, log_lines, query="tutorial=1&debug=1"):
     return page, log
 
 
+def doomsigner_card(browser):
+    from test_tutorial_single import OfflineChain, ordered, wait
+
+    context = browser.new_context(viewport={"width": 1000, "height": 1300},
+                                  service_workers="block")
+    chain = OfflineChain(context)
+    page = context.new_page()
+    log = Log(page)
+    chain.log = log
+    try:
+        page.goto(f"{ORIGIN}/wallet.html?tutorial=multi&firmware=doomsigner&debug=1")
+        log.wait(r"display\(\) enter: WarningScreen\b", 180, "Doomsigner build warning")
+        page.wait_for_timeout(600)
+        mark = log.mark()
+        page.keyboard.press("Enter")
+        log.wait(r"display\(\) exit: WarningScreen -> 0", 30, "acknowledge build warning", mark)
+        log.wait(r"display\(\) enter: MainMenuScreen\b", 60, "Doomsigner tutorial boot", mark)
+        assert page.evaluate("window.__firmware") == "doomsigner"
+        assert page.evaluate("window.WalletTutorial.current.firmware") == "doomsigner"
+        assert page.evaluate("window.WalletTutorial.current.id") == "multi"
+        page.evaluate("""() => {
+            const t = window.WalletTutorial.current;
+            t.pace = text => text === 'Put a test seed on Card B'
+                ? new Promise(resolve => { window.releaseCardBTitle = resolve; })
+                : Promise.resolve();
+        }""")
+        page.locator('#tutorial button[aria-label="Play"]').click()
+        page.get_by_role("button", name="Random noise instead", exact=True).click()
+        stored = log.wait(
+            r"\[card\] Card A stored secret (\d+), type 0x(\w+) subtype 0x(\w+), "
+            r"label '([^']*)', (\d+) bytes, fingerprint ([0-9a-f]{8})",
+            180, "Doomsigner to store its generated seed on Card A")
+        check("Doomsigner stores a twelve-word Masterseed on Card A",
+              (stored.group(2), stored.group(3), int(stored.group(5))) == ("10", "01", 84),
+              stored.group(0))
+        mark = next(i for i, line in enumerate(log.lines) if stored.group(0) in line)
+        wait(page, "t.stepText.textContent.includes('Card B')", "Doomsigner Card A discard", 90)
+        page.locator('#tutorial button[aria-label="Pause"]').click()
+        page.evaluate("() => window.releaseCardBTitle()")
+        wait(page, "t.paused && !t.performing", "stop at Card B")
+        check("Doomsigner discards Card A's seed through its real discard menu",
+              ordered(log, ["SeedOptionsScreen", "WarningScreen", "MainMenuScreen"], mark)
+              and log.last_screen() == "MainMenuScreen")
+        assert log.last_screen() == "MainMenuScreen", "Doomsigner advanced beyond the Card B boundary"
+        check("Doomsigner reaches Card B without storing another secret or requesting coins",
+              "Card B" in panel(page, ".tut-step")
+              and not log.seen(r"\[card\] Card B stored secret")
+              and not chain.claims and not chain.broadcasts and not chain.unexpected)
+        check("Doomsigner card ceremony has no firmware or page exception",
+              not log.seen(r"RAISED|PAGEERROR|Traceback|display\(\) enter: UnhandledException"))
+        assert ordered(log, ["SeedOptionsScreen", "WarningScreen", "MainMenuScreen"], mark)
+    except Exception:
+        with open(harness.artifact("tutorial-doomsigner-failure.log"), "w") as handle:
+            handle.write("\n".join(log.lines))
+        page.screenshot(path=harness.artifact("tutorial-doomsigner-failure.png"), full_page=True)
+        print("\n".join(log.lines[-45:]), flush=True)
+        raise
+    finally:
+        context.close()
+
+
 def main() -> int:
     expected = wallet_by_embit()
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
+        doomsigner_card(browser)
         context = browser.new_context(viewport={"width": 1000, "height": 1300},
                                       service_workers="block")
         serve_at(context, harness.PORT, ORIGIN)
@@ -364,44 +427,83 @@ def main() -> int:
         # --- hands on --------------------------------------------------------
         print("\nhands on: the visitor presses, the panel keeps pace")
         page, log = boot(context, logs)
-        page.locator("#tutorial button", has_text="I will drive").click()
+        check("tutorial=1 opens the smartcard multisig demo",
+              page.locator("#tutorial h2").inner_text() == "Multisig"
+              and page.locator(".cardtray-card").count() == 3
+              and page.evaluate("window.__firmware") == "smartcard")
+        page.locator('#tutorial button[aria-label="Play"]').click()
+        page.get_by_role("button", name="Random noise instead", exact=True).click()
+        page.locator('#tutorial button[aria-label="Pause"]').click()
+        page.wait_for_timeout(500)
+        page.locator(".tut-fold.floating > summary").click()
+        page.locator(".tut-fold.floating").get_by_role(
+            "button", name="I will drive", exact=True).click()
         check("the progress line is not shown in hands on mode",
               bar_width(page) == 0, f"{bar_width(page)}px")
 
-        wait_instruction(page, "Click Card A")
-        check("the panel opens by asking for the card", True)
+        wait_instruction(page, "Card A into the reader")
+        page.wait_for_timeout(1500)
+        check("the panel waits for the visitor to insert the card",
+              panel(page, ".tut-do") == "Card A into the reader"
+              and log.last_screen() == "MainMenuScreen")
         page.locator(".cardtray-card").nth(0).click()
+        wait_instruction(page, "Seeds")
+        check("the panel moves on only once the card is in",
+              panel(page, ".tut-do") == "Seeds")
 
-        wait_instruction(page, "open Scan")
-        check("and moves on only once the card is in", True)
-        page.keyboard.press("Enter")
+        creation = log.mark()
+        for instruction, keys, screen in [
+            ("Seeds", ["ArrowRight", "Enter"], "ButtonListScreen"),
+            ("Create a seed", ["ArrowDown"] * 4 + ["Enter"], "ButtonListScreen"),
+            ("A new seed, from a photograph", ["Enter"],
+             "ToolsImageEntropyLivePreviewScreen"),
+            ("Take the picture", ["Enter"], "ToolsImageEntropyFinalImageScreen"),
+            ("Accept it", ["ArrowRight"], "ButtonListScreen"),
+            ("Twelve words", ["Enter"], "DireWarningScreen"),
+            ("The device says to keep them private", ["Enter"], "SeedWordsScreen"),
+            ("The twelve words it made", ["Enter"] * 3, "SeedWordsBackupTestPromptScreen"),
+            ("Skip the backup check", ["ArrowDown", "ArrowDown", "Enter"],
+             "SeedFinalizeScreen"),
+            ("Done", ["Enter"], "SeedOptionsScreen"),
+            ("Backup seed", ["ArrowDown"] * 3 + ["Enter"], "ButtonListScreen"),
+        ]:
+            wait_instruction(page, instruction)
+            if instruction == "Take the picture":
+                page.wait_for_timeout(2000)
+                check("hands on waits for the visitor to take the photograph",
+                      log.last_screen() == "ToolsImageEntropyLivePreviewScreen"
+                      and panel(page, ".tut-do") == instruction)
+            since = log.mark()
+            for key in keys:
+                page.keyboard.press(key)
+                page.wait_for_timeout(560)
+            log.wait(r"display\(\) enter: " + screen + r"\b", 120,
+                     instruction, since)
+            check(f"{instruction}: the firmware reaches {screen}", True)
 
-        # The QR crossing to the device is the coordinator's job in both modes,
-        # so nothing is asked of the visitor here. What the panel owes instead is
-        # a caption saying what moved and which way.
-        deadline = time.time() + 60
-        while time.time() < deadline and not panel(page, ".tut-arrow"):
-            page.wait_for_timeout(200)
-        check("the transfer is captioned, with a direction",
-              "Phone" in panel(page, ".tut-arrow") and "device" in panel(page, ".tut-arrow"),
-              panel(page, ".tut-arrow"))
-        check("and says what moved",
-              "seed" in panel(page, ".tut-caption").lower(), panel(page, ".tut-caption"))
+        wait_instruction(page, "To SeedKeeper")
+        check("the seed was created, not scanned or loaded from a card",
+              log.seen(r"display\(\) enter: ScanScreen|\[card\].*exporting secret",
+                       creation) is None)
+        check("hands on has not backed up the seed before handing back",
+              log.seen(r"\[card\].*stored secret", creation) is None)
+        check("nothing raised while creating the seed",
+              log.seen(r"View\.run RAISED|display\(\) enter: UnhandledException",
+                       creation) is None)
         page.screenshot(path=harness.artifact("tutorial-hands-on.png"), full_page=True)
 
-        wait_instruction(page, "fingerprint")
-        check("the phone holds up the seed and the device reads it", True)
-        page.keyboard.press("Enter")
-
-        wait_instruction(page, "Backup seed")
-        for key in ["ArrowDown", "ArrowDown", "ArrowDown", "Enter"]:
-            page.keyboard.press(key)
-            page.wait_for_timeout(200)
-        wait_instruction(page, "To SeedKeeper")
-        check("and keeps pace through the menus without driving anything", True)
-
         # Handing back mid-step: same steps, same evidence, different driver.
-        page.locator("#tutorial button", has_text="Let it drive").click()
+        saving = log.mark()
+        page.locator(".tut-fold.floating > summary").click()
+        page.locator(".tut-fold.floating").get_by_role(
+            "button", name="Let it drive", exact=True).click()
+        stored = log.wait(
+            r"\[card\] Card A stored secret (\d+), type 0x(\w+) subtype 0x(\w+), "
+            r"label '([^']*)', (\d+) bytes, fingerprint ([0-9a-f]{8})",
+            240, "Card A to store the generated seed", saving)
+        check("handing back stores a twelve-word Masterseed on Card A",
+              (stored.group(2), stored.group(3), int(stored.group(5))) == ("10", "01", 84),
+              stored.group(0))
         deadline = time.time() + 240
         while time.time() < deadline and "Card B" not in panel(page, ".tut-step"):
             page.wait_for_timeout(500)
@@ -426,7 +528,8 @@ def main() -> int:
         # anyone that does not suit.
         print("\npacing, and the controls over it")
         page, log = boot(context, logs)
-        page.locator("#tutorial button", has_text="Play").click()
+        page.locator('#tutorial button[aria-label="Play"]').click()
+        page.get_by_role("button", name="Random noise instead", exact=True).click()
 
         instruction, _ = next_instruction(page, "")
         gaps = []
@@ -436,7 +539,7 @@ def main() -> int:
         check("an instruction is left up long enough to be read",
               min(gaps) > 1.0, " ".join(f"{gap:.1f}s" for gap in gaps))
 
-        page.locator("#tutorial button", has_text="Pause").click()
+        page.locator('#tutorial button[aria-label="Pause"]').click()
         # The action already in flight finishes first -- pausing happens between
         # actions and never inside one -- so what is asserted is that everything
         # then goes still and stays still, rather than that it stopped on the
@@ -455,16 +558,28 @@ def main() -> int:
         check("and the progress line keeps what has actually happened", bar > 0,
               f"{bar:.0f}px")
 
-        page.locator("#tutorial button", has_text="Step").click()
-        stepped, _ = next_instruction(page, held)
+        stepping = log.mark()
+        page.locator('#tutorial button[aria-label="One step"]').click()
+        stepped = log.wait(r"display\(\) enter: (\w+)", 120,
+                           "one action to reach the next firmware screen", stepping).group(1)
+        page.locator('#tutorial button[aria-label="Play"]').wait_for(state="visible")
+        page.wait_for_timeout(500)
+        step_bar = bar_width(page)
+        stopped = log.mark()
         page.wait_for_timeout(8000)
         check("Step takes exactly one action and stops again",
-              panel(page, ".tut-do") == stepped, panel(page, ".tut-do")[:60])
+              log.last_screen() == stepped
+              and log.seen(r"display\(\) enter:", stopped) is None
+              and panel(page, ".tut-do") == held,
+              f"{stepped}: {panel(page, '.tut-do')[:60]}")
+        check("and the progress line advances once",
+              step_bar > bar and abs(bar_width(page) - step_bar) < 1,
+              f"{bar:.0f}px -> {step_bar:.0f}px")
         check("and the button says it is paused again",
-              page.locator("#tutorial button", has_text="Play").count() == 1)
+              page.locator('#tutorial button[aria-label="Play"]').is_visible())
 
-        page.locator("#tutorial button", has_text="Play").click()
-        after, _ = next_instruction(page, stepped)
+        page.locator('#tutorial button[aria-label="Play"]').click()
+        after, _ = next_instruction(page, held)
         check("Play carries on from there", bool(after), after[:60])
 
         # --- the three ways Bitsaga Signet can let it down --------------------
@@ -498,6 +613,19 @@ def main() -> int:
 
         context.route(f"{API}/**", faucet)
 
+        deadline = time.time() + 300
+        while time.time() < deadline and "descriptor" not in panel(page, ".tut-caption"):
+            page.wait_for_timeout(100)
+        check("the descriptor transfer is captioned, with a direction",
+              "Phone" in panel(page, ".tut-arrow")
+              and "device" in panel(page, ".tut-arrow"), panel(page, ".tut-arrow"))
+        check("and says what moved",
+              panel(page, ".tut-caption") == "The 2 of 3 descriptor",
+              panel(page, ".tut-caption"))
+        log.wait(r"display\(\) enter: MultisigWalletDescriptorScreen\b", 240,
+                 "the device to read the descriptor")
+        check("the wallet really reads the descriptor being transferred", True)
+
         first = True
         for how, expect, name in [
             ("empty", "faucet is empty", "faucet-unavailable"),
@@ -527,7 +655,7 @@ def main() -> int:
         # --- a narrow phone ----------------------------------------------------
         print("\nat 360px")
         page.set_viewport_size({"width": 360, "height": 780})
-        page.locator("#tutorial details").first.evaluate("node => node.open = true")
+        page.locator(".tut-fold.floating > summary").click()
         page.wait_for_timeout(500)
         width = page.evaluate("() => [document.documentElement.scrollWidth, window.innerWidth]")
         check("nothing pushes the page sideways with the details open",
@@ -535,41 +663,48 @@ def main() -> int:
         page.screenshot(path=harness.artifact("tutorial-360-running.png"), full_page=True)
         page.close()
 
-        # The page at rest is a SeedSigner and nothing else, which is the thing
-        # worth handing to a stranger: the tutorial is a guided demo of one
-        # ceremony and turns the page into a lesson, so it is behind the URL.
-        # ?tutorial=offer is the button that used to be on every visit.
-        bare = context.new_page()
-        # wallet=1, or this waits on DOOM: the page boots into the game and
-        # fetches the wallet only on the unlock. What is being asked here is
-        # whether the wallet page offers a tutorial, not what boots first.
-        bare.goto(f"{ORIGIN}/wallet.html?wallet=1")
-        bare.wait_for_timeout(2500)
-        check("the page at rest says nothing about a tutorial",
-              bare.locator("#start-tutorial").count() == 0
-              and bare.locator("#tutorial").count() == 0)
-        bare.close()
-
-        resting = context.new_page()
-        resting.set_viewport_size({"width": 360, "height": 780})
-        resting.goto(f"{ORIGIN}/wallet.html?tutorial=offer")
-        resting.wait_for_timeout(2500)
-        check("asked for it, the page offers the tutorial and nothing else",
-              resting.locator("#start-tutorial").count() == 1
-              and resting.locator("#tutorial").count() == 0)
-        rest_width = resting.evaluate(
-            "() => [document.documentElement.scrollWidth, window.innerWidth]")
-        check("and it fits a narrow phone too",
-              rest_width[0] <= rest_width[1], f"{rest_width[0]}px in {rest_width[1]}px")
-        resting.screenshot(path=harness.artifact("tutorial-360-resting.png"), full_page=True)
-
-        # Asking for it, so this still proves the firmware gate rather than
-        # passing because nothing offers a tutorial on a bare URL any more.
-        stock = context.new_page()
-        stock.goto(f"{ORIGIN}/wallet.html?firmware=stock&tutorial=offer")
-        stock.wait_for_timeout(2500)
-        check("stock is not offered a tutorial about cards it does not have",
-              stock.locator("#start-tutorial").count() == 0)
+        # The picker lives inside the wallet drawer on ordinary pages; only the
+        # tutorial supported by the selected firmware is offered.
+        for query, label in [
+            ("wallet=1", "Single sig"),
+            ("wallet=1&firmware=stock", "Single sig"),
+            ("wallet=1&firmware=smartcard", "Multisig"),
+            ("wallet=1&firmware=doomsigner", "Multisig"),
+            ("wallet=1&firmware=stock&tutorial=offer", "Single sig"),
+            ("wallet=1&firmware=smartcard&tutorial=offer", "Multisig"),
+        ]:
+            resting = context.new_page()
+            logs.append(Log(resting))
+            resting.set_viewport_size({"width": 360, "height": 780})
+            resting.goto(f"{ORIGIN}/wallet.html?{query}&debug=1")
+            resting.locator("#wallet-button").wait_for(state="visible")
+            picker = resting.locator("#wallet #start-tutorial")
+            check(f"{query}: no tutorial or picker is visible before opening the drawer",
+                  resting.locator("#tutorial").count() == 0
+                  and not resting.locator("#start-tutorial").is_visible())
+            resting.locator("#wallet-button").click()
+            picker.wait_for(state="visible")
+            check(f"{query}: exactly one picker, inside the open wallet drawer",
+                  resting.locator("#start-tutorial").count() == 1
+                  and picker.is_visible() and resting.locator("#wallet").is_visible()
+                  and resting.locator("#tutorial").count() == 0)
+            buttons = picker.get_by_role("button")
+            check(f"{query}: only {label} is offered",
+                  buttons.all_text_contents() == [label]
+                  and picker.get_by_role("button", name=label, exact=True).is_visible(),
+                  repr(buttons.all_text_contents()))
+            rest_width = resting.evaluate(
+                "() => [document.documentElement.scrollWidth, window.innerWidth]")
+            check(f"{query}: the open drawer fits a narrow phone",
+                  rest_width[0] <= rest_width[1], f"{rest_width[0]}px in {rest_width[1]}px")
+            if query == "wallet=1&firmware=smartcard&tutorial=offer":
+                resting.screenshot(path=harness.artifact("tutorial-360-resting.png"),
+                                   full_page=True)
+            resting.get_by_role("button", name="Close the simulator wallet", exact=True).click()
+            picker.wait_for(state="hidden")
+            check(f"{query}: closing the drawer hides the picker again",
+                  not picker.is_visible())
+            resting.close()
 
         for log in logs:
             errors = [line for line in log.lines if line.startswith("PAGEERROR")]
