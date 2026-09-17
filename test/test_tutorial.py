@@ -689,8 +689,9 @@ def main() -> int:
                   and picker.is_visible() and resting.locator("#wallet").is_visible()
                   and resting.locator("#tutorial").count() == 0)
             buttons = picker.get_by_role("button")
-            check(f"{query}: only {label} is offered",
-                  buttons.all_text_contents() == [label]
+            expected_labels = ["Single sig", "Multisig"] if label == "Multisig" else [label]
+            check(f"{query}: supported tutorials are offered once each",
+                  buttons.all_text_contents() == expected_labels
                   and picker.get_by_role("button", name=label, exact=True).is_visible(),
                   repr(buttons.all_text_contents()))
             rest_width = resting.evaluate(
