@@ -66,7 +66,7 @@ bc40c8a15196236b2314db0856f72ca0b49980cd5413b8c852a7349f5fee0859  src/web/jsQR.j
 1929b1cfc42dec2c9b13a5775631797530bb8765234e5f7e6e4658530f62a011  src/web/wallet-cards.js
 f029b75d59d2dca175e4ccab5da55f368b7c1ae19257aca7a76431ac44ff6e4d  src/web/wallet-coordinator.js
 06818db62a87fc02f5dc811ab4a0064588d89a1a7e67da63995a2ff7de7b0841  src/web/wallet-track.js
-b4759f788dfc446cd52a815b21803411ec73c77b27f9df1bb591d8ed60525133  src/web/wallet-tutorial.js
+2b9dbb6344330ee4dc2826fc9ec918c16312778d22bba31d6ff0646adbde5bc1  src/web/wallet-tutorial.js
 846780d60b7590f919e87501f0fe84fb2fa15720bbcc54f898983358173018cd  src/web/wallet-worker.js
 74ceda4ab38cf46b4d7cbb5bab92c484f663e16772e969167e012725eab4eb78  src/web/wallet.html
 
