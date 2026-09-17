@@ -1719,6 +1719,7 @@
     function seedOntoCard(i) {
       var seed = SEEDS[i];
       var card = "Card " + seed.card;
+      var cachedPin = t.firmware === "doomsigner" && i > 0;
       return step(
         "Put a test seed on " + card,
         PHASES[0],
@@ -1773,10 +1774,10 @@
               screenIs("ButtonListScreen")),
           act("To SeedKeeper",
               keys(["ArrowDown", "Enter"]),
-              screenIs(i === 0 ? "SeedAddPassphraseScreen" : "WarningScreen")),
-          act(i === 0 ? "The card asks for a PIN" : "The device remembers the card PIN",
-              i === 0 ? pin() : null,
-              i === 0 ? screenIs("WarningScreen") : settle(0)),
+              screenIs(cachedPin ? "WarningScreen" : "SeedAddPassphraseScreen")),
+          act(cachedPin ? "The device remembers the card PIN" : "The card asks for a PIN",
+              cachedPin ? null : pin(),
+              cachedPin ? settle(0) : screenIs("WarningScreen")),
           act("It has none yet",
               keys(["Enter"]), screenIs("SeedAddPassphraseScreen")),
           act("Choose one",

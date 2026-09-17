@@ -789,6 +789,14 @@ def main() -> int:
         deadline = time.time() + 300
         while time.time() < deadline and "descriptor" not in panel(page, ".tut-caption"):
             page.wait_for_timeout(100)
+        stored_c = next((i for i, line in enumerate(log.lines)
+                         if "[card] Card C stored secret" in line), len(log.lines))
+        check("smartcard asks for a PIN for each new card",
+              sum("No Cached pin, prompting for pin" in line
+                  for line in log.lines[:stored_c]) == 3)
+        check("all three cards received a generated seed before the descriptor transfer",
+              all(log.seen(r"\[card\] Card " + card + r" stored secret")
+                  for card in "ABC"))
         check("the descriptor transfer is captioned, with a direction",
               "Phone" in panel(page, ".tut-arrow")
               and "device" in panel(page, ".tut-arrow"), panel(page, ".tut-arrow"))
