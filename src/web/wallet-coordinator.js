@@ -1783,6 +1783,7 @@
     steps.appendChild(step("Export its key", EXPORT_PATH));
     steps.appendChild(step("Leave the QR up. This reads it.", null));
     this.body.appendChild(steps);
+    if (scope.WalletTutorial) scope.WalletTutorial.offer(this.body, scope.__firmware);
     this.sayInto(this.body);
   };
 

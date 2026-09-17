@@ -46,7 +46,7 @@ TO_MAINNET = ("ArrowUp", "Enter")
 # The sentence that is up on either network. A seed you rely on is the same seed
 # whichever network the device is set to, and typing it here compromises its
 # mainnet keys either way, so this half is not a mainnet sentence.
-ALWAYS = "Never enter a seed phrase you rely on"
+ALWAYS = "Never enter a real seed phrase"
 
 # What mainnet adds, and only mainnet: no secure element under keys that are now
 # the real ones.
@@ -93,8 +93,10 @@ def main() -> int:
         check("a fresh page comes up on Testnet",
               indicator(page) == ("Bitcoin network: Testnet", False),
               str(indicator(page)))
-        check("and offers our test network while it is on one",
+        page.locator("#about > summary").click()
+        check("and offers our test network in the details while it is on one",
               page.locator(".note").is_visible())
+        page.locator("#about > summary").click()
         said, mainnet_half = warning(page)
         check("the warning is the short one on Testnet",
               ALWAYS in said and not mainnet_half and ONLY_ON_MAINNET not in said,
@@ -151,8 +153,10 @@ def main() -> int:
               str(indicator(page)))
         # A visitor who has gone to mainnet on purpose is not being taught
         # anything, and should not be handed a test network to play on.
-        check("and the page stops offering our test network",
+        page.locator("#about > summary").click()
+        check("and the page stops offering our test network even with details open",
               not page.locator(".note").is_visible())
+        page.locator("#about > summary").click()
         # The short half stays: what changed is that the page now holds real
         # mainnet keys, not whether a seed you rely on may be typed into it.
         said, mainnet_half = warning(page)

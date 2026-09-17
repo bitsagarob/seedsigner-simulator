@@ -98,14 +98,24 @@
   // is an inventory of what has to happen; six phases is where you are. Each
   // step names the phase it belongs to, rather than this list naming ranges of
   // step numbers, so inserting a step cannot silently move the marks.
-  var PHASES = [
-    "Seeds onto cards",
-    "Keys off the cards",
-    "Build the wallet",
-    "Get test coins",
-    "Sign it twice",
-    "Send it",
-  ];
+  var REGISTRY = {
+    single: {
+      title: "Single sig",
+      firmwares: ["stock"],
+      phases: ["Make a seed", "Back up the seed", "Export the key", "Build the wallet",
+               "Get test coins", "Sign it", "Send it"],
+      build: function (tutorial) { return createSteps(tutorial, singleSteps); },
+    },
+    multi: {
+      title: "Multisig",
+      firmwares: ["smartcard", "doomsigner"],
+      phases: ["Seeds onto cards", "Keys off the cards", "Build the wallet",
+               "Get test coins", "Sign it twice", "Send it"],
+      build: function (tutorial) { return createSteps(tutorial, multiSteps); },
+    },
+  };
+
+  var CANCELLED = new Error("Tutorial action cancelled");
 
   // Drawn in the page's own idiom: strokes that inherit the button's colour.
   var ICONS = {
@@ -350,6 +360,12 @@
   // ------------------------------------------------------------- the machine
 
   function Tutorial(options) {
+    this.id = options.id || "multi";
+    this.entry = REGISTRY[this.id];
+    if (!this.entry) throw new Error("Unknown tutorial: " + this.id);
+    this.firmware = options.firmware || this.entry.firmwares[0];
+    this.passphrase = options.passphrase === true || options.passphrase === "1";
+    this.phases = this.entry.phases.slice();
     this.sendKey = options.sendKey;
     this.keymap = options.keymap;
     this.tray = options.tray;
@@ -385,7 +401,7 @@
     // What it is, in the words somebody searching for it would use. "A 2 of 3 on
     // Bitsaga Signet" names the quorum and the network, which are the two things
     // a visitor does not know yet.
-    this.heading = element("h2", null, "Multi-sig demo");
+    this.heading = element("h2", null, this.entry.title);
     head.appendChild(this.heading);
     this.controls = element("div", "tut-controls");
     head.appendChild(this.controls);
@@ -398,11 +414,7 @@
     // Where the run is, in phases. Marks rather than numbers: it is answering
     // "how far in am I", which is a length, not a count.
     this.phaseRow = element("div", "tut-phases");
-    this.phaseMarks = PHASES.map(function () {
-      var mark = element("i");
-      this.phaseRow.appendChild(mark);
-      return mark;
-    }, this);
+    this.updatePhases();
     this.phaseText = element("p", "tut-phase");
 
     // What the run needs before it can start, asked before the browser asks.
@@ -509,6 +521,20 @@
     root.appendChild(this.bar);
     root.appendChild(head);
     root.appendChild(this.chooser);
+    if (this.id === "single") {
+      var label = element("label", "tut-choice-note");
+      this.passphraseBox = element("input");
+      this.passphraseBox.type = "checkbox";
+      this.passphraseBox.id = "tutorial-passphrase";
+      this.passphraseBox.checked = this.passphrase;
+      label.appendChild(this.passphraseBox);
+      label.appendChild(document.createTextNode(" Add a passphrase"));
+      root.appendChild(label);
+      this.passphraseBox.addEventListener("change", function () {
+        self1.passphrase = self1.passphraseBox.checked;
+        if (self1.schedulePassphrase) self1.schedulePassphrase();
+      });
+    }
 
     // The step and the instruction sit wherever the page says they belong. Given
     // a slot under the device, that is where they go: they change every few
@@ -583,10 +609,20 @@
 
   /** Which phase the run is in, and how much of the row is behind it. */
   Tutorial.prototype.setPhase = function (name) {
-    var at = PHASES.indexOf(name);
+    var at = this.phases.indexOf(name);
     this.phaseText.textContent = name || "";
     this.phaseMarks.forEach(function (mark, i) {
       mark.dataset.state = at < 0 ? "" : (i < at ? "done" : (i === at ? "now" : ""));
+    });
+  };
+
+  Tutorial.prototype.updatePhases = function () {
+    var self = this;
+    while (this.phaseRow.firstChild) this.phaseRow.removeChild(this.phaseRow.firstChild);
+    this.phaseMarks = this.phases.map(function () {
+      var mark = element("i");
+      self.phaseRow.appendChild(mark);
+      return mark;
     });
   };
 
@@ -640,7 +676,7 @@
     var deadline = Date.now() + (this.mode === "hands" ? Math.max(timeout, 900000) : timeout);
     return new Promise(function (resolve, reject) {
       (function tick() {
-        if (generation !== self.generation) return;         // restarted underneath us
+        if (generation !== self.generation) return reject(CANCELLED);
         var value;
         try {
           value = test();
@@ -656,8 +692,18 @@
     });
   };
 
+  Tutorial.prototype.check = function (generation) {
+    if (generation !== this.generation) throw CANCELLED;
+  };
+
   Tutorial.prototype.sleep = function (ms) {
-    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+    var self = this, generation = this.generation;
+    return new Promise(function (resolve, reject) {
+      setTimeout(function () {
+        if (generation !== self.generation) return reject(CANCELLED);
+        resolve();
+      }, ms);
+    });
   };
 
   /**
@@ -675,10 +721,11 @@
     // that cannot be cut short means the press it was counting down to happens
     // anyway. Now the beat ends the moment Pause is pressed, and the gate below
     // catches the run before anything moves.
-    var self = this;
+    var self = this, generation = this.generation;
     var started = Date.now();
-    return new Promise(function (resolve) {
+    return new Promise(function (resolve, reject) {
       (function tick() {
+        if (generation !== self.generation) return reject(CANCELLED);
         if (self.paused || Date.now() - started >= wait) return resolve();
         setTimeout(tick, 60);
       })();
@@ -706,9 +753,10 @@
   // ------------------------------------------------------------ the device
 
   Tutorial.prototype.press = function (names, gap) {
-    var self = this;
+    var self = this, generation = this.generation;
     return names.reduce(function (chain, name) {
       return chain.then(function () {
+        self.check(generation);
         self.sendKey(self.keymap[name]);
         return self.sleep(gap || PRESS_GAP);
       });
@@ -844,12 +892,13 @@
    */
   Tutorial.prototype.summary = function () {
     var state = this.state || {};
+    if (this.id === "single") state = state.activeRound || {};
     var keys = (state.keys || []).filter(Boolean).length;
-    var rows = [["Keys", keys + " of 3"]];
+    var rows = [["Keys", this.id === "single" ? (state.account ? "1 of 1" : "0 of 1") : keys + " of 3"]];
     if (state.receive) rows.push(["Receiving at", ends(state.receive.address)]);
     if (state.funding) rows.push(["Funded by", ends(state.funding)]);
     if (state.spend && state.spend.txid) rows.push(["Spent", ends(state.spend.txid)]);
-    else if (state.wallet) rows.push(["Quorum", "2 of 3"]);
+    else if (state.wallet) rows.push(["Quorum", this.id === "single" ? "1 of 1" : "2 of 3"]);
 
     this.face.textContent = "";
     this.face.appendChild(element("b", null, "Demo wallet"));
@@ -909,8 +958,8 @@
   Tutorial.prototype.mirrorDevice = function () {
     this.painter.fillStyle = "#0b0c0e";
     this.painter.fillRect(0, 0, 640, 480);
-    // The device draws a QR into the left 240 by 240 of its 320 by 240 screen.
-    this.painter.drawImage(this.screen, 0, 0, 240, 240, 80, 0, 480, 480);
+    this.painter.drawImage(this.screen, 0, 0, this.screen.width, this.screen.height,
+                           0, 0, 640, 480);
     this.painter.strokeStyle = "#f7931a";
     this.painter.lineWidth = 6;
     this.painter.strokeRect(60, 20, 520, 440);
@@ -947,7 +996,7 @@
   Tutorial.prototype.readDevice = function () {
     if (!scope.jsQR) return null;
     var context = this.screen.getContext("2d");
-    var image = context.getImageData(0, 0, 240, 240);
+    var image = context.getImageData(0, 0, this.screen.width, this.screen.height);
     var found = scope.jsQR(image.data, image.width, image.height);
     return found && found.data ? found.data : null;
   };
@@ -1037,7 +1086,19 @@
     var step = this.steps && this.steps[this.at];
     var action = step && step.actions && step.actions[this.atAction];
     if (!action || !action.perform) return;
-    action.perform({ tutorial: this, state: this.state || (this.state = {}) });
+    if (this.performing || !this.waitingForHands) return;
+    this.waitingForHands = false;
+    var self = this, generation = this.generation;
+    this.performing = true;
+    return Promise.resolve().then(function () {
+      self.check(generation);
+      return action.perform({ tutorial: self, state: self.state || (self.state = {}),
+                              check: function () { self.check(generation); } });
+    }).catch(function (error) {
+      if (error !== CANCELLED && generation === self.generation) self.fail(error);
+    }).then(function () {
+      if (generation === self.generation) self.performing = false;
+    });
   };
 
   Tutorial.prototype.stepOn = function () {
@@ -1073,14 +1134,12 @@
       track("drive", "hands");
       return this.start("hands");
     }
-    var step = this.at, action = this.atAction;
-    track("drive", this.mode === "hands" ? "self" : "hands");
-    this.mode = this.mode === "hands" ? "self" : "hands";
+    if (this.mode === "hands") return this.togglePlay();
+    track("drive", "hands");
+    this.mode = "hands";
     this.paused = false;
     this.stepOnce = false;
-    this.generation++;               // let the wait in flight go
     this.reflect();
-    this.run(step, action);
   };
 
   /**
@@ -1120,6 +1179,8 @@
    * can be re-driven, else the last one that can, else the beginning.
    */
   Tutorial.prototype.backTarget = function () {
+    // Broadcasting cannot be undone by replaying an earlier signing step.
+    if (this.state && this.state.broadcasting) return -1;
     var steps = this.steps || [];
     for (var i = this.at; i >= 0; i--) {
       var can = steps[i] && steps[i].replay;
@@ -1130,15 +1191,16 @@
   };
 
   Tutorial.prototype.stepBack = function () {
-    if (this.mode === "idle") return;
+    if (this.mode === "idle" || (this.state && this.state.broadcasting)) return;
     var target = this.backTarget();
-    if (target < 0) return this.restart();
+    if (target < 0) return this.id === "multi" ? this.restart() : undefined;
     track("back", (this.steps[target] || {}).title || "");
     // Landing paused: somebody who pressed this wants to watch the step rather
     // than have it start away from them again.
     this.paused = true;
     this.stepOnce = false;
     this.generation++;               // let the wait in flight go
+    this.cursor = this.lines.length;
     this.reflect();
     this.run(target, 0);
   };
@@ -1151,7 +1213,11 @@
     // mode it was in.
     track("restart", "step " + (this.at + 1));
     var params = new URLSearchParams(location.search);
-    params.set("tutorial", this.mode === "hands" ? "hands" : "play");
+    params.set("tutorial", this.id);
+    params.set("firmware", this.firmware);
+    params.set("mode", this.mode === "hands" ? "hands" : "play");
+    if (this.passphrase) params.set("passphrase", "1");
+    else params.delete("passphrase");
     location.search = params.toString();
   };
 
@@ -1179,13 +1245,15 @@
     this.backButton.hidden = idle;
     // Always live, and it says where it goes before it is pressed, because
     // where that is depends on what the run has already left behind it.
-    this.backButton.disabled = false;
     var target = idle ? -1 : this.backTarget();
+    this.backButton.disabled = !!(this.state && this.state.broadcasting)
+      || (target < 0 && this.id !== "multi");
     var steps = this.steps || [];
     this.backButton.title =
       target === this.at ? "Play this step again"
       : target >= 0 ? "Back to " + (steps[target] || {}).title
-      : "Start again: a card with a seed on it cannot be given its first one twice";
+      : this.id === "multi" ? "Start again: this device stage cannot be replayed"
+      : "This device stage cannot be replayed; use Begin again to restart";
     this.playButton.classList.toggle("on", this.mode === "self" && !this.paused);
     // Never off. It used to be disabled while the visitor was driving, on the
     // grounds that hands on already is stepping, which is true and beside the
@@ -1227,10 +1295,15 @@
   // answered does not ask the faucet again.
   Tutorial.prototype.run = function (fromStep, fromAction) {
     var self = this;
-    var steps = this.steps || (this.steps = buildSteps(this));
-    var context = { tutorial: this, state: this.state || (this.state = {}) };
+    var generation = this.generation;
+    var steps = this.steps || (this.steps = this.entry.build(this));
+    var context = { tutorial: this, state: this.state || (this.state = {}),
+                    check: function () { self.check(generation); } };
+    this.finished = false;
+    this.performing = false;
 
     function runStep(index, first) {
+      context.check();
       if (index >= steps.length) return Promise.resolve();
       var step = steps[index];
       self.at = index;
@@ -1263,11 +1336,17 @@
       return step.actions.slice(first).reduce(function (chain, action, offset) {
         var at = first + offset;
         return chain.then(function () {
+          context.check();
           self.atAction = at;
+          self.waitingForHands = false;
           return self.gate();
         }).then(function () {
+          context.check();
           self.doText.textContent = action.instruct || "";
-          if (self.mode !== "self") return null;
+          if (self.mode !== "self") {
+            self.waitingForHands = true;
+            return null;
+          }
           // The instruction is up; leave time to read it before the device
           // moves. An action with nothing to say gets no wait, because what
           // it is waiting for is the thing to watch.
@@ -1277,11 +1356,23 @@
             // run there rather than one action later.
             return self.gate();
           }).then(function () {
-            if (action.perform) return action.perform(context);
+            context.check();
+            if (self.mode !== "self") {
+              self.waitingForHands = true;
+              return;
+            }
+            if (!action.perform) return;
+            self.performing = true;
+            return Promise.resolve(action.perform(context)).then(function () {
+              context.check();
+              self.performing = false;
+            });
           });
         }).then(function () {
+          context.check();
           return action.until(context);
         }).then(function () {
+          context.check();
           self.fraction = (at + 1) / step.actions.length;
           self.setProgress(self.fraction);
           if (self.stepOnce) {           // one action was all that was asked for
@@ -1296,6 +1387,8 @@
     }
 
     return runStep(fromStep, fromAction || 0).then(function () {
+      context.check();
+      self.finished = true;
       self.doText.textContent = "";
       self.endTransfer();
       self.setProgress(0);
@@ -1306,7 +1399,7 @@
       self.releaseCamera();
       self.offerHandsOn();
     }).catch(function (error) {
-      self.fail(error);
+      if (error !== CANCELLED && generation === self.generation) self.fail(error);
     });
   };
 
@@ -1324,10 +1417,15 @@
    */
   Tutorial.prototype.offerHandsOn = function () {
     if (this.handsOffer) return;
+    var self = this;
     this.handsOffer = this.control("Try it yourself", function () {
       track("hands-offer", "taken");
       var params = new URLSearchParams(location.search);
-      params.set("tutorial", "hands");
+      params.set("tutorial", self.id);
+      params.set("firmware", self.firmware);
+      params.set("mode", "hands");
+      if (self.passphrase) params.set("passphrase", "1");
+      else params.delete("passphrase");
       location.search = params.toString();
     });
     this.handsOffer.classList.add("primary");
@@ -1385,8 +1483,9 @@
     return { instruct: instruct, perform: perform, until: until };
   }
 
-  function buildSteps(tutorial) {
+  function createSteps(tutorial, builder) {
     var t = tutorial;
+    var PHASES = t.entry.phases;
 
     function keys(names, gap) {
       return function () { return t.press(names, gap); };
@@ -1496,13 +1595,17 @@
      * Seeds screen offers "Load a seed" straight away when there is no seed
      * loaded, and a list of seeds when there is.
      */
+    function discardKeys() {
+      return keys(Array(t.firmware === "doomsigner" ? 6 : 5).fill("ArrowDown").concat(["Enter"]));
+    }
+
     function forgetTheSeed(card) {
       return [
         act("Make the device forget the seed",
             keys(["ArrowRight", "Enter"]), screenIs("ButtonListScreen")),
         act("The loaded seed", keys(["Enter"]), screenIs("SeedOptionsScreen")),
         act("Discard",
-            keys(["ArrowDown", "ArrowDown", "ArrowDown", "ArrowDown", "ArrowDown", "Enter"]),
+            discardKeys(),
             screenIs("WarningScreen")),
         act("Confirm",
             keys(["ArrowDown", "Enter"]), screenIs("MainMenuScreen")),
@@ -1538,6 +1641,7 @@
       return act(null, null, function (context) {
         t.transfer("in", caption);
         var done = false;
+        var generation = t.generation;
         // The caption first, as above. The frames then cycle for as long as the
         // device needs them, which is already visible; what was not was the
         // moment the phone put the first one up.
@@ -1546,7 +1650,7 @@
           t.scanning("in");
           var at = 0;
           (function cycle() {
-            if (done) return;
+            if (done || generation !== t.generation) return;
             t.paintMatrix(scope.QREncode.matrix(list[at % list.length]));
             at++;
             setTimeout(cycle, 550);
@@ -1578,7 +1682,7 @@
           if (!text) return false;
           if (text.toLowerCase().indexOf("ur:") === 0) {
             collector = collector || scope.URDecode.collector();
-            collector.receive(text);
+            try { collector.receive(text); } catch (error) { return false; }
             // Real sub-step progress: codes actually read, out of the number
             // this transfer turned out to have.
             if (collector.parts()) {
@@ -1633,7 +1737,8 @@
               return t.beat(900).then(function () { return value; });
             });
           }),
-          act("Take the picture", keys(["Enter"]), function () {
+          act("Take the picture", t.firmware === "doomsigner"
+              ? advance("ToolsImageEntropyFinalImageScreen", 6).perform : keys(["Enter"]), function () {
             return t.until("display\\(\\) enter: ToolsImageEntropyFinalImageScreen\\b",
                            120000).then(function (value) {
               t.stopEntropy();
@@ -1658,9 +1763,11 @@
               keys(["ArrowDown", "ArrowDown", "ArrowDown", "Enter"]),
               screenIs("ButtonListScreen")),
           act("To SeedKeeper",
-              keys(["ArrowDown", "Enter"]), screenIs("SeedAddPassphraseScreen")),
-          act("The card asks for a PIN",
-              pin(), screenIs("WarningScreen")),
+              keys(["ArrowDown", "Enter"]),
+              screenIs(i === 0 ? "SeedAddPassphraseScreen" : "WarningScreen")),
+          act(i === 0 ? "The card asks for a PIN" : "The device remembers the card PIN",
+              i === 0 ? pin() : null,
+              i === 0 ? screenIs("WarningScreen") : settle(0)),
           act("It has none yet",
               keys(["Enter"]), screenIs("SeedAddPassphraseScreen")),
           act("Choose one",
@@ -1676,18 +1783,15 @@
           act("The seed is on the card",
               keys(["Enter"]), screenIs("SeedOptionsScreen")),
           act("Now the device forgets it",
-              keys(["ArrowDown", "ArrowDown", "ArrowDown", "ArrowDown", "ArrowDown", "Enter"]),
+              discardKeys(),
               screenIs("WarningScreen")),
           act("Confirm",
               keys(["ArrowDown", "Enter"]), screenIs("MainMenuScreen")),
           act(card + " out of the reader",
               function () { t.tray.eject(); }, inserted(-1)),
         ],
-        // Not a fixed no: this step can be run again right up until the moment
-        // it writes to the card, and a visitor who presses Back ten seconds in
-        // should get the step rather than the whole demo. Once the card holds a
-        // seed it holds a PIN too, and neither comes off.
-        function () { return t.tray.state(i) === "blank"; });
+        // Even a blank card cannot replay image capture from an arbitrary device screen.
+        false);
     }
 
     // -------------------------------------------------- the key off a card
@@ -1793,6 +1897,7 @@
     function coordinator(work) {
       return act(null, null, function (context) {
         return Promise.resolve(work(context)).then(function () {
+          context.check();
           // Deriving an address takes a fifth of a second and puts a sentence
           // up worth reading -- an address, an amount, a transaction id -- so
           // the step waits for a reader rather than for itself.
@@ -1801,6 +1906,335 @@
       });
     }
 
+    return builder(t, {
+      step: step, act: act, keys: keys, screenIs: screenIs, logged: logged,
+      settle: settle, homeAgain: homeAgain, advance: advance,
+      handUp: handUp, handUpFrames: handUpFrames, readOff: readOff,
+      coordinator: coordinator, seedOntoCard: seedOntoCard,
+      keyOffCard: keyOffCard, signWith: signWith,
+    });
+  }
+
+  function singleSteps(t, helpers) {
+      var keys = helpers.keys, screenIs = helpers.screenIs, logged = helpers.logged;
+      var settle = helpers.settle, homeAgain = helpers.homeAgain, advance = helpers.advance;
+      var handUp = helpers.handUp, handUpFrames = helpers.handUpFrames;
+      var readOff = helpers.readOff, coordinator = helpers.coordinator;
+      var state = t.state || (t.state = {});
+      var original = { passphrase: false };
+      state.rounds = [original];
+      state.activeRound = original;
+      var phases = t.phases;
+      var stock = t.firmware === "stock";
+      var decided = false;
+      var scheduled = false;
+      var pendingPassphrase = false;
+      var finalizing = false;
+      var steps = [];
+
+      function down(count) {
+        return Array(count).fill("ArrowDown").concat(["Enter"]);
+      }
+
+      function passphraseStep(round, phase, reload) {
+        var actions = reload ? [
+          coordinator(function () {
+            state.activeRound = round;
+          }),
+          homeAgain(),
+          act("Seeds", keys(["ArrowRight", "Enter"]), screenIs("ButtonListScreen")),
+          act("The loaded seed", keys(["Enter"]), screenIs("SeedOptionsScreen")),
+          act("Discard the loaded seed", keys(down(stock ? 4 : 5)), screenIs("WarningScreen")),
+          act("Confirm discard", keys(["ArrowDown", "Enter"]), screenIs("MainMenuScreen")),
+          act("Open Scan", keys(["Enter"]), screenIs("ScanScreen")),
+          handUp("Reload the demo's original SeedQR", function () { return state.seedqr; },
+                 screenIs("SeedFinalizeScreen")),
+        ] : [];
+        return step(reload ? "Discard, reload, add passphrase" : "Add a passphrase", phase,
+          actions.concat([
+            act("Passphrases are chosen when loading. Select Type Passphrase.",
+                keys(["ArrowDown", "Enter"]), screenIs("SeedAddPassphraseScreen")),
+            act("Type the demo passphrase abc, then save with button 3",
+                keys(["Enter", "ArrowRight", "Enter", "ArrowRight", "Enter", "3"]),
+                screenIs("SeedReviewPassphraseScreen")),
+            act("Review the changed fingerprint, then Done",
+                keys(stock ? ["ArrowDown", "Enter"] : ["Enter"]), screenIs("SeedOptionsScreen")),
+          ]), false);
+      }
+
+      // A round cannot be replayed after its seed has been replaced, or after broadcast.
+      function replay(round) {
+        return function () {
+          return state.activeRound === round && !round.sending && !round.claimPending
+            && t.currentScreen() === "MainMenuScreen";
+        };
+      }
+
+      function roundSteps(round, p) {
+        var exportActions = [
+          homeAgain(),
+          act("Seeds", keys(["ArrowRight", "Enter"]), screenIs("ButtonListScreen")),
+          act("The loaded seed", keys(["Enter"]), screenIs("SeedOptionsScreen")),
+        ];
+        return [
+          step("Export the single-sig account key", p[0], exportActions.concat([
+            act("Export Xpub", keys(["ArrowDown", "Enter"]), screenIs("ButtonListScreen")),
+            act("Single sig", keys(["Enter"]), screenIs("ButtonListScreen")),
+            act("Native Segwit", keys(["Enter"]), screenIs("ButtonListScreen")),
+            act("Animated QR", keys(["Enter"]), settle(1600)),
+            advance("QRDisplayScreen", 5),
+            readOff("The account public key", function (context, value) {
+              return Promise.resolve(C.parseAccount(typeof value === "string" ? value : value.payload()))
+                .then(function (account) {
+                  context.check();
+                  round.account = account;
+                  t.detail(round.passphrase ? "passphrase account fingerprint" : "account fingerprint",
+                           account.fingerprint);
+                });
+            }),
+            act("Leave the account QR", function () {
+              return t.sleep(1600).then(keys(["Enter"]));
+            }, logged("display\\(\\) enter: (LargeIconStatusScreen|MainMenuScreen)\\b")),
+            act("Open Verify Address if offered", function () {
+              if (t.currentScreen() === "LargeIconStatusScreen") return t.press(["Enter"]);
+            }, function () {
+              if (t.currentScreen() === "MainMenuScreen") return Promise.resolve();
+              return screenIs("ScanScreen")();
+            }),
+            act("Cancel address verification for this demo if offered", function () {
+              if (t.currentScreen() === "ScanScreen") return t.press(["ArrowLeft"]);
+            }, function () {
+              return t.poll(120000, function () { return t.currentScreen() === "MainMenuScreen"; }, "the home screen");
+            }),
+          ]), replay(round)),
+          step("Build the single-sig wallet", p[1], [coordinator(function (context) {
+            round.wallet = round.wallet || C.singleSigWallet(round.account);
+            round.index = round.index === undefined ? 0 : round.index;
+            return C.deriveAddressSingle(round.wallet, 0, round.index).then(function (receive) {
+              context.check();
+              round.receive = receive;
+              t.detail("descriptor", round.wallet.descriptor);
+              t.detail("receive address", receive.address);
+              t.verdict.dataset.state = "good";
+              t.verdict.textContent = "The wallet's address is " + receive.address;
+              t.summary();
+            });
+          })], replay(round)),
+          step("Ask Bitsaga Signet's faucet for coins", p[2], [
+            coordinator(function (context) {
+              if (round.funding) return;
+              // A pending payment must settle before Back can replay coordinator work.
+              if (!round.claim) {
+                round.claimPending = true;
+                t.reflect();
+                round.claim = Promise.resolve().then(function () {
+                  return C.network.claim(round.receive.address);
+                }).then(function (paid) {
+                  round.funding = paid.txid;
+                  round.claimPending = false;
+                  return paid;
+                }, function (error) {
+                  round.claim = null;
+                  round.claimPending = false;
+                  throw error;
+                });
+              }
+              return round.claim.then(function (paid) {
+                context.check();
+                t.reflect();
+                t.detail("faucet transaction", paid.txid);
+                t.verdict.dataset.state = "good";
+                t.verdict.textContent = "The faucet sent test coins. " + NOT_REAL;
+              }, function (error) {
+                context.check();
+                t.reflect();
+                throw error;
+              });
+            }),
+            coordinator(function () {
+              return waitForBlock(t, round.funding, "the faucet's payment", "Waiting for test coins.");
+            }),
+          ], false),
+          step("Build the spend", p[3], [coordinator(function (context) {
+            if (round.psbt) return;
+            return C.network.proof(round.funding).then(function (proof) {
+              context.check();
+              return C.transactionOutputs(proof.tx);
+            }).then(function (outputs) {
+              context.check();
+              var script = C.hex(round.receive.scriptPubkey);
+              var ours = outputs.filter(function (out) { return out.script === script; })[0];
+              if (!ours) throw new Error("the faucet's transaction does not pay this wallet");
+              round.input = { txid: round.funding, vout: ours.index,
+                              value: BigInt(ours.value), source: round.receive };
+              return C.deriveAddressSingle(round.wallet, 1, round.index);
+            }).then(function (change) {
+              context.check();
+              round.change = change;
+              round.amount = round.input.value - FEE;
+              if (round.amount <= 0n) throw new Error("the faucet payment does not cover the fee");
+              round.psbt = C.buildPsbtSingle({ inputs: [round.input],
+                outputs: [{ value: round.amount, script: change.scriptPubkey }] });
+              round.frames = specterFrames(round.psbt);
+              t.detail("unsigned PSBT", round.psbt);
+              t.verdict.dataset.state = "good";
+              t.verdict.textContent = "Ready to sign: " + round.amount + " sats, with " + FEE + " sat fee.";
+            });
+          })], replay(round)),
+          step("Sign with the loaded seed", p[3], [
+            homeAgain(),
+            act("Seeds", keys(["ArrowRight", "Enter"]), screenIs("ButtonListScreen")),
+            act("The loaded seed", keys(["Enter"]), screenIs("SeedOptionsScreen")),
+            act("Scan transaction", keys(["Enter"]), screenIs("ScanScreen")),
+            handUpFrames("The unsigned transaction", function () { return round.frames; }, function () {
+              return t.poll(300000, function () {
+                var screen = t.currentScreen();
+                return screen && screen !== "ScanScreen";
+              }, "the device to take the transaction");
+            }),
+            advance("PSBTFinalizeScreen", 10, "Review the transaction, until it offers to sign"),
+            act("Approve it", keys(["Enter"]), screenIs("QRDisplayScreen", 240000)),
+            readOff("The signed transaction", function (context, collector) {
+              round.signed = C.toBase64(collector.psbt());
+            }, 300000),
+            act("Leave the signed QR", function () {
+              return t.sleep(1600).then(keys(["Enter"]));
+            }, screenIs("MainMenuScreen")),
+          ], replay(round)),
+          step("Send it", p[4], [
+            coordinator(function (context) {
+              round.sending = true;
+              if (round.sent) return;
+              return Promise.resolve(C.finaliseSingle(round.signed, [round.input])).then(function (raw) {
+                context.check();
+                round.spend = { hex: raw.hex || raw, txid: singleTxid(round.psbt) };
+                return round.broadcastResult || C.network.broadcast(round.spend.hex);
+              }).then(function (sent) {
+                round.broadcastResult = sent;
+                context.check();
+                if (sent.txid && sent.txid !== round.spend.txid) {
+                  throw new Error("the network gave the transaction a different id");
+                }
+                round.sent = sent;
+                t.detail("transaction id", round.spend.txid);
+              });
+            }),
+            coordinator(function () {
+              return waitForBlock(t, round.spend.txid, "the spend", "Waiting for the spend to be mined.");
+            }),
+          ], false),
+          step("Done", p[4], [coordinator(function () {
+            round.confirmed = true;
+            t.verdict.dataset.state = "good";
+            t.verdict.textContent = "Signed, sent and confirmed on Bitsaga Signet: " + round.spend.txid;
+            t.showFace("Confirmed", round.spend.txid);
+          })], false),
+        ];
+      }
+
+      t.schedulePassphrase = function () {
+        if (!t.passphrase || scheduled || !decided) return;
+        if (!finalizing && t.currentScreen() === "SeedFinalizeScreen") {
+          pendingPassphrase = true;
+          return;
+        }
+        scheduled = true;
+        var round = { passphrase: true };
+        state.rounds.push(round);
+        var extra = ["Load with passphrase", "Export the passphrase key", "Build the passphrase wallet",
+                     "Get passphrase test coins", "Sign with passphrase", "Send with passphrase"];
+        Array.prototype.push.apply(t.phases, extra);
+        t.updatePhases();
+        t.setPhase(steps[t.at] && steps[t.at].phase);
+        var from = steps.length;
+        steps.push(passphraseStep(round, extra[0], true));
+        Array.prototype.push.apply(steps, roundSteps(round, extra.slice(1)));
+        if (t.finished) {
+          if (t.handsOffer) { t.handsOffer.remove(); t.handsOffer = null; }
+          t.paused = false;
+          t.run(from);
+        }
+      };
+
+      steps.push(step("Make a seed from a photograph", phases[0], [
+        act("Tools", keys(["ArrowDown", "Enter"]), screenIs("ButtonListScreen")),
+        act("A new seed, from a photograph", keys(["Enter"]), function () {
+          return screenIs("ToolsImageEntropyLivePreviewScreen")().then(function () {
+            t.showEntropy();
+            return t.beat(900);
+          });
+        }),
+        act("Take the picture", keys(["Enter"]), function () {
+          return screenIs("ToolsImageEntropyFinalImageScreen")().then(function () {
+            t.stopEntropy();
+            t.endTransfer();
+          });
+        }),
+        act("Accept it", keys(["ArrowRight"]), screenIs("ButtonListScreen")),
+        act("Twelve words", keys(["Enter"]), screenIs("DireWarningScreen")),
+        act("Keep the words private", keys(["Enter"]), screenIs("SeedWordsScreen")),
+        act("The twelve words", keys(["Enter", "Enter", "Enter"]), screenIs("SeedWordsBackupTestPromptScreen")),
+        act("Skip the backup check", keys(down(stock ? 1 : 2)), screenIs("SeedFinalizeScreen")),
+        coordinator(function () {
+          decided = true;
+          if (t.passphrase) {
+            scheduled = true;
+            original.passphrase = true;
+            t.phases.splice(1, 0, "Add a passphrase");
+            t.updatePhases();
+            steps.splice(1, 1, passphraseStep(original, "Add a passphrase", false));
+          }
+        }),
+      ], false));
+      steps.push(step("Finish loading the seed", phases[0], [
+        act("Done", function () {
+          if (pendingPassphrase || t.passphrase) return;
+          finalizing = true;
+          return t.press(["Enter"]);
+        }, function () {
+          // Decide at Done, not at seed generation: a paused pending seed can still take a passphrase.
+          return t.poll(120000, function () {
+            if (t.currentScreen() === "SeedOptionsScreen") {
+              finalizing = true;
+              return true;
+            }
+            if (!finalizing && (pendingPassphrase || t.passphrase)
+                && t.currentScreen() === "SeedFinalizeScreen") {
+              scheduled = true;
+              original.passphrase = true;
+              t.phases.splice(1, 0, "Add a passphrase");
+              t.updatePhases();
+              steps.splice(t.at + 1, 0, passphraseStep(original, "Add a passphrase", false));
+              return true;
+            }
+            return false;
+          }, "Done or a pending passphrase");
+        }),
+      ], false));
+      steps.push(step("Backup for this demo", "Back up the seed", [
+        act("Backup seed", keys(down(3)), screenIs("ButtonListScreen")),
+        act("Export SeedQR", keys(down(stock ? 1 : 2)), screenIs("SeedTranscribeSeedQRFormatScreen")),
+        act("Standard SeedQR", keys(["Enter"]), screenIs("DireWarningScreen")),
+        act("Keep the demo backup private", keys(["Enter"]), screenIs("SeedTranscribeSeedQRWholeQRScreen")),
+        readOff("A temporary backup for this demo only", function (context, text) {
+          if (typeof text !== "string" || !/^\d{48}$/.test(text)) throw new Error("expected a twelve-word Standard SeedQR");
+          state.seedqr = text;
+        }),
+        act("View the backup", keys(["Enter"]), screenIs("SeedTranscribeSeedQRZoomedInScreen")),
+        act("Continue", keys(["Enter"]), screenIs("SeedTranscribeSeedQRConfirmQRPromptScreen")),
+        act("Skip the backup scan", keys(["ArrowDown", "Enter"]), screenIs("SeedOptionsScreen")),
+      ], false));
+      Array.prototype.push.apply(steps, roundSteps(original, t.entry.phases.slice(2)));
+      return steps;
+    }
+
+  function multiSteps(t, helpers) {
+    var PHASES = t.entry.phases;
+    var keys = helpers.keys, screenIs = helpers.screenIs;
+    var homeAgain = helpers.homeAgain, handUp = helpers.handUp;
+    var coordinator = helpers.coordinator;
+    var seedOntoCard = helpers.seedOntoCard, keyOffCard = helpers.keyOffCard;
+    var signWith = helpers.signWith;
     var steps = [];
     for (var s = 0; s < 3; s++) steps.push(seedOntoCard(s));
     for (var k = 0; k < 3; k++) steps.push(keyOffCard(k));
@@ -1895,15 +2329,18 @@
           }).then(function (change) {
             state.change = change;
             state.amount = state.input.value - FEE;
-            state.psbt = C.toBase64(C.buildPsbt(state.input, state.receive,
-                                                change.scriptPubkey, state.amount));
+            return Promise.resolve(C.buildPsbt(state.input, state.receive,
+                                               change.scriptPubkey, state.amount));
+          }).then(function (psbt) {
+            context.check();
+            state.psbt = C.toBase64(psbt);
             state.frames = specterFrames(state.psbt);
             t.detail("spending", state.input.txid + ":" + state.input.vout);
-            t.detail("paying", change.address);
+            t.detail("paying", state.change.address);
             t.detail("unsigned PSBT", state.psbt);
             t.verdict.dataset.state = "good";
             t.verdict.textContent = "Ready to sign: "
-              + (Number(state.amount) / 1e8).toFixed(8) + " to " + change.address
+              + (Number(state.amount) / 1e8).toFixed(8) + " to " + state.change.address
               + ", with " + FEE + " sat of fee. " + NOT_REAL;
             t.showFace("Unsigned transaction", state.frames.length + " codes to hold up");
           });
@@ -1923,17 +2360,22 @@
           return Promise.all(state.signed.map(function (psbt) {
             return C.partialSignatures(psbt);
           })).then(function (found) {
+            context.check();
             var signatures = {};
             found.forEach(function (some) { Object.assign(signatures, some); });
             t.detail("signatures collected", String(Object.keys(signatures).length), true);
             return C.finalise(state.input, state.receive, state.change.scriptPubkey,
                               state.amount, signatures);
           }).then(function (final) {
+            context.check();
             state.spend = final;
             t.detail("signed transaction", final.hex);
             t.detail("transaction id", final.txid);
+            state.broadcasting = true;
+            t.reflect();
             return C.network.broadcast(final.hex);
           }).then(function (sent) {
+            context.check();
             if (sent.txid && sent.txid !== state.spend.txid) {
               throw new Error("the network gave the transaction a different id");
             }
@@ -1983,9 +2425,12 @@
   function waitForBlock(t, txid, what, say) {
     t.showFace("Waiting for a block", txid);
     var deadline = Date.now() + 300000;
+    var generation = t.generation;
     return new Promise(function (resolve, reject) {
       (function again() {
+        if (generation !== t.generation) return reject(CANCELLED);
         C.network.proof(txid).then(function (proof) {
+          if (generation !== t.generation) return reject(CANCELLED);
           t.detail(what + " confirmed in block", String(proof.height), true);
           t.verdict.dataset.state = "good";
           t.verdict.textContent = "Confirmed on Bitsaga Signet in block "
@@ -1993,12 +2438,14 @@
           t.showFace("Confirmed", "Block " + proof.height);
           resolve();
         }, function (error) {
+          if (generation !== t.generation) return reject(CANCELLED);
           if (error.status !== 404) return reject(error);
           if (Date.now() > deadline) {
             return reject(new Error("Bitsaga Signet has not confirmed this "
                                     + "transaction. " + say));
           }
           C.network.status().then(function (status) {
+            if (generation !== t.generation) return;
             t.subProgress(Math.min(1, (status.last_block_age_seconds || 0) /
                                       (status.block_seconds || 30)));
           }).catch(function () {}).then(function () {
@@ -2014,6 +2461,34 @@
    * Small frames rather than one dense code, which is what every coordinator
    * does and what a 640 by 480 camera can actually read.
    */
+  function singleTxid(psbt) {
+    var bytes = C.fromBase64(psbt), at = 5;
+    function length() {
+      var n = bytes[at++];
+      if (n < 253) return n;
+      var size = n === 253 ? 2 : n === 254 ? 4 : 8;
+      var value = 0;
+      for (var i = 0; i < size; i++) value += bytes[at++] * Math.pow(256, i);
+      if (!Number.isSafeInteger(value)) throw new Error("invalid PSBT length");
+      return value;
+    }
+    if (C.hex(bytes.subarray(0, 5)) !== "70736274ff") throw new Error("expected a PSBT");
+    while (at < bytes.length) {
+      var keyLength = length();
+      if (!keyLength) break;
+      var key = bytes.slice(at, at + keyLength);
+      at += keyLength;
+      var valueLength = length();
+      var value = bytes.slice(at, at + valueLength);
+      at += valueLength;
+      if (value.length !== valueLength) throw new Error("truncated PSBT");
+      if (keyLength === 1 && key[0] === 0) {
+        return C.hex(scope.URDecode.sha256(scope.URDecode.sha256(value)).reverse());
+      }
+    }
+    throw new Error("the PSBT does not carry an unsigned transaction");
+  }
+
   function specterFrames(payload, size) {
     var chunk = size || 280;
     var parts = [];
@@ -2028,21 +2503,45 @@
   // ------------------------------------------------------------ what the page uses
 
   scope.WalletTutorial = {
-    /** The one button on the resting page. */
-    offer: function (container) {
+    registry: REGISTRY,
+    createSteps: createSteps,
+    offer: function (container, firmware) {
       var style = element("style");
       style.textContent = CSS;
       document.head.appendChild(style);
-      var button = element("button", "tut-start", "Start the multi-sig demo");
-      button.type = "button";
-      button.id = "start-tutorial";
-      button.addEventListener("click", function () {
-        track("open", "");
-        var params = new URLSearchParams(location.search);
-        params.set("tutorial", "1");
-        location.search = params.toString();
+      var picker = element("div");
+      picker.id = "start-tutorial";
+      firmware = firmware || "stock";
+      Object.keys(REGISTRY).forEach(function (id) {
+        var entry = REGISTRY[id];
+        if (entry.firmwares.indexOf(firmware) < 0) return;
+        var item = element("div");
+        var button = element("button", "tut-start", entry.title);
+        button.type = "button";
+        item.appendChild(button);
+        var checkbox = null;
+        if (id === "single") {
+          var label = element("label", "tut-choice-note");
+          checkbox = element("input");
+          checkbox.type = "checkbox";
+          label.appendChild(checkbox);
+          label.appendChild(document.createTextNode(" Add a passphrase"));
+          item.appendChild(label);
+        }
+        button.addEventListener("click", function () {
+          track("open", id);
+          var params = new URLSearchParams(location.search);
+          params.set("tutorial", id);
+          params.set("firmware", firmware);
+          params.delete("mode");
+          if (checkbox && checkbox.checked) params.set("passphrase", "1");
+          else params.delete("passphrase");
+          location.search = params.toString();
+        });
+        picker.appendChild(item);
       });
-      container.appendChild(button);
+      container.appendChild(picker);
+      return picker;
     },
 
     mount: function (options) {
@@ -2053,7 +2552,7 @@
       // Reloaded into a run: it still asks what to photograph, because a reload
       // is not an answer. What the URL decides is which mode the answer starts.
       if (options.mode) {
-        tutorial.pending = options.mode;
+        tutorial.pending = options.mode === "hands" ? "hands" : "self";
         tutorial.chooser.hidden = false;
       }
       // The same decoder the wallet's own camera path uses, because the phone
