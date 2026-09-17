@@ -167,10 +167,11 @@ def boot(context, chain, query, page=None, log=None):
     assert page.evaluate("window.__firmware") == "stock"
     assert page.evaluate(CURRENT + ".id") == "single"
     assert page.locator(".cardtray-card").count() == 0
-    check("registry offers single on stock and multisig on all three firmwares",
+    check("registry offers single and multisig on all three firmwares",
           page.evaluate("() => Object.fromEntries(Object.entries(window.WalletTutorial.registry)"
                         ".map(([id, entry]) => [id, entry.firmwares]))")
-          == {"single": ["stock"], "multi": ["smartcard", "doomsigner", "stock"]})
+          == {"single": ["stock", "smartcard", "doomsigner"],
+              "multi": ["smartcard", "doomsigner", "stock"]})
     page.evaluate("() => { const t = " + CURRENT + "; "
                   "t.pace = () => Promise.resolve(); t.beat = () => Promise.resolve(); }")
     return page, log
@@ -439,6 +440,89 @@ def restart(page, log):
           and log.last_screen() == "MainMenuScreen")
 
 
+def card_run(browser, firmware, scenario):
+    context = browser.new_context(viewport={"width": 1000, "height": 1300},
+                                  service_workers="block")
+    chain = OfflineChain(context)
+    page = context.new_page()
+    log = Log(page)
+    chain.log = log
+
+    def observe_seed(route):
+        response = route.fetch(url=f"http://127.0.0.1:{harness.PORT}/wallet-worker.js")
+        source = response.text()
+        anchor = '    js_log(f"display() enter: {type(self).__name__}")'
+        assert source.count(anchor) == 1
+        source = source.replace(anchor, anchor + '\n'
+            '    if type(self).__name__ == "SeedFinalizeScreen":\n'
+            '        from seedsigner.controller import Controller\n'
+            '        js_log("test pending mnemonic: " + " ".join(Controller.get_instance().storage.get_pending_seed().mnemonic_list))')
+        route.fulfill(response=response, body=source)
+
+    context.route("**/wallet-worker.js*", observe_seed)
+    try:
+        page.goto(f"{ORIGIN}/wallet.html?tutorial=single&firmware={firmware}&debug=1&e2e=1"
+                  + ("&passphrase=1" if scenario == "prechecked" else ""))
+        if firmware == "doomsigner":
+            log.wait(r"display\(\) enter: WarningScreen\b", 180, "DoomSigner build warning")
+            page.wait_for_timeout(600)
+            page.keyboard.press("Enter")
+        log.wait(r"display\(\) enter: MainMenuScreen\b", 180, "card firmware boot")
+        assert page.evaluate("window.__firmware") == firmware
+        assert page.evaluate(CURRENT + ".firmware") == firmware
+        page.evaluate("() => { const t = " + CURRENT + "; "
+                      "t.pace = () => Promise.resolve(); t.beat = () => Promise.resolve(); }")
+        start(page)
+        stored = log.wait(r"\[card\] Card A stored secret \d+, type 0x10 subtype 0x01, "
+                          r"label '[^']*', 84 bytes", 180, "twelve-word seed saved on Card A")
+        stored_at = next(i for i, line in enumerate(log.lines) if stored.group(0) in line)
+        exported = log.wait(r"\[card\] Card A exporting secret", 180, "seed reloaded from Card A", stored_at)
+        exported_at = next(i for i, line in enumerate(log.lines) if exported.group(0) in line)
+        assert ordered(log, ["ToolsImageEntropyLivePreviewScreen", "SeedWordsScreen",
+                             "SeedAddPassphraseScreen", "WarningScreen", "SeedAddPassphraseScreen",
+                             "SeedAddPassphraseScreen", "LargeIconStatusScreen"], end=stored_at)
+        assert ordered(log, ["SeedOptionsScreen", "WarningScreen", "MainMenuScreen"],
+                       stored_at, exported_at)
+        wait(page, "t.state.rounds[0].account", "card account export")
+        if scenario == "late":
+            page.locator("#tutorial-passphrase").check()
+            assert len(evidence(page)["state"]["rounds"]) == 2
+        wait(page, "t.finished && t.state.rounds.every(r => r.confirmed)", "card rounds confirmed", 300)
+        got = evidence(page)["state"]
+        mnemonic = log.wait(r"test pending mnemonic: ([a-z ]+)", 5, "observed mnemonic input").group(1)
+        expected = [False, True] if scenario == "late" else [True]
+        assert [r["passphrase"] for r in got["rounds"]] == expected
+        assert len(chain.claims) == len(chain.broadcasts) == len(expected)
+        assert "seedqr" not in got
+        assert not log.seen(r"display\(\) enter: SeedTranscribeSeedQRWholeQRScreen")
+        for i, round_ in enumerate(got["rounds"]):
+            prove_round(f"{firmware} {scenario} round {i + 1}", mnemonic, round_,
+                        chain.claims[i], chain.broadcasts[i], chain.proofs)
+            assert ordered(log, ["ScanScreen", "PSBTOverviewScreen", "PSBTFinalizeScreen", "QRDisplayScreen"],
+                           0 if i == 0 else chain.broadcasts[i - 1]["mark"], chain.broadcasts[i]["mark"])
+        if scenario == "late":
+            mark = chain.broadcasts[0]["mark"]
+            assert ordered(log, ["SeedOptionsScreen", "WarningScreen", "MainMenuScreen",
+                                 "SeedFinalizeScreen", "SeedAddPassphraseScreen", "SeedReviewPassphraseScreen",
+                                 "SeedOptionsScreen", "SeedExportXpubDetailsScreen"], mark, chain.claims[1]["mark"])
+            assert log.seen(r"\[card\] Card A exporting secret", mark)
+            assert not any("display() enter: ScanScreen" in line
+                           for line in log.lines[mark:exported_at])
+        assert not chain.unexpected
+        assert not log.seen(r"RAISED|PAGEERROR|Traceback|display\(\) enter: UnhandledException")
+        check(f"{firmware}: seed discarded before card reload and account export",
+              ordered(log, ["SeedOptionsScreen", "WarningScreen", "MainMenuScreen",
+                            "SeedFinalizeScreen", "SeedOptionsScreen", "SeedExportXpubDetailsScreen"],
+                      stored_at))
+    except Exception:
+        with open(harness.artifact(f"tutorial-single-{firmware}-failure.log"), "w") as handle:
+            handle.write("\n".join(log.lines))
+        print("\n".join(log.lines[-45:]), flush=True)
+        raise
+    finally:
+        context.close()
+
+
 def main():
     load_embit()
     for name, passed, detail in reference.check_published_vectors():
@@ -446,6 +530,9 @@ def main():
         assert passed, name
     with sync_playwright() as p:
         browser = p.chromium.launch()
+        for firmware in ("smartcard", "doomsigner"):
+            for scenario in ("prechecked", "late"):
+                card_run(browser, firmware, scenario)
         for scenario in ("prechecked", "late", "early", "pending-finalize"):
             context = browser.new_context(viewport={"width": 1000, "height": 1300},
                                           service_workers="block")

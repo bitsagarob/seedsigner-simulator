@@ -101,7 +101,7 @@
   var REGISTRY = {
     single: {
       title: "Single sig",
-      firmwares: ["stock"],
+      firmwares: ["stock", "smartcard", "doomsigner"],
       phases: ["Make a seed", "Back up the seed", "Export the key", "Build the wallet",
                "Get test coins", "Sign it", "Send it"],
       build: function (tutorial) { return createSteps(tutorial, singleSteps); },
@@ -367,7 +367,11 @@
     this.passphrase = options.passphrase === true || options.passphrase === "1";
     this.qrSeeds = this.id === "multi" && this.firmware === "stock";
     this.phases = this.entry.phases.slice();
-    if (this.qrSeeds) this.phases.splice(0, 2, "Scan three seeds", "Export the keys");
+    if (this.qrSeeds) {
+      this.phases.splice(0, 2, "Scan three seeds", "Export the keys");
+    } else if (this.id === "single" && this.firmware !== "stock") {
+      this.phases.splice(0, 2, "Seed onto card", "Read the card");
+    }
     this.sendKey = options.sendKey;
     this.keymap = options.keymap;
     this.tray = options.tray;
@@ -1806,6 +1810,30 @@
 
     // -------------------------------------------------- the key off a card
 
+    function seedOffCard(i, cachedPin) {
+      var card = "Card " + SEEDS[i].card;
+      return [
+        act(card + " into the reader",
+            function () { t.tray.insert(i); }, inserted(i)),
+        act("Seeds",
+            keys(["ArrowRight", "Enter"]), screenIs("ButtonListScreen")),
+        act("From SeedKeeper",
+            keys(["ArrowDown", "ArrowDown", "ArrowDown", "Enter"]),
+            cachedPin ? logged("display\\(\\) enter: (SeedAddPassphraseScreen|ButtonListScreen)\\b")
+              : screenIs("SeedAddPassphraseScreen")),
+        act("The card's PIN", cachedPin ? function () {
+          if (t.currentScreen() === "SeedAddPassphraseScreen") return pin()();
+        } : pin(), cachedPin ? function () {
+          return t.poll(240000, function () {
+            return t.currentScreen() === "ButtonListScreen";
+          }, "the card's secret list");
+        } : screenIs("ButtonListScreen", 240000)),
+        act("The one secret on the card", keys(["Enter"]),
+            logged("\\[card\\] " + card + " exporting secret", 240000)),
+        act(null, null, screenIs("SeedFinalizeScreen", 240000)),
+      ];
+    }
+
     function scanSeed(i) {
       var seed = SEEDS[i];
       return step("Scan test seed " + seed.card, PHASES[0], [
@@ -1832,22 +1860,9 @@
       return step(
         "Read " + card + "'s public key",
         PHASES[1],
-        (t.qrSeeds ? selectSeed(i) : [
-          act(card + " into the reader",
-              function () { t.tray.insert(i); }, inserted(i)),
-          act("Seeds",
-              keys(["ArrowRight", "Enter"]), screenIs("ButtonListScreen")),
-          act("From SeedKeeper",
-              keys(["ArrowDown", "ArrowDown", "ArrowDown", "Enter"]),
-              screenIs("SeedAddPassphraseScreen")),
-          act("The card's PIN",
-              pin(), screenIs("ButtonListScreen", 240000)),
-          act("The one secret on the card",
-              keys(["Enter"]),
-              logged("\\[card\\] Card " + seed.card + " exporting secret", 240000)),
-          act(null, null, screenIs("SeedFinalizeScreen", 240000)),
+        (t.qrSeeds ? selectSeed(i) : seedOffCard(i).concat([
           act("Done", keys(["Enter"]), screenIs("SeedOptionsScreen")),
-        ]).concat([
+        ])).concat([
           act("Export Xpub",
               keys(["ArrowDown", "Enter"]), screenIs("ButtonListScreen")),
           act("Multisig",
@@ -1947,6 +1962,7 @@
       handUp: handUp, handUpFrames: handUpFrames, readOff: readOff,
       coordinator: coordinator, seedOntoCard: seedOntoCard,
       keyOffCard: keyOffCard, signWith: signWith, scanSeed: scanSeed,
+      seedOffCard: seedOffCard, discardKeys: discardKeys,
     });
   }
 
@@ -1979,12 +1995,13 @@
           homeAgain(),
           act("Seeds", keys(["ArrowRight", "Enter"]), screenIs("ButtonListScreen")),
           act("The loaded seed", keys(["Enter"]), screenIs("SeedOptionsScreen")),
-          act("Discard the loaded seed", keys(down(stock ? 4 : 5)), screenIs("WarningScreen")),
+          act("Discard the loaded seed", stock ? keys(down(4)) : helpers.discardKeys(), screenIs("WarningScreen")),
           act("Confirm discard", keys(["ArrowDown", "Enter"]), screenIs("MainMenuScreen")),
+        ].concat(stock ? [
           act("Open Scan", keys(["Enter"]), screenIs("ScanScreen")),
           handUp("Reload the demo's original SeedQR", function () { return state.seedqr; },
                  screenIs("SeedFinalizeScreen")),
-        ] : [];
+        ] : helpers.seedOffCard(0, true)) : [];
         return step(reload ? "Discard, reload, add passphrase" : "Add a passphrase", phase,
           actions.concat([
             act("Passphrases are chosen when loading. Select Type Passphrase.",
@@ -2191,7 +2208,7 @@
         }
       };
 
-      steps.push(step("Make a seed from a photograph", phases[0], [
+      var seedStep = stock ? step("Make a seed from a photograph", phases[0], [
         act("Tools", keys(["ArrowDown", "Enter"]), screenIs("ButtonListScreen")),
         act("A new seed, from a photograph", keys(["Enter"]), function () {
           return screenIs("ToolsImageEntropyLivePreviewScreen")().then(function () {
@@ -2210,18 +2227,24 @@
         act("Keep the words private", keys(["Enter"]), screenIs("SeedWordsScreen")),
         act("The twelve words", keys(["Enter", "Enter", "Enter"]), screenIs("SeedWordsBackupTestPromptScreen")),
         act("Skip the backup check", keys(down(stock ? 1 : 2)), screenIs("SeedFinalizeScreen")),
-        coordinator(function () {
-          decided = true;
-          if (t.passphrase) {
-            scheduled = true;
-            original.passphrase = true;
-            t.phases.splice(1, 0, "Add a passphrase");
-            t.updatePhases();
-            steps.splice(1, 1, passphraseStep(original, "Add a passphrase", false));
-          }
-        }),
-      ], false));
-      steps.push(step("Finish loading the seed", phases[0], [
+      ], false) : step("Read the seed back from Card A", phases[1], helpers.seedOffCard(0, true), false);
+      if (!stock) {
+        var save = helpers.seedOntoCard(0);
+        save.phase = phases[0];
+        steps.push(save);
+      }
+      seedStep.actions.push(coordinator(function () {
+        decided = true;
+        if (t.passphrase) {
+          scheduled = true;
+          original.passphrase = true;
+          t.phases.splice(stock ? 1 : 2, 0, "Add a passphrase");
+          t.updatePhases();
+          steps.splice(stock ? 1 : 2, 1, passphraseStep(original, "Add a passphrase", false));
+        }
+      }));
+      steps.push(seedStep);
+      steps.push(step("Finish loading the seed", stock ? phases[0] : phases[1], [
         act("Done", function () {
           if (pendingPassphrase || t.passphrase) return;
           finalizing = true;
@@ -2237,7 +2260,7 @@
                 && t.currentScreen() === "SeedFinalizeScreen") {
               scheduled = true;
               original.passphrase = true;
-              t.phases.splice(1, 0, "Add a passphrase");
+              t.phases.splice(stock ? 1 : 2, 0, "Add a passphrase");
               t.updatePhases();
               steps.splice(t.at + 1, 0, passphraseStep(original, "Add a passphrase", false));
               return true;
@@ -2246,7 +2269,7 @@
           }, "Done or a pending passphrase");
         }),
       ], false));
-      steps.push(step("Backup for this demo", "Back up the seed", [
+      if (stock) steps.push(step("Backup for this demo", "Back up the seed", [
         act("Backup seed", keys(down(3)), screenIs("ButtonListScreen")),
         act("Export SeedQR", keys(down(stock ? 1 : 2)), screenIs("SeedTranscribeSeedQRFormatScreen")),
         act("Standard SeedQR", keys(["Enter"]), screenIs("DireWarningScreen")),

@@ -448,6 +448,19 @@ def stock_qr(browser):
         context.close()
 
 
+def check_card_pins(log, firmware):
+    start = 0
+    for card in "ABC":
+        end = next(i for i in range(start, len(log.lines))
+                   if f"[card] Card {card} stored secret" in log.lines[i])
+        prompts = sum("No Cached pin, prompting for pin" in line
+                      for line in log.lines[start:end])
+        expected = 1 if firmware == "smartcard" or card == "A" else 0
+        check(f"{firmware} Card {card}: {expected} uncached PIN prompt(s)",
+              prompts == expected, f"observed {prompts}")
+        start = end + 1
+
+
 def doomsigner_card(browser):
     from test_tutorial_single import OfflineChain, ordered, wait
 
@@ -499,6 +512,17 @@ def doomsigner_card(browser):
         check("Doomsigner card ceremony has no firmware or page exception",
               not log.seen(r"RAISED|PAGEERROR|Traceback|display\(\) enter: UnhandledException"))
         assert ordered(log, ["SeedOptionsScreen", "WarningScreen", "MainMenuScreen"], mark)
+        page.evaluate("() => { window.WalletTutorial.current.pace = () => Promise.resolve(); }")
+        page.locator('#tutorial button[aria-label="Play"]').click()
+        for card in "BC":
+            stored = log.wait(
+                r"\[card\] Card " + card + r" stored secret \d+, type 0x10 subtype 0x01, "
+                r"label '[^']*', 84 bytes", 240, f"Doomsigner to store Card {card}", mark)
+            check(f"Doomsigner stores a twelve-word Masterseed on Card {card}",
+                  stored is not None)
+        check_card_pins(log, "doomsigner")
+        check("Doomsigner three-card ceremony has no firmware or page exception",
+              not log.seen(r"RAISED|PAGEERROR|Traceback|display\(\) enter: UnhandledException"))
     except Exception:
         with open(harness.artifact("tutorial-doomsigner-failure.log"), "w") as handle:
             handle.write("\n".join(log.lines))
@@ -797,6 +821,7 @@ def main() -> int:
         check("all three cards received a generated seed before the descriptor transfer",
               all(log.seen(r"\[card\] Card " + card + r" stored secret")
                   for card in "ABC"))
+        check_card_pins(log, "smartcard")
         check("the descriptor transfer is captioned, with a direction",
               "Phone" in panel(page, ".tut-arrow")
               and "device" in panel(page, ".tut-arrow"), panel(page, ".tut-arrow"))
@@ -849,10 +874,10 @@ def main() -> int:
         for query, labels in [
             ("wallet=1", ["Single sig", "Multisig"]),
             ("wallet=1&firmware=stock", ["Single sig", "Multisig"]),
-            ("wallet=1&firmware=smartcard", ["Multisig"]),
-            ("wallet=1&firmware=doomsigner", ["Multisig"]),
+            ("wallet=1&firmware=smartcard", ["Single sig", "Multisig"]),
+            ("wallet=1&firmware=doomsigner", ["Single sig", "Multisig"]),
             ("wallet=1&firmware=stock&tutorial=offer", ["Single sig", "Multisig"]),
-            ("wallet=1&firmware=smartcard&tutorial=offer", ["Multisig"]),
+            ("wallet=1&firmware=smartcard&tutorial=offer", ["Single sig", "Multisig"]),
         ]:
             resting = context.new_page()
             logs.append(Log(resting))
