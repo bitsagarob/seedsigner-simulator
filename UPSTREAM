@@ -136,7 +136,7 @@ tag    = v0.2-0.1
 # native 320x200 put on a canvas.
 
 [doomsigner-game]
-repo   = https://github.com/bitsagarob/doomsigner.git
+repo   = https://github.com/bitsagarob/doomsigner-os.git
 commit = 4285bda39b59e3344fd04f0794791580f70e3b0c
 tag    = doomsigner-v0.1
 
