@@ -67,7 +67,7 @@ REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 
 # The firmware port. Not part of this repository: the simulator runs the boot
 # game, it does not own it.
-DOOM_SRC="${DOOM_SRC:-${HOME}/apps/seedsigner-os/boot-game/doom}"
+DOOM_SRC="${DOOM_SRC:-${HOME}/apps/doomsigner-os/boot-game/doom}"
 
 # Next to the wallet zip, for the same reason it is there: these are build
 # outputs, not source files, and committing them would invite the reader to
@@ -93,7 +93,7 @@ usage() {
 Usage: build-doom-wasm.sh [options]
 
   --src DIR    The seedsigner-os DOOM port to build
-               (default: $DOOM_SRC, else ~/apps/seedsigner-os/boot-game/doom)
+               (default: $DOOM_SRC, else ~/apps/doomsigner-os/boot-game/doom)
   --dest DIR   Where to put the artifacts
                (default: <repo>/build/out/doom; copy them next to the page's
                other assets, which is src/web/, to actually serve them)

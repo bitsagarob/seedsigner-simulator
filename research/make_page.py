@@ -233,7 +233,7 @@ def body(main, signet, regtest, imgs_main, imgs_signet):
     <pre><code style="word-break:break-all;white-space:pre-wrap">{r["psbt_final_v2"]}</code></pre>
     <p>The transaction as broadcast:</p>
     <pre><code style="word-break:break-all;white-space:pre-wrap">{r["tx_hex"]}</code></pre>
-    <p>Code: firmware branch <code>musig2</code> on <a href="https://github.com/bitsagarob/seedsigner">bitsagarob/seedsigner</a> (helpers <code>musig2.py</code>, <code>musig2_psbt.py</code>, <code>musig2_session.py</code>, <code>musig2_sp.py</code> and their tests), simulator build served unlisted beside the <a href="/seedsigner-simulator/">SeedSigner simulator</a> at <code>/seedsigner-simulator/musig/wallet.html?firmware=doomsigner-musig</code>.</p>
+    <p>Code: firmware branch <code>musig2</code> on <a href="https://github.com/bitsagarob/doomsigner">bitsagarob/doomsigner</a> (helpers <code>musig2.py</code>, <code>musig2_psbt.py</code>, <code>musig2_session.py</code>, <code>musig2_sp.py</code> and their tests), simulator build served unlisted beside the <a href="/seedsigner-simulator/">SeedSigner simulator</a> at <code>/seedsigner-simulator/musig/wallet.html?firmware=doomsigner-musig</code>.</p>
 
     <p class="meta-note">Mainnet spend confirmed {published}, block {main["confirmed_block"] if main else "pending"}. Regtest and Bitsaga Signet runs the same day. Every screen, transaction and proof on this page is reproducible from the repository.</p>
   </div>

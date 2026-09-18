@@ -524,7 +524,7 @@
       "<li>Under <b>Pyodide 0.26.4</b>, the project's own release, checked at",
       " build time against sha256 <code>70dba934…</code>.</li></ul>",
       "<h3>Code</h3><ul>",
-      "<li><a href='https://github.com/bitsagarob/seedsigner'>bitsagarob/seedsigner</a>",
+      "<li><a href='https://github.com/bitsagarob/doomsigner'>bitsagarob/doomsigner</a>",
       " the device</li>",
       "<li><a href='https://github.com/bitsagarob/embit'>bitsagarob/embit</a>",
       " descriptors</li></ul>",

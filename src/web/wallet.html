@@ -1226,7 +1226,7 @@ const SMARTCARD = BASE_FIRMWARE === "smartcard" || BASE_FIRMWARE === "doomsigner
 function walletZipKind(firmware) {
   // Was `doomsigner -> smartcard`: this firmware had no zip of its own and
   // borrowed ShieldSigner's, then had silent payments patched on at runtime.
-  // It has its own now, built from bitsagarob/seedsigner like the other two are
+  // It has its own now, built from bitsagarob/doomsigner like the other two are
   // built from their upstreams, so the mapping is the identity and this function
   // survives only to say that it used not to be.
   return firmware;

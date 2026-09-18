@@ -63,7 +63,7 @@ wallet_zip_contents_sha256 = 231a83cc8757098816386f5146bd6f20caccd7ff09aa2f286bf
 # point rather than something to paper over: rebuilding it checks that we built
 # what we said we did, not that upstream did.
 [doomsigner]
-repo   = https://github.com/bitsagarob/seedsigner.git
+repo   = https://github.com/bitsagarob/doomsigner.git
 commit = 8cfb72808ebe516bcd6fb7d14d00a0e77e6cbbea
 tag    = none: dev, ahead of the last release
 
