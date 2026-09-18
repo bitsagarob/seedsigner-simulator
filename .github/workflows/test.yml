@@ -48,16 +48,17 @@ jobs:
           path: |
             build/out
             src/web/pyodide-e24b45d3
-          key: assets-${{ hashFiles('build/*.sh', 'build/checksums.txt', 'UPSTREAM') }}
+          key: assets-${{ hashFiles('build/*.sh', 'build/checksums.txt', 'UPSTREAM', '.github/workflows/test.yml') }}
 
       # fetch-assets.sh needs curl and python3; build-wallet-zip.sh also needs
       # git. All three are on the runner image already.
-      - name: Build both wallet zips and fetch the Pyodide runtime
+      - name: Build the three wallet zips and fetch the Pyodide runtime
         if: steps.assets.outputs.cache-hit != 'true'
         run: |
           ./build/fetch-assets.sh
           ./build/build-wallet-zip.sh smartcard
           ./build/build-wallet-zip.sh stock
+          ./build/build-wallet-zip.sh doomsigner
 
       - name: Install Playwright
         run: |
