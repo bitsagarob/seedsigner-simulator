@@ -54,8 +54,14 @@ REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 # "ssh" for one reached with `ssh NAME` -- so the name has to be one ssh can
 # resolve, from a config or from DNS. The first box listed is the one the others
 # are compared against in question 4.
+#
+# vps1 was in this default until 2026-09-18. It was decommissioned on 2026-08-13
+# and answers to no hostname, so every one of its checks failed: 51 of 61 on the
+# last run, which drowned the 9 real ones. A check that is red by default is a
+# check nobody reads. Add a second box back with SIM_DEPLOY_BOXES when there is
+# one.
 SITE_URL="${SIM_DEPLOY_URL:-https://bitsaga.be/seedsigner-simulator}"
-read -r -a BOXES <<< "${SIM_DEPLOY_BOXES:-vps2:local vps1:ssh}"
+read -r -a BOXES <<< "${SIM_DEPLOY_BOXES:-vps2:local}"
 
 SITE_URL="${SITE_URL%/}"
 
@@ -69,7 +75,7 @@ Environment:
   SIM_DEPLOY_URL     Where the deployment is
                      (default: https://bitsaga.be/seedsigner-simulator)
   SIM_DEPLOY_BOXES   Space-separated NAME:HOW, HOW being local or ssh
-                     (default: "vps2:local vps1:ssh")
+                     (default: "vps2:local")
 USAGE
 }
 
