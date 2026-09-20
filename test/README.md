@@ -31,7 +31,8 @@ upstream commits, which takes a few minutes; later runs reuse all of it.
 A subset, by substring on the step name -- the names are `leak_scan`, `cards`,
 `tray_layout`, `device`, `firmware`, `build_info`, `settings`, `scan_seedqr`, `scan_compact`,
 `scan_native`, `stock_scan_seedqr`, `stock_scan_compact`, `stock_scan_native`,
-`cards_browser`, `cards_seed`, `cards_seedkeeper`, `cards_descriptor`, `mainnet`:
+`cards_browser`, `cards_seed`, `cards_seedkeeper`, `cards_descriptor`, `mainnet`,
+`tutorial`, `tutorial_single`:
 
     python3 test/run.py scan          # everything with "scan" in the name
     python3 test/run.py stock         # the three stock-firmware scans
@@ -51,9 +52,20 @@ Individual files run on their own too, against a server you start yourself:
     python3 test/make_qr_y4m.py
     python3 test/test_scan.py
 
-Screenshots land in `test/artifacts/`. So do the QR videos, which `run.py`
-deletes afterwards because they are 160MB and regenerate in seconds; set
-`SIM_KEEP_VIDEOS=1` to keep them.
+Screenshots land in `test/artifacts/`. Most are taken only when something
+fails. The exception is the walkthroughs: a run photographs the panel the first
+time it names a phase, as `walkthrough-<walkthrough>-<firmware>-<n>-<phase>.png`,
+so a passing run leaves pictures of the ceremony rather than only of a wreck.
+
+How far a set goes is how far that run goes, which is not the same for all of
+them. `stock_qr` and the stock single-sig scenarios drive a whole ceremony and
+photograph most of its phases; `doomsigner_card` stops at the Card B boundary
+and the hands-on run stops part way, both on purpose, so those two leave one
+opening picture each. A complete matrix would need a capture pass that exists
+to take pictures, and there is no such pass.
+
+The QR videos land there too. `run.py` deletes them afterwards because they are
+160MB and regenerate in seconds; set `SIM_KEEP_VIDEOS=1` to keep them.
 
 | variable | default | what it does |
 | --- | --- | --- |

@@ -70,6 +70,18 @@ SUITE = [
     ("tutorial_single", ["test_tutorial_single.py"], True),
 ]
 
+# test_tutorial_musig.py is not here either, and for a worse reason: it is
+# flaky. Measured 2026-09-20 on vps2, five runs, four passes and one failure
+# where the firmware's own QR decoder raised "Segment total changed
+# unexpectedly" the moment the MuSig2 PSBT scan opened. That is a real race and
+# it has not been found yet, so the walkthrough is checked by hand:
+#
+#     python3 test/serve.py --port 8770 src/web src/shims build/out &
+#     python3 test/test_tutorial_musig.py
+#
+# What CI does pin about MuSig2 is that DoomSigner offers it in the picker,
+# which test_tutorial.py asserts.
+
 # test_tutorial_live.py is deliberately not here. It drives the whole multisig
 # tutorial against the real Bitsaga Signet, which means the network, a chain
 # that has to be up, and real waiting for real blocks. test_tutorial.py covers

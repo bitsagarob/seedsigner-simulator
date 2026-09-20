@@ -8,7 +8,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import harness
 from harness import Log, check, report
 from playwright.sync_api import sync_playwright
-from test_tutorial_single import OfflineChain, ORIGIN, wait, control, quiet, load_embit
+import test_tutorial_single
+from test_tutorial_single import (OfflineChain, ORIGIN, PhaseShots, wait, control, quiet,
+                                  load_embit)
 from musig_reference import check_artifact, check_published_vectors
 
 
@@ -23,6 +25,7 @@ def coordinator_zip():
 
 
 def main():
+    test_tutorial_single.SHOTS = PhaseShots("musig-doomsigner")
     load_embit()
     assert all(ok for _, ok, _ in check_published_vectors())
     with sync_playwright() as p:

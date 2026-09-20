@@ -111,16 +111,23 @@ To run your own fork, `SS_REPO` and `SS_COMMIT` override the pin for one build
 - **One host.** No backend, and the CSP names one other origin,
   `signet.bitsaga.be`, for the faucet and read-only lookups.
 
-## The multisig tutorial
+## The walkthroughs
 
-A guided 2 of 3 done in the page, behind a URL since the resting page is a plain
-SeedSigner: `?tutorial=offer` shows the button, `?tutorial=1` starts it.
-ShieldSigner only, the flow being about SeedKeeper cards.
+Three guided ceremonies done in the page. The resting page is a plain
+SeedSigner, so none of them starts on its own: open the wallet drawer and the
+picker offers whichever ones the running firmware can do, or name one on the URL
+as `?tutorial=single`, `?tutorial=multi` or `?tutorial=musig`.
 
-Three published test seeds go onto three cards with the real PIN ceremony, a 2 of
-3 is built from the keys read back, the faucet on **Bitsaga Signet** pays it, and
-two cards sign a spend that confirms. **Those coins are not real bitcoin.** Press
-play and it narrates itself, or take over and press the buttons.
+| Walkthrough | Firmwares | What it does |
+| --- | --- | --- |
+| **Single sig** | SeedSigner, ShieldSigner, DoomSigner | makes a seed, backs it up, exports the key, funds it, signs and sends. A checkbox adds a passphrase |
+| **Multisig** | SeedSigner, ShieldSigner, DoomSigner | a 2 of 3, from three cards on the forks and by QR on stock |
+| **MuSig2** | DoomSigner | a 2 of 3 MuSig2, nonces exchanged and both cards signing. DoomSigner boots into DOOM, so five taps on the top side button open the wallet first |
+
+Three published test seeds, the real PIN ceremony where there are cards, the
+faucet on **Bitsaga Signet** pays the wallet, and the spend confirms. **Those
+coins are not real bitcoin.** Press play and it narrates itself, or take over
+and press the buttons.
 
 The coordinator is drawn as a phone beside the device, because that is what it
 is: [`signet-coordinator.js`](src/web/signet-coordinator.js) builds the

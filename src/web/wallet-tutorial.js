@@ -99,9 +99,10 @@
   // step names the phase it belongs to, rather than this list naming ranges of
   // step numbers, so inserting a step cannot silently move the marks.
   var REGISTRY = {
-    // Mounted by URL, ?tutorial=musig, and deliberately absent from the
-    // drawer picker: the picker is the resting page's invitation, and the
-    // suite pins what each firmware offers there.
+    // DoomSigner only, and offered in the drawer picker like the other two:
+    // it is the one firmware that can sign a MuSig2 spend. Reachable by URL as
+    // ?tutorial=musig as well. The suite pins what each firmware offers, so a
+    // choice appearing or disappearing here fails a test rather than shipping.
     musig: {
       title: "MuSig2",
       firmwares: ["doomsigner"],

@@ -245,6 +245,13 @@ def panel(page, selector):
     return node.inner_text().strip() if node.count() else ""
 
 
+def shots(page):
+    """The phase screenshots, when a run has asked for them."""
+    import test_tutorial_single
+    if test_tutorial_single.SHOTS:
+        test_tutorial_single.SHOTS.look(page)
+
+
 def wait_instruction(page, contains, timeout=90):
     """Wait for the panel to be asking for something, and say what it asks."""
     deadline = time.time() + timeout
@@ -252,6 +259,7 @@ def wait_instruction(page, contains, timeout=90):
         text = panel(page, ".tut-do")
         if contains.lower() in text.lower():
             return text
+        shots(page)
         page.wait_for_timeout(200)
     raise AssertionError(f"the panel never asked for {contains!r}; it says "
                          f"{panel(page, '.tut-do')!r} on {panel(page, '.tut-step')!r}")
@@ -264,6 +272,7 @@ def next_instruction(page, after, timeout=180):
         text = panel(page, ".tut-do")
         if text and text != after:
             return text, time.time() - started
+        shots(page)
         page.wait_for_timeout(100)
     raise AssertionError(f"the panel sat on {after!r} for {timeout}s")
 
@@ -278,7 +287,10 @@ def boot(context, log_lines, query="tutorial=1&debug=1"):
 
 
 def stock_qr(browser):
-    from test_tutorial_single import OfflineChain, evidence, load_embit, ordered, wait
+    import test_tutorial_single
+    from test_tutorial_single import OfflineChain, PhaseShots, evidence, load_embit, ordered, wait
+
+    test_tutorial_single.SHOTS = PhaseShots("multi-stock")
 
     load_embit()
     from embit.descriptor import Descriptor
@@ -462,7 +474,10 @@ def check_card_pins(log, firmware):
 
 
 def doomsigner_card(browser):
-    from test_tutorial_single import OfflineChain, ordered, wait
+    import test_tutorial_single
+    from test_tutorial_single import OfflineChain, PhaseShots, ordered, wait
+
+    test_tutorial_single.SHOTS = PhaseShots("multi-doomsigner")
 
     context = browser.new_context(viewport={"width": 1000, "height": 1300},
                                   service_workers="block")
@@ -623,6 +638,10 @@ def main() -> int:
 
         # --- hands on --------------------------------------------------------
         print("\nhands on: the visitor presses, the panel keeps pace")
+        # The third firmware's Multisig pictures. This run is hands on and stops
+        # part way, so it photographs the opening phases rather than all six.
+        import test_tutorial_single
+        test_tutorial_single.SHOTS = test_tutorial_single.PhaseShots("multi-smartcard")
         page, log = boot(context, logs)
         check("tutorial=1 opens the smartcard multisig demo",
               page.locator("#tutorial h2").inner_text() == "Multisig"

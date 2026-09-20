@@ -99,6 +99,32 @@ class OfflineChain:
         route.fulfill(status=status, content_type="application/json", body=json.dumps(body))
 
 
+# Phase screenshots. Everything this suite photographed was a failure, so a run
+# that passed left nothing to look at, and a walkthrough is a thing you look at.
+# One shot per phase, taken from the poll loop every self-driving run already
+# sits in, so no run has to be driven twice to get them.
+SHOTS = None
+
+
+class PhaseShots:
+    """A screenshot the first time the panel names each phase."""
+
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.seen = []
+
+    def look(self, page):
+        phase = page.evaluate(
+            "() => { const t = " + CURRENT + "; return t && t.phaseText"
+            " ? t.phaseText.textContent : ''; }")
+        if not phase or phase in self.seen:
+            return
+        self.seen.append(phase)
+        slug = re.sub(r"[^a-z0-9]+", "-", phase.lower()).strip("-")
+        page.screenshot(path=harness.artifact(
+            f"walkthrough-{self.prefix}-{len(self.seen)}-{slug}.png"), full_page=True)
+
+
 def wait(page, predicate, what, timeout=180):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -107,6 +133,8 @@ def wait(page, predicate, what, timeout=180):
             raise AssertionError(f"{what}: {bad.inner_text()}")
         if page.evaluate("() => { const t = " + CURRENT + "; return !!(" + predicate + "); }"):
             return
+        if SHOTS:
+            SHOTS.look(page)
         page.wait_for_timeout(100)
     raise AssertionError(f"timed out waiting for {what}: " + str(page.evaluate(
         "() => { const t = " + CURRENT + "; return [t.at, t.atAction, "
@@ -442,6 +470,10 @@ def restart(page, log):
 
 
 def card_run(browser, firmware, scenario):
+    global SHOTS
+    # One scenario is enough to photograph: prechecked and late walk the same
+    # phases, and a second set of the same pictures is not evidence of anything.
+    SHOTS = PhaseShots(f"single-{firmware}") if scenario == "prechecked" else None
     context = browser.new_context(viewport={"width": 1000, "height": 1300},
                                   service_workers="block")
     chain = OfflineChain(context)
@@ -525,6 +557,7 @@ def card_run(browser, firmware, scenario):
 
 
 def main():
+    global SHOTS
     load_embit()
     for name, passed, detail in reference.check_published_vectors():
         check(name, passed, detail)
@@ -535,6 +568,7 @@ def main():
             for scenario in ("prechecked", "late"):
                 card_run(browser, firmware, scenario)
         for scenario in ("prechecked", "late", "early", "pending-finalize"):
+            SHOTS = PhaseShots("single-stock") if scenario == "prechecked" else None
             context = browser.new_context(viewport={"width": 1000, "height": 1300},
                                           service_workers="block")
             chain = OfflineChain(context)
