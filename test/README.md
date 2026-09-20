@@ -64,6 +64,11 @@ and the hands-on run stops part way, both on purpose, so those two leave one
 opening picture each. A complete matrix would need a capture pass that exists
 to take pictures, and there is no such pass.
 
+A set is also best effort rather than exhaustive. The shot is taken from a poll
+loop that looks every 100ms, so a phase the run crosses faster than that leaves
+no picture, and two runs of the same walkthrough can photograph different
+phases. Missing pictures are not a failure signal.
+
 The QR videos land there too. `run.py` deletes them afterwards because they are
 160MB and regenerate in seconds; set `SIM_KEEP_VIDEOS=1` to keep them.
 

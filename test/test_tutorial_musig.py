@@ -14,6 +14,22 @@ from test_tutorial_single import (OfflineChain, ORIGIN, PhaseShots, wait, contro
 from musig_reference import check_artifact, check_published_vectors
 
 
+TRACE_QR = """
+  const wrap = () => {
+    if (!window.QREncode || window.QREncode.__traced) return false;
+    const real = window.QREncode.matrix;
+    window.QREncode.matrix = function (text) {
+      console.log("PAINT " + Math.round(performance.now()) + " "
+                  + String(text).slice(0, 16));
+      return real.apply(this, arguments);
+    };
+    window.QREncode.__traced = true;
+    return true;
+  };
+  if (!wrap()) { const t = setInterval(() => { if (wrap()) clearInterval(t); }, 50); }
+"""
+
+
 def coordinator_zip():
     data = io.BytesIO()
     with zipfile.ZipFile(harness.find_asset("wallet-doomsigner.zip")) as source:
@@ -35,6 +51,15 @@ def main():
         archive = coordinator_zip()
         context.route("**/wallet-embit.zip", lambda route: route.fulfill(body=archive, content_type="application/zip"))
         page = context.new_page()
+        # SIM_TRACE_QR=1 logs every payload the phone paints, with a clock. It is
+        # here for one open bug: this walkthrough has failed once in seventeen
+        # runs with the firmware's own decoder raising "Segment total changed
+        # unexpectedly" the moment the PSBT scan opened, which can only happen if
+        # two rounds' frames reach one scan. The rounds carry very different
+        # totals -- p1of5 early, p1of19 later -- so the trace names the round a
+        # stray frame came from. Off by default: it is a line per frame.
+        if os.environ.get("SIM_TRACE_QR"):
+            page.add_init_script(TRACE_QR)
         log = Log(page)
         chain.log = log
         try:

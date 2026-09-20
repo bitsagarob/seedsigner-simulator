@@ -71,13 +71,22 @@ SUITE = [
 ]
 
 # test_tutorial_musig.py is not here either, and for a worse reason: it is
-# flaky. Measured 2026-09-20 on vps2, five runs, four passes and one failure
-# where the firmware's own QR decoder raised "Segment total changed
-# unexpectedly" the moment the MuSig2 PSBT scan opened. That is a real race and
-# it has not been found yet, so the walkthrough is checked by hand:
+# flaky, once. Measured 2026-09-20 on vps2: seventeen runs, sixteen passes and
+# one failure, where the firmware's own QR decoder raised "Segment total changed
+# unexpectedly" (decode_qr.py, in BaseAnimatedQrDecoder.add) the moment the
+# MuSig2 PSBT scan opened, dropping DoomSigner into UnhandledExceptionView. That
+# can only happen if frames from two rounds reach one scan, and the rounds carry
+# very different totals: p1of5 in the first, p1of19 in a later one.
+#
+# It has not been reproduced since. Sixteen attempts followed, twelve of them
+# with SIM_TRACE_QR=1 logging every painted frame and three running at once to
+# load the box, and every one passed. A stale frame left on the phone canvas was
+# the obvious suspect and is wrong: endTransfer calls summary(), which calls
+# clearPhone(). So it stays out of the suite rather than making CI red on
+# roughly one push in seventeen, and is run by hand:
 #
 #     python3 test/serve.py --port 8770 src/web src/shims build/out &
-#     python3 test/test_tutorial_musig.py
+#     SIM_TRACE_QR=1 python3 test/test_tutorial_musig.py
 #
 # What CI does pin about MuSig2 is that DoomSigner offers it in the picker,
 # which test_tutorial.py asserts.
