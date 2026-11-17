@@ -30,6 +30,8 @@
   var PREVIEW_H = 240;
   var CAPTURE_W = 640;
   var CAPTURE_H = 480;
+  var TOUCH_CAPTURE_W = 512;
+  var TOUCH_CAPTURE_H = 384;
 
   var HEADER_BYTES = 64;
   var QR_OFFSET = HEADER_BYTES;
@@ -42,7 +44,7 @@
   // Desktop runs at about 15fps. Touch devices use TOUCH_TICK_MS below to reduce
   // camera and canvas work while keeping enough frames for a stable QR scan.
   var TICK_MS = 66;
-  var TOUCH_TICK_MS = 120;
+  var TOUCH_TICK_MS = 200;
 
   // How long the camera may deliver nothing before the page says so, and how
   // often it is asked. Comfortably longer than a tick and than any single
@@ -84,8 +86,10 @@
     // A phone has less room for the repeated video/canvas copies below, and a
     // CompactSeedQR only needs a handful of frames. Ask for fewer camera frames
     // on touch devices while leaving desktop scanning at its existing rate.
-    var tickMs = scope.matchMedia && scope.matchMedia("(pointer: coarse)").matches
-      ? TOUCH_TICK_MS : TICK_MS;
+    var touchDevice = isTouchDevice();
+    var tickMs = touchDevice ? TOUCH_TICK_MS : TICK_MS;
+    var captureW = touchDevice ? TOUCH_CAPTURE_W : CAPTURE_W;
+    var captureH = touchDevice ? TOUCH_CAPTURE_H : CAPTURE_H;
     var stream = null;
     var video = null;
     // A canvas standing in for the camera, when the page handed one over rather
@@ -211,7 +215,13 @@
     // jsQR is served from this origin: the page sends COEP require-corp, so a
     // CDN would be refused.
     function makeDecoder() {
-      return loadJsQR().then(withJsQR);
+      return loadJsQR().then(function (jsQR) {
+        // BarcodeDetector can be present but unimplemented on Android Chrome.
+        // Calling it once per frame before discovering that costs a visible
+        // pause; phones use the known decoder directly at a lighter scan rate.
+        if (touchDevice) return jsQRDecoder(jsQR, "jsQR (mobile)");
+        return withJsQR(jsQR);
+      });
     }
 
     function loadJsQR() {
@@ -269,6 +279,23 @@
       });
     }
 
+    function jsQRDecoder(jsQR, name) {
+      return {
+        name: name,
+        read: function (source, imageData) {
+          return Promise.resolve(jsQR(imageData.data, imageData.width, imageData.height))
+            .then(function (found) {
+              return found ? Uint8Array.from(found.binaryData) : null;
+            });
+        },
+      };
+    }
+
+    function isTouchDevice() {
+      return !!((scope.matchMedia && scope.matchMedia("(pointer: coarse)").matches) ||
+                (scope.navigator && scope.navigator.maxTouchPoints > 0));
+    }
+
     function nativeDetector() {
       if (!scope.BarcodeDetector) return Promise.resolve(null);
       return scope.BarcodeDetector.getSupportedFormats().then(function (formats) {
@@ -287,9 +314,9 @@
       return navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment",
-          width: { ideal: CAPTURE_W },
-          height: { ideal: CAPTURE_H },
-          frameRate: { ideal: 12 },
+          width: { ideal: captureW },
+          height: { ideal: captureH },
+          frameRate: { ideal: touchDevice ? 8 : 12 },
         },
         audio: false,
       });
@@ -333,7 +360,7 @@
           video.addEventListener("loadedmetadata", function () { resolve(); }, { once: true });
         });
       }).then(function () {
-        capture = makeCanvas(CAPTURE_W, CAPTURE_H);
+        capture = makeCanvas(captureW, captureH);
         preview = makeCanvas(PREVIEW_W, PREVIEW_H);
         return makeDecoder();
       }).then(function (ready) {
@@ -407,8 +434,8 @@
 
       publishFrame();
 
-      capture.ctx.drawImage(frameSource(), 0, 0, CAPTURE_W, CAPTURE_H);
-      var imageData = capture.ctx.getImageData(0, 0, CAPTURE_W, CAPTURE_H);
+      capture.ctx.drawImage(frameSource(), 0, 0, captureW, captureH);
+      var imageData = capture.ctx.getImageData(0, 0, captureW, captureH);
       return decoder.read(capture.canvas, imageData).then(function (payload) {
         if (payload && payload.length) publishPayload(payload);
       });
