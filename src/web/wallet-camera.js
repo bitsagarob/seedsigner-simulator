@@ -15,7 +15,7 @@
   // Int32 header slots.
   var CMD = 0;         // 0 stop, 1 start. Written by the worker.
   var STATE = 1;       // see STATES. Written by the page.
-  var FRAME_SEQ = 2;   // bumped once per published frame
+  var FRAME_SEQ = 2;   // bumped when a frame or decoded payload is ready
   var FRAME_W = 3;
   var FRAME_H = 4;
   var QR_LEN = 5;      // >0 while a decoded payload is waiting to be claimed
@@ -39,9 +39,10 @@
   var FRAME_OFFSET = ERR_OFFSET + ERR_MAX;
   var TOTAL_BYTES = FRAME_OFFSET + PREVIEW_W * PREVIEW_H * 3;
 
-  // ~15fps. The Python decode loop is slower than this, so the page is never the
-  // bottleneck and frames it publishes in between are simply overwritten.
+  // Desktop runs at about 15fps. Touch devices use TOUCH_TICK_MS below to reduce
+  // camera and canvas work while keeping enough frames for a stable QR scan.
   var TICK_MS = 66;
+  var TOUCH_TICK_MS = 120;
 
   // How long the camera may deliver nothing before the page says so, and how
   // often it is asked. Comfortably longer than a tick and than any single
@@ -80,6 +81,11 @@
     var hdr = header(sab);
     var source = (options && options.source) || null;
     var onTrouble = (options && options.onTrouble) || function () {};
+    // A phone has less room for the repeated video/canvas copies below, and a
+    // CompactSeedQR only needs a handful of frames. Ask for fewer camera frames
+    // on touch devices while leaving desktop scanning at its existing rate.
+    var tickMs = scope.matchMedia && scope.matchMedia("(pointer: coarse)").matches
+      ? TOUCH_TICK_MS : TICK_MS;
     var stream = null;
     var video = null;
     // A canvas standing in for the camera, when the page handed one over rather
@@ -168,6 +174,9 @@
         return report(readString(sab, hdr, ERR_OFFSET, ERR_LEN) || "the camera stopped");
       }
       if (state !== STATES.RUNNING) return;
+      // QR parsing owns the worker until it either accepts or rejects this
+      // payload; an idle camera during that hand-off is not a camera stall.
+      if (Atomics.load(hdr, QR_LEN) !== 0) return report("");
       if (Date.now() - lastFrameAt < STALL_MS) return;
 
       report("The camera is not sending any pictures. The device only checks its " +
@@ -231,16 +240,32 @@
             },
           };
         }
-        return {
+        var nativeFailed = false;
+        var decoder = {
           name: "BarcodeDetector+jsQR",
           read: function (source, imageData) {
-            return native.detect(source).then(function (codes) {
+            if (nativeFailed) return Promise.resolve(readBytes(imageData));
+            // Some browsers expose BarcodeDetector but reject detect() at
+            // runtime (Android Chrome has reported "Barcode Detection not
+            // implemented"). Disable that fast path for this camera session
+            // and keep scanning with the decoder we know works everywhere.
+            return Promise.resolve().then(function () {
+              return native.detect(source);
+            }).then(function (codes) {
               // Native says something is there; jsQR is what reads it. If jsQR
               // disagrees, report nothing and wait for the next frame.
               return codes.length ? readBytes(imageData) : null;
+            }, function (error) {
+              nativeFailed = true;
+              decoder.name = "jsQR (native detector unavailable)";
+              if (new URLSearchParams(location.search).has("debug")) {
+                console.warn("[cam] BarcodeDetector failed; using jsQR", error);
+              }
+              return readBytes(imageData);
             });
           },
         };
+        return decoder;
       });
     }
 
@@ -264,6 +289,7 @@
           facingMode: "environment",
           width: { ideal: CAPTURE_W },
           height: { ideal: CAPTURE_H },
+          frameRate: { ideal: 12 },
         },
         audio: false,
       });
@@ -354,8 +380,14 @@
     }
 
     function publishPayload(payload) {
+      if (Atomics.load(hdr, CMD) === 0) return;
       new Uint8Array(sab, QR_OFFSET, QR_MAX).set(payload.slice(0, QR_MAX));
       Atomics.store(hdr, QR_LEN, Math.min(payload.length, QR_MAX));
+      // Wake the worker even if the frame that found this QR was consumed just
+      // before the payload was published. The bytes in the frame buffer remain
+      // the same; the new sequence is a hand-off signal for payload().
+      Atomics.add(hdr, FRAME_SEQ, 1);
+      Atomics.notify(hdr, FRAME_SEQ);
     }
 
     function tick() {
@@ -367,13 +399,13 @@
       var state = Atomics.load(hdr, STATE);
       if (state === STATES.IDLE) return start();
       if (state !== STATES.RUNNING) return Promise.resolve();
+      // Keep the preview and decoder idle while Python processes the QR. The
+      // worker is woken by publishPayload(), so it no longer needs camera frames
+      // to claim the result.
+      if (Atomics.load(hdr, QR_LEN) !== 0) return Promise.resolve();
       if (!frameSource() || !frameW()) return Promise.resolve();
 
       publishFrame();
-
-      // The worker has not claimed the last payload yet. Decoding another would
-      // only overwrite it, and it is the same QR anyway.
-      if (Atomics.load(hdr, QR_LEN) !== 0) return Promise.resolve();
 
       capture.ctx.drawImage(frameSource(), 0, 0, CAPTURE_W, CAPTURE_H);
       var imageData = capture.ctx.getImageData(0, 0, CAPTURE_W, CAPTURE_H);
@@ -384,7 +416,7 @@
 
     function loop() {
       tick().catch(fail).then(function () {
-        setTimeout(loop, TICK_MS);
+        setTimeout(loop, tickMs);
       });
     }
 
@@ -407,6 +439,7 @@
           // answering with a stale one.
           Atomics.store(hdr, STATE, STATES.IDLE);
         }
+        Atomics.store(hdr, QR_LEN, 0);
         Atomics.store(hdr, CMD, 1);
 
         var deadline = Date.now() + timeoutMs;
